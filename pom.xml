@@ -50,12 +50,11 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- SLF4J Simple Logger for Testcontainers -->
+        <!-- SLF4J Simple Logger (required by MongoDB driver and Testcontainers) -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>1.7.36</version>
-            <scope>test</scope>
         </dependency>
 
         <!-- Testcontainers -->
@@ -71,6 +70,20 @@
             <version>${testcontainers.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>mongodb</artifactId>
+            <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- AssertJ Swing for UI Testing -->
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-swing-junit</artifactId>
+            <version>3.17.1</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -83,6 +96,9 @@
                 <configuration>
                     <source>17</source>
                     <target>17</target>
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
 
@@ -95,6 +111,11 @@
                     <includes>
                         <include>**/*Test.java</include>
                     </includes>
+                    <excludes>
+                        <exclude>**/*IT.java</exclude>
+                        <exclude>**/ui/*Test.java</exclude>
+                    </excludes>
+                    <argLine>${argLine}</argLine>
                 </configuration>
             </plugin>
 
@@ -108,6 +129,7 @@
                         <include>**/*IT.java</include>
                     </includes>
                     <skipTests>${skipITs}</skipTests>
+                    <argLine>${argLine}</argLine>
                 </configuration>
                 <executions>
                     <execution>
@@ -140,6 +162,7 @@
                     </execution>
                     <execution>
                         <id>check</id>
+                        <phase>verify</phase>
                         <goals>
                             <goal>check</goal>
                         </goals>
@@ -152,14 +175,34 @@
                                         <limit>
                                             <counter>LINE</counter>
                                             <value>COVEREDRATIO</value>
+                                            <minimum>0.70</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>BRANCH</counter>
+                                            <value>COVEREDRATIO</value>
                                             <minimum>0.60</minimum>
                                         </limit>
+                                        <limit>
+                                            <counter>METHOD</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.70</minimum>
+                                        </limit>
                                     </limits>
+                                    <excludes>
+                                        <exclude>**/ui/**</exclude>
+                                        <exclude>**/model/**</exclude>
+                                    </excludes>
                                 </rule>
                             </rules>
                         </configuration>
                     </execution>
                 </executions>
+                <configuration>
+                    <excludes>
+                        <exclude>**/ui/**</exclude>
+                        <exclude>**/model/**</exclude>
+                    </excludes>
+                </configuration>
             </plugin>
 
             <!-- PIT Mutation Testing -->
@@ -191,7 +234,15 @@
                 <version>4.3.0</version>
                 <configuration>
                     <repoToken>${env.COVERALLS_REPO_TOKEN}</repoToken>
+                    <jacocoReportPath>${project.build.directory}/site/jacoco/jacoco.xml</jacocoReportPath>
                 </configuration>
+            </plugin>
+            
+            <!-- SonarCloud Maven Plugin -->
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>3.10.0.2594</version>
             </plugin>
 
             <!-- Maven Exec Plugin for running the application -->

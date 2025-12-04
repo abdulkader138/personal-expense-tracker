@@ -12,9 +12,10 @@ hs_err_pid*
 .DS_Store
 .idea/
 *.iml
-.classpath
-.project
 .settings/
+.vscode
+*_SETUP.md
+*.properties
 bin/
 *.swp
 *.swo
