@@ -1,6 +1,6 @@
 # Personal Expense Tracker
 
-[![JAVA CI Unit tests, Mutation tests and Coveralls with Maven in Linux](https://github.com/YOUR_USERNAME/personal-expense-tracker/actions/workflows/maven.yaml/badge.svg?branch=main)](https://github.com/YOUR_USERNAME/personal-expense-tracker/actions/workflows/maven.yaml)  [![JAVA CI Unit tests with Maven in Windows & MacOS](https://github.com/YOUR_USERNAME/personal-expense-tracker/actions/workflows/mac_and_windows_workflow_for_unit_tests.yaml/badge.svg)](https://github.com/YOUR_USERNAME/personal-expense-tracker/actions/workflows/mac_and_windows_workflow_for_unit_tests.yaml)  [![JAVA IT, E2E tests with Maven in Linux](https://github.com/YOUR_USERNAME/personal-expense-tracker/actions/workflows/ubuntu_workflow_flow_for_integration_and_end2end_tests.yaml/badge.svg)](https://github.com/YOUR_USERNAME/personal-expense-tracker/actions/workflows/ubuntu_workflow_flow_for_integration_and_end2end_tests.yaml)  [![Coverage Status](https://coveralls.io/repos/github/YOUR_USERNAME/personal-expense-tracker/badge.svg?branch=main)](https://coveralls.io/github/YOUR_USERNAME/personal-expense-tracker?branch=main) [![Java CI with Maven, Docker and SonarCloud in Linux](https://github.com/YOUR_USERNAME/personal-expense-tracker/actions/workflows/java_ci_maven_docker_sonarcloud.yaml/badge.svg)](https://github.com/YOUR_USERNAME/personal-expense-tracker/actions/workflows/java_ci_maven_docker_sonarcloud.yaml) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=personal-expense-tracker&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=personal-expense-tracker)
+<!-- [![JAVA CI Unit tests, Mutation tests and Coveralls with Maven in Linux](https://github.com/YOUR_USERNAME/personal-expense-tracker/actions/workflows/maven.yaml/badge.svg?branch=main)](https://github.com/YOUR_USERNAME/personal-expense-tracker/actions/workflows/maven.yaml)  [![JAVA CI Unit tests with Maven in Windows & MacOS](https://github.com/YOUR_USERNAME/personal-expense-tracker/actions/workflows/mac_and_windows_workflow_for_unit_tests.yaml/badge.svg)](https://github.com/YOUR_USERNAME/personal-expense-tracker/actions/workflows/mac_and_windows_workflow_for_unit_tests.yaml)  [![JAVA IT, E2E tests with Maven in Linux](https://github.com/YOUR_USERNAME/personal-expense-tracker/actions/workflows/ubuntu_workflow_flow_for_integration_and_end2end_tests.yaml/badge.svg)](https://github.com/YOUR_USERNAME/personal-expense-tracker/actions/workflows/ubuntu_workflow_flow_for_integration_and_end2end_tests.yaml)  [![Coverage Status](https://coveralls.io/repos/github/YOUR_USERNAME/personal-expense-tracker/badge.svg?branch=main)](https://coveralls.io/github/YOUR_USERNAME/personal-expense-tracker?branch=main) [![Java CI with Maven, Docker and SonarCloud in Linux](https://github.com/YOUR_USERNAME/personal-expense-tracker/actions/workflows/java_ci_maven_docker_sonarcloud.yaml/badge.svg)](https://github.com/YOUR_USERNAME/personal-expense-tracker/actions/workflows/java_ci_maven_docker_sonarcloud.yaml) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=personal-expense-tracker&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=personal-expense-tracker) -->
 
 A comprehensive Personal Expense Tracker application developed following Test-Driven Development (TDD) principles, with full build automation and continuous integration.
 
@@ -39,18 +39,17 @@ This application provides a simple yet complete solution for managing personal e
 
 ## Note
 
-- `integration-test-profile`: When activated, this profile skips unit tests executed by the maven-surefire-plugin and runs integration tests via the maven-failsafe-plugin. To activate this profile, use the following command: 
+- `integration-test-profile`: When activated, this profile skips unit tests executed by the maven-surefire-plugin and runs integration tests via the maven-failsafe-plugin. To activate this profile, use the following command:
 
-    `mvn verify -Pintegration-test-profile`
+  `mvn verify -Pintegration-test-profile`
 
 - `mutation-testing-with-coverage`: This profile runs unit tests with JaCoCo coverage and PIT mutation testing, and uploads coverage to Coveralls. To activate this profile, use:
 
-    `mvn verify -Pmutation-testing-with-coverage -DrepoToken=$COVERALLS_REPO_TOKEN coveralls:report`
+  `mvn verify -Pmutation-testing-with-coverage -DrepoToken=$COVERALLS_REPO_TOKEN coveralls:report`
 
 - `jacoco`: This profile runs unit tests with JaCoCo coverage for SonarCloud analysis. To activate this profile, use:
 
-    `mvn verify -Pjacoco`
-
+  `mvn verify -Pjacoco`
 
 ## Project Structure
 
@@ -98,15 +97,18 @@ personal-expense-tracker/
 This project follows **Test-Driven Development (TDD)** methodology and adheres to the **Test Pyramid**. It includes:
 
 ### Unit Tests
+
 - **Service Tests**: Test business logic with mocked dependencies
 - **DAO Tests**: Test data access layer with in-memory MongoDB (Testcontainers)
 - **Controller/View Tests**: Test UI components with AssertJ Swing
 
 ### Integration Tests
+
 - **Database Integration Tests**: Test real database interactions using Testcontainers
 - **Service Integration Tests**: Test service layer with real DAOs
 
 ### End-to-End Tests (Optional)
+
 - **E2E Tests**: Test complete user workflows through the UI
 
 ## Continuous Integration
@@ -114,16 +116,19 @@ This project follows **Test-Driven Development (TDD)** methodology and adheres t
 The project includes **GitHub Actions workflows** that:
 
 1. **Unit Tests Workflow** (Linux):
+
    - Runs on Java 8, 11, and 17
    - Performs mutation testing on Java 8
    - Uploads coverage to Coveralls
    - Generates test reports
 
 2. **Cross-Platform Unit Tests** (Windows & macOS):
+
    - Runs unit tests on multiple operating systems
    - Ensures compatibility across platforms
 
 3. **Integration Tests Workflow** (Linux):
+
    - Runs integration and end-to-end tests
    - Uses Docker/Testcontainers for MongoDB
 
