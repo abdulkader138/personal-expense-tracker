@@ -199,5 +199,87 @@ public class CategoryDAOTest {
         // Then
         assertFalse(result);
     }
+
+    @Test
+    public void testCreate_WhenLastDocumentHasNoCategoryId() throws SQLException {
+        // Given - edge case: last document exists but doesn't have categoryId field
+        Category category = new Category("Travel");
+        Document last = new Document("_id", 5); // No categoryId field
+        when(categoriesCollection.find()).thenReturn(findIterable);
+        when(findIterable.sort(any())).thenReturn(findIterable);
+        when(findIterable.first()).thenReturn(last);
+
+        // When
+        Category result = categoryDAO.create(category);
+
+        // Then - should default to ID 1
+        assertNotNull(result);
+        assertEquals(Integer.valueOf(1), result.getCategoryId());
+        verify(categoriesCollection, times(1)).insertOne(any(Document.class));
+    }
+
+    @Test(expected = SQLException.class)
+    public void testCreate_ExceptionHandling() throws SQLException {
+        // Given - exception during create
+        Category category = new Category("Food");
+        when(categoriesCollection.find()).thenThrow(new RuntimeException("Database error"));
+
+        // When
+        categoryDAO.create(category);
+    }
+
+    @Test(expected = SQLException.class)
+    public void testFindById_ExceptionHandling() throws SQLException {
+        // Given - exception during find
+        when(categoriesCollection.find(any(Bson.class))).thenThrow(new RuntimeException("Database error"));
+
+        // When
+        categoryDAO.findById(1);
+    }
+
+    @Test(expected = SQLException.class)
+    public void testDelete_ExceptionHandling() throws SQLException {
+        // Given - exception during delete
+        when(categoriesCollection.deleteOne(any(Bson.class))).thenThrow(new RuntimeException("Database error"));
+
+        // When
+        categoryDAO.delete(1);
+    }
+
+    @Test
+    public void testFindAll_EmptyResult() throws SQLException {
+        // Given - no categories
+        MongoCursor<Document> cursor = mock(MongoCursor.class);
+        when(categoriesCollection.find()).thenReturn(findIterable);
+        when(findIterable.sort(any())).thenReturn(findIterable);
+        when(findIterable.iterator()).thenReturn(cursor);
+        when(cursor.hasNext()).thenReturn(false);
+
+        // When
+        List<Category> result = categoryDAO.findAll();
+
+        // Then
+        assertNotNull(result);
+        assertEquals(0, result.size());
+    }
+
+    @Test(expected = SQLException.class)
+    public void testFindAll_ExceptionHandling() throws SQLException {
+        // Given - exception during find
+        when(categoriesCollection.find()).thenThrow(new RuntimeException("Database error"));
+
+        // When
+        categoryDAO.findAll();
+    }
+
+    @Test(expected = SQLException.class)
+    public void testUpdate_ExceptionHandling() throws SQLException {
+        // Given - exception during update
+        Category category = new Category(1, "Food");
+        when(categoriesCollection.updateOne(any(Bson.class), any(Bson.class))).thenThrow(new RuntimeException("Database error"));
+
+        // When
+        categoryDAO.update(category);
+    }
 }
 

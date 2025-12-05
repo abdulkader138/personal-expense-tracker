@@ -1,6 +1,7 @@
 package com.mycompany.pet.service;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -157,6 +158,39 @@ public class CategoryServiceTest {
     @Test(expected = IllegalArgumentException.class)
     public void testDeleteCategory_NullId() throws SQLException {
         categoryService.deleteCategory(null);
+    }
+
+    @Test
+    public void testDeleteCategory_NotFound() throws SQLException {
+        // Given - category doesn't exist
+        Integer categoryId = 999;
+        when(categoryDAO.delete(categoryId)).thenReturn(false);
+
+        // When
+        boolean result = categoryService.deleteCategory(categoryId);
+
+        // Then
+        assertFalse(result);
+        verify(categoryDAO, times(1)).delete(categoryId);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreateCategory_WhitespaceOnlyName() throws SQLException {
+        categoryService.createCategory("   ");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testUpdateCategory_WhitespaceOnlyName() throws SQLException {
+        Category existingCategory = new Category(1, "Food");
+        when(categoryDAO.findById(1)).thenReturn(existingCategory);
+        categoryService.updateCategory(1, "   ");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testUpdateCategory_NullName() throws SQLException {
+        Category existingCategory = new Category(1, "Food");
+        when(categoryDAO.findById(1)).thenReturn(existingCategory);
+        categoryService.updateCategory(1, null);
     }
 }
 

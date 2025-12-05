@@ -349,5 +349,193 @@ public class ExpenseDAOTest {
         assertNotNull(result);
         assertEquals(new BigDecimal("150.50"), result);
     }
+
+    @Test
+    public void testCreate_WhenLastDocumentHasNoExpenseId() throws SQLException {
+        // Given - edge case: last document exists but doesn't have expenseId field
+        Expense expense = new Expense(LocalDate.now(), new BigDecimal("100.50"), "Lunch", 1);
+        Document last = new Document("_id", 5); // No expenseId field
+        when(expensesCollection.find()).thenReturn(findIterable);
+        when(findIterable.sort(any())).thenReturn(findIterable);
+        when(findIterable.first()).thenReturn(last);
+
+        // When
+        Expense result = expenseDAO.create(expense);
+
+        // Then - should default to ID 1
+        assertNotNull(result);
+        assertEquals(Integer.valueOf(1), result.getExpenseId());
+        verify(expensesCollection, times(1)).insertOne(any(Document.class));
+    }
+
+    @Test
+    public void testFindByMonth_NoMatches() throws SQLException {
+        // Given - expenses exist but none match the month
+        int year = 2024;
+        int month = 2;
+        LocalDate date1 = LocalDate.of(2024, 1, 15); // Different month
+        Document doc1 = new Document("expenseId", 1)
+                .append("date", date1.toString())
+                .append("amount", "100.50")
+                .append("description", "Lunch")
+                .append("categoryId", 1);
+
+        MongoCursor<Document> cursor = mock(MongoCursor.class);
+        when(expensesCollection.find()).thenReturn(findIterable);
+        when(findIterable.iterator()).thenReturn(cursor);
+        when(cursor.hasNext()).thenReturn(true, false);
+        when(cursor.next()).thenReturn(doc1);
+
+        // When
+        List<Expense> result = expenseDAO.findByMonth(year, month);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(0, result.size());
+    }
+
+    @Test
+    public void testGetMonthlyTotal_NoMatches() throws SQLException {
+        // Given - expenses exist but none match the month
+        int year = 2024;
+        int month = 2;
+        LocalDate date1 = LocalDate.of(2024, 1, 15); // Different month
+        Document doc1 = new Document("expenseId", 1)
+                .append("date", date1.toString())
+                .append("amount", "100.50")
+                .append("description", "Lunch")
+                .append("categoryId", 1);
+
+        MongoCursor<Document> cursor = mock(MongoCursor.class);
+        when(expensesCollection.find()).thenReturn(findIterable);
+        when(findIterable.iterator()).thenReturn(cursor);
+        when(cursor.hasNext()).thenReturn(true, false);
+        when(cursor.next()).thenReturn(doc1);
+
+        // When
+        BigDecimal result = expenseDAO.getMonthlyTotal(year, month);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(BigDecimal.ZERO, result);
+    }
+
+    @Test
+    public void testGetTotalByCategory_NoMatches() throws SQLException {
+        // Given - no expenses for this category
+        Integer categoryId = 999;
+        MongoCursor<Document> cursor = mock(MongoCursor.class);
+        when(expensesCollection.find(Filters.eq("categoryId", categoryId))).thenReturn(findIterable);
+        when(findIterable.iterator()).thenReturn(cursor);
+        when(cursor.hasNext()).thenReturn(false);
+
+        // When
+        BigDecimal result = expenseDAO.getTotalByCategory(categoryId);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(BigDecimal.ZERO, result);
+    }
+
+    @Test(expected = SQLException.class)
+    public void testCreate_ExceptionHandling() throws SQLException {
+        // Given - exception during create
+        Expense expense = new Expense(LocalDate.now(), new BigDecimal("100.50"), "Lunch", 1);
+        when(expensesCollection.find()).thenThrow(new RuntimeException("Database error"));
+
+        // When
+        expenseDAO.create(expense);
+    }
+
+    @Test(expected = SQLException.class)
+    public void testFindById_ExceptionHandling() throws SQLException {
+        // Given - exception during find
+        when(expensesCollection.find(any(Bson.class))).thenThrow(new RuntimeException("Database error"));
+
+        // When
+        expenseDAO.findById(1);
+    }
+
+    @Test
+    public void testFindByCategory_EmptyResult() throws SQLException {
+        // Given - no expenses for this category
+        Integer categoryId = 999;
+        MongoCursor<Document> cursor = mock(MongoCursor.class);
+        when(expensesCollection.find(Filters.eq("categoryId", categoryId))).thenReturn(findIterable);
+        when(findIterable.sort(any())).thenReturn(findIterable);
+        when(findIterable.iterator()).thenReturn(cursor);
+        when(cursor.hasNext()).thenReturn(false);
+
+        // When
+        List<Expense> result = expenseDAO.findByCategory(categoryId);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(0, result.size());
+    }
+
+    @Test(expected = SQLException.class)
+    public void testFindAll_ExceptionHandling() throws SQLException {
+        // Given - exception during find
+        when(expensesCollection.find()).thenThrow(new RuntimeException("Database error"));
+
+        // When
+        expenseDAO.findAll();
+    }
+
+    @Test(expected = SQLException.class)
+    public void testUpdate_ExceptionHandling() throws SQLException {
+        // Given - exception during update
+        Expense expense = new Expense(1, LocalDate.now(), new BigDecimal("100"), "Lunch", 1);
+        when(expensesCollection.updateOne(any(Bson.class), any(Bson.class))).thenThrow(new RuntimeException("Database error"));
+
+        // When
+        expenseDAO.update(expense);
+    }
+
+    @Test(expected = SQLException.class)
+    public void testDelete_ExceptionHandling() throws SQLException {
+        // Given - exception during delete
+        when(expensesCollection.deleteOne(any(Bson.class))).thenThrow(new RuntimeException("Database error"));
+
+        // When
+        expenseDAO.delete(1);
+    }
+
+    @Test(expected = SQLException.class)
+    public void testFindByCategory_ExceptionHandling() throws SQLException {
+        // Given - exception during find
+        when(expensesCollection.find(any(Bson.class))).thenThrow(new RuntimeException("Database error"));
+
+        // When
+        expenseDAO.findByCategory(1);
+    }
+
+    @Test(expected = SQLException.class)
+    public void testGetTotalByCategory_ExceptionHandling() throws SQLException {
+        // Given - exception during find
+        when(expensesCollection.find(any(Bson.class))).thenThrow(new RuntimeException("Database error"));
+
+        // When
+        expenseDAO.getTotalByCategory(1);
+    }
+
+    @Test(expected = SQLException.class)
+    public void testGetMonthlyTotal_ExceptionHandling() throws SQLException {
+        // Given - exception during find
+        when(expensesCollection.find()).thenThrow(new RuntimeException("Database error"));
+
+        // When
+        expenseDAO.getMonthlyTotal(2024, 1);
+    }
+
+    @Test(expected = SQLException.class)
+    public void testFindByMonth_ExceptionHandling() throws SQLException {
+        // Given - exception during find
+        when(expensesCollection.find()).thenThrow(new RuntimeException("Database error"));
+
+        // When
+        expenseDAO.findByMonth(2024, 1);
+    }
 }
 

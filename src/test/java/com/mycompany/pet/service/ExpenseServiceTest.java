@@ -1,6 +1,7 @@
 package com.mycompany.pet.service;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -224,6 +225,20 @@ public class ExpenseServiceTest {
     }
 
     @Test
+    public void testDeleteExpense_NotFound() throws SQLException {
+        // Given - expense doesn't exist
+        Integer expenseId = 999;
+        when(expenseDAO.delete(expenseId)).thenReturn(false);
+
+        // When
+        boolean result = expenseService.deleteExpense(expenseId);
+
+        // Then
+        assertFalse(result);
+        verify(expenseDAO, times(1)).delete(expenseId);
+    }
+
+    @Test
     public void testGetTotalByCategory_Success() throws SQLException {
         // Given
         Integer categoryId = 1;
@@ -259,6 +274,170 @@ public class ExpenseServiceTest {
         assertNotNull(result);
         assertEquals(expectedTotal, result);
         verify(expenseDAO, times(1)).getMonthlyTotal(year, month);
+    }
+
+    @Test
+    public void testGetExpensesByCategory_Success() throws SQLException {
+        // Given
+        Integer categoryId = 1;
+        List<Expense> expectedExpenses = Arrays.asList(
+            new Expense(1, LocalDate.now(), new BigDecimal("100"), "Lunch", categoryId),
+            new Expense(2, LocalDate.now(), new BigDecimal("50"), "Coffee", categoryId)
+        );
+        when(expenseDAO.findByCategory(categoryId)).thenReturn(expectedExpenses);
+
+        // When
+        List<Expense> result = expenseService.getExpensesByCategory(categoryId);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        verify(expenseDAO, times(1)).findByCategory(categoryId);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetExpensesByCategory_NullId() throws SQLException {
+        expenseService.getExpensesByCategory(null);
+    }
+
+    @Test(expected = SQLException.class)
+    public void testGetExpensesByCategory_SQLException() throws SQLException {
+        // Given - DAO throws SQLException
+        Integer categoryId = 1;
+        when(expenseDAO.findByCategory(categoryId)).thenThrow(new SQLException("Database error"));
+
+        // When
+        expenseService.getExpensesByCategory(categoryId);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreateExpense_WhitespaceDescription() throws SQLException {
+        Category category = new Category(1, "Food");
+        when(categoryDAO.findById(1)).thenReturn(category);
+        expenseService.createExpense(LocalDate.now(), new BigDecimal("100"), "   ", 1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testUpdateExpense_WhitespaceDescription() throws SQLException {
+        Expense existingExpense = new Expense(1, LocalDate.now(), new BigDecimal("100"), "Lunch", 1);
+        Category category = new Category(1, "Food");
+        when(expenseDAO.findById(1)).thenReturn(existingExpense);
+        when(categoryDAO.findById(1)).thenReturn(category);
+        expenseService.updateExpense(1, LocalDate.now(), new BigDecimal("100"), "   ", 1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreateExpense_NullDescription() throws SQLException {
+        Category category = new Category(1, "Food");
+        when(categoryDAO.findById(1)).thenReturn(category);
+        expenseService.createExpense(LocalDate.now(), new BigDecimal("100"), null, 1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testUpdateExpense_NullDate() throws SQLException {
+        Expense existingExpense = new Expense(1, LocalDate.now(), new BigDecimal("100"), "Lunch", 1);
+        Category category = new Category(1, "Food");
+        when(expenseDAO.findById(1)).thenReturn(existingExpense);
+        when(categoryDAO.findById(1)).thenReturn(category);
+        expenseService.updateExpense(1, null, new BigDecimal("100"), "Description", 1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testUpdateExpense_NullAmount() throws SQLException {
+        Expense existingExpense = new Expense(1, LocalDate.now(), new BigDecimal("100"), "Lunch", 1);
+        Category category = new Category(1, "Food");
+        when(expenseDAO.findById(1)).thenReturn(existingExpense);
+        when(categoryDAO.findById(1)).thenReturn(category);
+        expenseService.updateExpense(1, LocalDate.now(), null, "Description", 1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testUpdateExpense_NullDescription() throws SQLException {
+        Expense existingExpense = new Expense(1, LocalDate.now(), new BigDecimal("100"), "Lunch", 1);
+        Category category = new Category(1, "Food");
+        when(expenseDAO.findById(1)).thenReturn(existingExpense);
+        when(categoryDAO.findById(1)).thenReturn(category);
+        expenseService.updateExpense(1, LocalDate.now(), new BigDecimal("100"), null, 1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testUpdateExpense_NullCategoryId() throws SQLException {
+        Expense existingExpense = new Expense(1, LocalDate.now(), new BigDecimal("100"), "Lunch", 1);
+        when(expenseDAO.findById(1)).thenReturn(existingExpense);
+        expenseService.updateExpense(1, LocalDate.now(), new BigDecimal("100"), "Description", null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testUpdateExpense_CategoryNotFound() throws SQLException {
+        Expense existingExpense = new Expense(1, LocalDate.now(), new BigDecimal("100"), "Lunch", 1);
+        when(expenseDAO.findById(1)).thenReturn(existingExpense);
+        when(categoryDAO.findById(1)).thenReturn(null);
+        expenseService.updateExpense(1, LocalDate.now(), new BigDecimal("100"), "Description", 1);
+    }
+
+    @Test(expected = SQLException.class)
+    public void testUpdateExpense_SQLExceptionFromUpdate() throws SQLException {
+        // Given - update throws SQLException
+        Integer expenseId = 1;
+        LocalDate date = LocalDate.now();
+        BigDecimal amount = new BigDecimal("100");
+        String description = "Description";
+        Integer categoryId = 1;
+        Category category = new Category(categoryId, "Food");
+        Expense existingExpense = new Expense(expenseId, date, amount, description, categoryId);
+        
+        when(categoryDAO.findById(categoryId)).thenReturn(category);
+        when(expenseDAO.findById(expenseId)).thenReturn(existingExpense);
+        when(expenseDAO.update(any(Expense.class))).thenThrow(new SQLException("Database error"));
+
+        // When
+        expenseService.updateExpense(expenseId, date, amount, description, categoryId);
+    }
+
+    @Test(expected = SQLException.class)
+    public void testUpdateExpense_SQLExceptionFromFindById() throws SQLException {
+        // Given - findById throws SQLException
+        Integer expenseId = 1;
+        LocalDate date = LocalDate.now();
+        BigDecimal amount = new BigDecimal("100");
+        String description = "Description";
+        Integer categoryId = 1;
+        Category category = new Category(categoryId, "Food");
+        
+        when(categoryDAO.findById(categoryId)).thenReturn(category);
+        when(expenseDAO.findById(expenseId)).thenThrow(new SQLException("Database error"));
+
+        // When
+        expenseService.updateExpense(expenseId, date, amount, description, categoryId);
+    }
+
+    @Test(expected = SQLException.class)
+    public void testUpdateExpense_SQLExceptionFromValidateExpense() throws SQLException {
+        // Given - categoryDAO.findById throws SQLException during validation
+        Integer expenseId = 1;
+        LocalDate date = LocalDate.now();
+        BigDecimal amount = new BigDecimal("100");
+        String description = "Description";
+        Integer categoryId = 1;
+        
+        when(categoryDAO.findById(categoryId)).thenThrow(new SQLException("Database error"));
+
+        // When
+        expenseService.updateExpense(expenseId, date, amount, description, categoryId);
+    }
+
+    @Test(expected = SQLException.class)
+    public void testCreateExpense_SQLExceptionFromValidateExpense() throws SQLException {
+        // Given - categoryDAO.findById throws SQLException during validation
+        LocalDate date = LocalDate.now();
+        BigDecimal amount = new BigDecimal("100");
+        String description = "Description";
+        Integer categoryId = 1;
+        
+        when(categoryDAO.findById(categoryId)).thenThrow(new SQLException("Database error"));
+
+        // When
+        expenseService.createExpense(date, amount, description, categoryId);
     }
 }
 

@@ -23,7 +23,24 @@
         <mongodb.version>4.11.1</mongodb.version>
         <jacoco.version>0.8.11</jacoco.version>
         <pitest.version>1.15.0</pitest.version>
+        <awaitility.version>4.2.0</awaitility.version>
+        <logback-classic.version>1.2.12</logback-classic.version>
+        <slf4j-api.version>1.7.36</slf4j-api.version>
         <skipITs>false</skipITs>
+        
+        <!-- SonarCloud configuration -->
+        <sonar.coverage.exclusions>
+            **/ui/**,
+            **/model/**,
+            **/ExpenseTrackerApp.*
+        </sonar.coverage.exclusions>
+        <sonar.exclusions>
+            **/ui/**,
+            **/model/**
+        </sonar.exclusions>
+        <sonar.junit.reportPaths>
+            ${project.build.directory}/surefire-reports
+        </sonar.junit.reportPaths>
     </properties>
 
     <dependencies>
@@ -50,11 +67,26 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- SLF4J Simple Logger (required by MongoDB driver and Testcontainers) -->
+        <!-- SLF4J API -->
         <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>1.7.36</version>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j-api.version}</version>
+        </dependency>
+        
+        <!-- Logback Classic (required by MongoDB driver and Testcontainers) -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback-classic.version}</version>
+        </dependency>
+        
+        <!-- Awaitility for async testing -->
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <version>${awaitility.version}</version>
+            <scope>test</scope>
         </dependency>
 
         <!-- Testcontainers -->
@@ -88,6 +120,28 @@
 
     <build>
         <plugins>
+            <!-- Build Helper Maven Plugin for additional test sources -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.4.0</version>
+                <executions>
+                    <execution>
+                        <id>add-test-source</id>
+                        <phase>generate-test-sources</phase>
+                        <goals>
+                            <goal>add-test-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>src/it/java</source>
+                                <source>src/e2e/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            
             <!-- Maven Compiler Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -191,6 +245,7 @@
                                     <excludes>
                                         <exclude>**/ui/**</exclude>
                                         <exclude>**/model/**</exclude>
+                                        <exclude>**/ExpenseTrackerApp.*</exclude>
                                     </excludes>
                                 </rule>
                             </rules>
@@ -201,6 +256,7 @@
                     <excludes>
                         <exclude>**/ui/**</exclude>
                         <exclude>**/model/**</exclude>
+                        <exclude>**/ExpenseTrackerApp.*</exclude>
                     </excludes>
                 </configuration>
             </plugin>
@@ -212,18 +268,54 @@
                 <version>${pitest.version}</version>
                 <configuration>
                     <targetClasses>
-                        <param>com.mycompany.pet.*</param>
+                        <param>com.mycompany.pet.service.*</param>
+                        <param>com.mycompany.pet.dao.*</param>
                     </targetClasses>
                     <targetTests>
-                        <param>com.mycompany.pet.*Test</param>
+                        <param>com.mycompany.pet.service.*Test</param>
+                        <param>com.mycompany.pet.dao.*Test</param>
                     </targetTests>
+                    <excludedClasses>
+                        <param>com.mycompany.pet.ui.*</param>
+                        <param>com.mycompany.pet.model.*</param>
+                        <param>com.mycompany.pet.database.*</param>
+                    </excludedClasses>
+                    <excludedTestClasses>
+                        <param>com.mycompany.pet.*IT</param>
+                        <param>com.mycompany.pet.*E2E</param>
+                    </excludedTestClasses>
                     <mutators>
-                        <mutator>ALL</mutator>
+                        <mutator>STRONGER</mutator>
                     </mutators>
                     <outputFormats>
                         <outputFormat>HTML</outputFormat>
                         <outputFormat>XML</outputFormat>
                     </outputFormats>
+                    <mutationThreshold>100</mutationThreshold>
+                </configuration>
+            </plugin>
+            
+            <!-- Maven Surefire Report Plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-report-plugin</artifactId>
+                <version>3.1.2</version>
+            </plugin>
+            
+            <!-- Maven Assembly Plugin for fat jar -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.6.0</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.mycompany.pet.ui.ExpenseTrackerApp</mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
                 </configuration>
             </plugin>
 
@@ -256,5 +348,170 @@
             </plugin>
         </plugins>
     </build>
+    
+    <profiles>
+        <!-- JaCoCo Profile for SonarCloud -->
+        <profile>
+            <id>jacoco</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <version>${jacoco.version}</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>prepare-agent</goal>
+                                    <goal>report</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/ui/**</exclude>
+                                <exclude>**/model/**</exclude>
+                                <exclude>**/ExpenseTrackerApp.*</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
+        <!-- Mutation Testing with Coverage Profile -->
+        <profile>
+            <id>mutation-testing-with-coverage</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.pitest</groupId>
+                        <artifactId>pitest-maven</artifactId>
+                        <version>${pitest.version}</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>mutationCoverage</goal>
+                                </goals>
+                                <phase>verify</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <version>${jacoco.version}</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>prepare-agent</goal>
+                                    <goal>report</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/ui/**</exclude>
+                                <exclude>**/model/**</exclude>
+                                <exclude>**/ExpenseTrackerApp.*</exclude>
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.eluder.coveralls</groupId>
+                        <artifactId>coveralls-maven-plugin</artifactId>
+                        <version>4.3.0</version>
+                        <executions>
+                            <execution>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>report</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
+        <!-- Integration Test Profile -->
+        <profile>
+            <id>integration-test-profile</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <skipTests>true</skipTests>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <version>3.1.2</version>
+                        <executions>
+                            <execution>
+                                <id>default-it</id>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                                <configuration>
+                                    <includes>
+                                        <include>**/*IT.java</include>
+                                    </includes>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>e2e-tests</id>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                                <configuration>
+                                    <excludes>
+                                        <exclude>**/*IT.java</exclude>
+                                    </excludes>
+                                    <includes>
+                                        <include>**/*E2E.java</include>
+                                    </includes>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
+        <!-- Generate Fat Jar Profile -->
+        <profile>
+            <id>generate_fat_jar_profile</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <skipTests>true</skipTests>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <version>3.6.0</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
 

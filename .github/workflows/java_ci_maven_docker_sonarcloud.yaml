@@ -1,0 +1,42 @@
+name: Java CI with Maven, Docker and SonarCloud in Linux
+
+on:
+  push:
+    branches:
+      - main 
+  pull_request:
+    branches:
+      - main 
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        # Shallow clones should be disabled for a better relevancy of SonarQube analysis
+        fetch-depth: 0
+    - name: Set up JDK 17
+      uses: actions/setup-java@v1
+      with:
+        java-version: 17
+    - name: Cache Maven packages
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.m2
+          ~/.sonar/cache
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml', '**/*.yml') }}
+        restore-keys: ${{ runner.os }}-m2-
+    - name: Build with Maven and SonarCloud
+      run: |
+        xvfb-run mvn verify -Pjacoco sonar:sonar \
+          -Dsonar.projectKey=personal-expense-tracker \
+          -Dsonar.organization=your-org \
+          -Dsonar.host.url=https://sonarcloud.io \
+          -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
