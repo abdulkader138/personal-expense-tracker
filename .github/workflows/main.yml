@@ -202,6 +202,13 @@ jobs:
         run: mvn jacoco:check
         continue-on-error: true
       
+      - name: Upload JaCoCo report for SonarCloud
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report-java-17
+          path: target/site/jacoco/
+      
       - name: Upload to Coveralls
         if: github.event_name == 'push'
         env:
@@ -229,6 +236,19 @@ jobs:
           java-version: 17
           distribution: 'temurin'
           cache: maven
+      
+      - name: Download JaCoCo report from coverage-check
+        uses: actions/download-artifact@v4
+        with:
+          name: jacoco-report-java-17
+          path: target/site/jacoco/
+        continue-on-error: true
+      
+      - name: Run tests and generate JaCoCo report (if not downloaded)
+        if: failure()
+        run: |
+          xvfb-run -a mvn clean test jacoco:report
+        continue-on-error: true
       
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
