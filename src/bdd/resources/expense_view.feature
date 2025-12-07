@@ -39,4 +39,3 @@ Feature: Expense Application Frame Specification of the behavior of the Expense 
 	Then The expense table does not contain an element with the following values
 		| ID | Date | Amount | Description | Category |
 		| 1 | 2024-01-15 | 100.50 | Lunch | Food |
-

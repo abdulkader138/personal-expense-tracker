@@ -36,6 +36,7 @@ public class DatabaseConfig {
 	 * 
 	 * @return the database configuration
 	 */
+	
 	public static DBConfig getDatabaseConfig() {
 		String runningServerFrom = System.getProperty("mongodb.server");
 		if (runningServerFrom == null) {
