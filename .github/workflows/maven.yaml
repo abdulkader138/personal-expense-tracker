@@ -20,13 +20,13 @@ jobs:
           additional-maven-args: "-Pjacoco"
     name: Build with Java ${{ matrix.java }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Setup JDK ${{ matrix.java }}
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v4
       with:
         java-version: ${{ matrix.java }}
     - name: Cache Maven Packages
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: ~/.m2
         key: ${{ runner.os }}-m2-jdk-${{ matrix.java }}-${{ hashFiles('**/pom.xml','**/*.yml') }}
@@ -41,25 +41,25 @@ jobs:
         mvn surefire-report:report-only site:site -DgenerateReport=false
       if: ${{ always () }}
     - name: ArchiveJUnitReport
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       if: ${{ always() }}
       with:
        name: surefire-report-jdk-${{ matrix.java }}
        path: '**/target/site'
     - name: ArchiveJaCoCoReport
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       if: ${{ always() }}
       with:
           name: jacoco-report-jdk-${{ matrix.java }}
           path: '**/target/site/jacoco'
     - name: ArchivePitReport
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       if: ${{ always() }}
       with:
           name: pit-report-jdk-${{ matrix.java }}
           path: '**/target/pit-reports'
     - name: ArchiveLogs
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       if: ${{ always() }}
       with:
          name: log-files
