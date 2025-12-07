@@ -66,8 +66,13 @@ jobs:
           distribution: 'temurin'
           cache: maven
       
+      - name: Install xvfb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+      
       - name: Run unit tests with coverage
-        run: xvfb-run mvn clean test jacoco:report
+        run: xvfb-run -a mvn clean test jacoco:report
         continue-on-error: ${{ matrix.java-version != 17 }}
       
       - name: Generate JaCoCo report
@@ -108,8 +113,13 @@ jobs:
           distribution: 'temurin'
           cache: maven
       
+      - name: Install xvfb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+      
       - name: Run integration tests
-        run: xvfb-run mvn verify -DskipITs=false
+        run: xvfb-run -a mvn verify -DskipITs=false
         env:
           DOCKER_HOST: unix:///var/run/docker.sock
         continue-on-error: true
@@ -140,8 +150,13 @@ jobs:
           distribution: 'temurin'
           cache: maven
       
+      - name: Install xvfb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+      
       - name: Run PIT mutation testing
-        run: mvn org.pitest:pitest-maven:mutationCoverage
+        run: xvfb-run -a mvn org.pitest:pitest-maven:mutationCoverage
         continue-on-error: true
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
