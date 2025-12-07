@@ -189,6 +189,15 @@ jobs:
           distribution: 'temurin'
           cache: maven
       
+      - name: Install xvfb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+      
+      - name: Run tests and generate JaCoCo report
+        run: xvfb-run -a mvn clean test jacoco:report
+        continue-on-error: true
+      
       - name: Check coverage thresholds
         run: mvn jacoco:check
         continue-on-error: true
