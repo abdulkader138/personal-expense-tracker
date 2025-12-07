@@ -2,10 +2,12 @@
 # Java Versions: Java 8
 # Tests: Only run Unit Tests
 # Reports: Unit test report
+# DISABLED: Use main.yml consolidated workflow instead
 name: JAVA CI Unit tests with Maven in Windows & MacOS
 on:
-  pull_request:
-  push:
+  workflow_dispatch:  # Only run manually if needed
+  # pull_request:
+  # push:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -16,13 +18,13 @@ jobs:
         - java: 8
     name: Build with Java ${{ matrix.java }}  on  ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Setup JDK ${{ matrix.java }}
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v4
       with:
         java-version: ${{ matrix.java }}
     - name: Cache Maven Packages
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: ~/.m2
         key: ${{ runner.os }}-m2-jdk-${{ matrix.java }}-${{ hashFiles('**/pom.xml','**/*.yml') }}
@@ -32,13 +34,13 @@ jobs:
         mvn verify 
       if: ${{ always () }}
     - name: ArchiveJUnitReport
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       if: ${{ always() }}
       with:
        name: surefire-report-jdk-${{ matrix.java }}-${{ matrix.os }}
        path: '**/target/site'
     - name: ArchiveLogs
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       if: ${{ always() }}
       with:
          name: log-files-${{ matrix.os }}

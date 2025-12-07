@@ -3,10 +3,12 @@
 # Coverage and Mutation is tested only on java 8 
 # Tests: All tests (Unit)
 # Reports: Unit test report , Coverage coversall and Mutation Testing
+# DISABLED: Use main.yml consolidated workflow instead
 name: JAVA CI Unit tests, Mutation tests and Coveralls with Maven in Linux
 on:
-  pull_request:
-  push:
+  workflow_dispatch:  # Only run manually if needed
+  # pull_request:
+  # push:
 jobs:
   build:
     runs-on: ubuntu-latest
