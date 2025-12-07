@@ -26,16 +26,15 @@
         <awaitility.version>4.2.0</awaitility.version>
         <logback-classic.version>1.2.12</logback-classic.version>
         <slf4j-api.version>1.7.36</slf4j-api.version>
+        <cucumber.version>5.5.0</cucumber.version>
         <skipITs>false</skipITs>
         
         <!-- SonarCloud configuration -->
         <sonar.coverage.exclusions>
-            **/ui/**,
             **/model/**,
             **/ExpenseTrackerApp.*
         </sonar.coverage.exclusions>
         <sonar.exclusions>
-            **/ui/**,
             **/model/**
         </sonar.exclusions>
         <sonar.junit.reportPaths>
@@ -116,6 +115,20 @@
             <version>3.17.1</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- Cucumber for BDD Testing -->
+        <dependency>
+            <groupId>io.cucumber</groupId>
+            <artifactId>cucumber-java</artifactId>
+            <version>${cucumber.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.cucumber</groupId>
+            <artifactId>cucumber-junit</artifactId>
+            <version>${cucumber.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -136,7 +149,22 @@
                             <sources>
                                 <source>src/it/java</source>
                                 <source>src/e2e/java</source>
+                                <source>src/bdd/java</source>
                             </sources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>add-test-resource</id>
+                        <phase>generate-test-resources</phase>
+                        <goals>
+                            <goal>add-test-resource</goal>
+                        </goals>
+                        <configuration>
+                            <resources>
+                                <resource>
+                                    <directory>src/bdd/resources</directory>
+                                </resource>
+                            </resources>
                         </configuration>
                     </execution>
                 </executions>
@@ -167,9 +195,12 @@
                     </includes>
                     <excludes>
                         <exclude>**/*IT.java</exclude>
-                        <exclude>**/ui/*Test.java</exclude>
                     </excludes>
-                    <argLine>${argLine}</argLine>
+                    <argLine>${argLine} --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.desktop/java.awt=ALL-UNNAMED --add-opens java.desktop/javax.swing=ALL-UNNAMED</argLine>
+                    <forkCount>1</forkCount>
+                    <reuseForks>true</reuseForks>
+                    <testFailureIgnore>false</testFailureIgnore>
+                    <forkedProcessTimeoutInSeconds>300</forkedProcessTimeoutInSeconds>
                 </configuration>
             </plugin>
 
@@ -183,7 +214,7 @@
                         <include>**/*IT.java</include>
                     </includes>
                     <skipTests>${skipITs}</skipTests>
-                    <argLine>${argLine}</argLine>
+                    <argLine>${argLine} --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.desktop/java.awt=ALL-UNNAMED --add-opens java.desktop/javax.swing=ALL-UNNAMED</argLine>
                 </configuration>
                 <executions>
                     <execution>
@@ -243,7 +274,6 @@
                                         </limit>
                                     </limits>
                                     <excludes>
-                                        <exclude>**/ui/**</exclude>
                                         <exclude>**/model/**</exclude>
                                         <exclude>**/ExpenseTrackerApp.*</exclude>
                                     </excludes>
@@ -254,7 +284,6 @@
                 </executions>
                 <configuration>
                     <excludes>
-                        <exclude>**/ui/**</exclude>
                         <exclude>**/model/**</exclude>
                         <exclude>**/ExpenseTrackerApp.*</exclude>
                     </excludes>
@@ -369,7 +398,6 @@
                         </executions>
                         <configuration>
                             <excludes>
-                                <exclude>**/ui/**</exclude>
                                 <exclude>**/model/**</exclude>
                                 <exclude>**/ExpenseTrackerApp.*</exclude>
                             </excludes>
@@ -411,7 +439,6 @@
                         </executions>
                         <configuration>
                             <excludes>
-                                <exclude>**/ui/**</exclude>
                                 <exclude>**/model/**</exclude>
                                 <exclude>**/ExpenseTrackerApp.*</exclude>
                             </excludes>
@@ -475,6 +502,21 @@
                                     </excludes>
                                     <includes>
                                         <include>**/*E2E.java</include>
+                                    </includes>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>bdd-tests</id>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                                <configuration>
+                                    <excludes>
+                                        <exclude>**/*IT.java</exclude>
+                                    </excludes>
+                                    <includes>
+                                        <include>**/*BDD.java</include>
                                     </includes>
                                 </configuration>
                             </execution>

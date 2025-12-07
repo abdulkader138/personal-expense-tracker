@@ -3,11 +3,8 @@ package com.mycompany.pet.ui;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.swing.core.matcher.JButtonMatcher.withText;
 import static org.assertj.swing.edt.GuiActionRunner.execute;
-import static org.junit.Assume.assumeFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-
-import java.awt.GraphicsEnvironment;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -59,10 +56,6 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
 
     @Override
     protected void onSetUp() throws Exception {
-        // Skip UI tests if running in headless mode
-        assumeFalse("Skipping UI test - running in headless mode", 
-            GraphicsEnvironment.isHeadless());
-        
         closeable = MockitoAnnotations.openMocks(this);
         
         // Setup mock data

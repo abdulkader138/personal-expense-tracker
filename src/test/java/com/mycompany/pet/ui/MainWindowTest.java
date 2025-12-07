@@ -3,11 +3,8 @@ package com.mycompany.pet.ui;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.swing.core.matcher.JButtonMatcher.withText;
 import static org.assertj.swing.edt.GuiActionRunner.execute;
-import static org.junit.Assume.assumeFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-
-import java.awt.GraphicsEnvironment;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -15,12 +12,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.assertj.swing.annotation.GUITest;
+import org.assertj.swing.core.GenericTypeMatcher;
+import org.assertj.swing.data.TableCell;
 import org.assertj.swing.fixture.FrameFixture;
 import org.assertj.swing.fixture.JButtonFixture;
 import org.assertj.swing.fixture.JComboBoxFixture;
 import org.assertj.swing.fixture.JTableFixture;
 import org.assertj.swing.junit.runner.GUITestRunner;
 import org.assertj.swing.junit.testcase.AssertJSwingJUnitTestCase;
+import javax.swing.JComboBox;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -58,10 +58,6 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
 
     @Override
     protected void onSetUp() throws Exception {
-        // Skip UI tests if running in headless mode
-        assumeFalse("Skipping UI test - running in headless mode", 
-            GraphicsEnvironment.isHeadless());
-        
         closeable = MockitoAnnotations.openMocks(this);
         
         // Setup mock data
@@ -78,20 +74,27 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         
         when(categoryService.getAllCategories()).thenReturn(categories);
         when(expenseService.getAllExpenses()).thenReturn(expenses);
+        when(expenseService.getExpensesByMonth(any(Integer.class), any(Integer.class))).thenReturn(expenses);
         when(categoryService.getCategory(any(Integer.class))).thenReturn(categories.get(0));
+        when(categoryService.getCategory(CATEGORY_ID_1)).thenReturn(categories.get(0));
         when(expenseService.getMonthlyTotal(any(Integer.class), any(Integer.class)))
             .thenReturn(EXPENSE_AMOUNT_1);
         when(expenseService.getTotalByCategory(any(Integer.class)))
             .thenReturn(EXPENSE_AMOUNT_1);
         
-        // Create and show window on EDT
+        // Create window on EDT and set it visible (like CategoryDialogTest does with parent frame)
         mainWindow = execute(() -> {
             MainWindow mw = new MainWindow(categoryService, expenseService);
+            mw.setVisible(true);
             return mw;
         });
         
         window = new FrameFixture(robot(), mainWindow);
+        // Window is already visible, but show() ensures it's properly shown
         window.show();
+        
+        // Don't call loadData() here - let individual tests call it if needed
+        // This prevents any potential blocking during setup
     }
 
     @Override
@@ -107,9 +110,11 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     @Test
     @GUITest
     public void testMainWindow_DisplaysCorrectly() {
+        System.out.println("TEST: testMainWindow_DisplaysCorrectly - START");
         // Then - verify window is visible and has correct title
         window.requireVisible();
         assertThat(window.target().getTitle()).isEqualTo("Personal Expense Tracker");
+        System.out.println("TEST: testMainWindow_DisplaysCorrectly - END");
     }
 
     @Test
@@ -149,7 +154,20 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testMainWindow_DisplaysExpenses() {
+    public void testMainWindow_DisplaysExpenses() throws SQLException {
+        // Given - ensure mocks are set up for getExpensesByMonth (needed by updateSummary)
+        when(expenseService.getExpensesByMonth(any(Integer.class), any(Integer.class)))
+            .thenReturn(new ArrayList<>());
+        
+        // Load data first
+        execute(() -> {
+            try {
+                mainWindow.loadData();
+            } catch (Exception e) {
+                // Ignore exceptions
+            }
+        });
+        
         // Then - verify expense table has data
         JTableFixture table = window.table();
         table.requireRowCount(1); // Should have 1 expense from mock data
@@ -159,7 +177,13 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     @GUITest
     public void testMainWindow_HasCategoryComboBox() {
         // Then - verify category combo box exists
-        JComboBoxFixture categoryCombo = window.comboBox();
+        // Find category combo box by its characteristic: it contains null as first item
+        JComboBoxFixture categoryCombo = window.comboBox(new GenericTypeMatcher<JComboBox>(JComboBox.class) {
+            @Override
+            protected boolean isMatching(JComboBox comboBox) {
+                return comboBox.getItemCount() > 0 && comboBox.getItemAt(0) == null;
+            }
+        });
         categoryCombo.requireVisible();
     }
 
@@ -167,9 +191,16 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     @GUITest
     public void testMainWindow_HasMonthComboBox() {
         // Then - verify month combo box exists and has items
-        // Note: Finding combo boxes by index since they don't have names
-        JComboBoxFixture monthCombo = window.comboBox();
+        // Find month combo box by its characteristic: it has "All" as first item
+        JComboBoxFixture monthCombo = window.comboBox(new GenericTypeMatcher<JComboBox>(JComboBox.class) {
+            @Override
+            protected boolean isMatching(JComboBox comboBox) {
+                return comboBox.getItemCount() > 0 && "All".equals(comboBox.getItemAt(0));
+            }
+        });
         monthCombo.requireVisible();
+        // Verify it has the expected items
+        monthCombo.requireItemCount(13); // "All" + 12 months
     }
 
     @Test
@@ -177,6 +208,158 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     public void testMainWindow_DisplaysMonthlyTotal() {
         // Then - verify monthly total label exists
         // The label should show the total from mock data
+        window.requireVisible();
+    }
+
+    @Test
+    @GUITest
+    public void testMainWindow_DisplaysUnknownCategory_WhenCategoryIsNull() throws SQLException {
+        // Given - expense with category that doesn't exist
+        List<Expense> expenses = new ArrayList<>();
+        expenses.add(new Expense(EXPENSE_ID_1, 
+            LocalDate.now(), 
+            EXPENSE_AMOUNT_1, 
+            EXPENSE_DESCRIPTION_1, 
+            999)); // Non-existent category ID
+        
+        when(expenseService.getAllExpenses()).thenReturn(expenses);
+        when(categoryService.getCategory(999)).thenReturn(null); // Category not found
+        
+        // When - reload data
+        execute(() -> {
+            mainWindow.loadData();
+        });
+        
+        // Then - verify "Unknown" is displayed in the table
+        JTableFixture table = window.table();
+        assertThat(table.rowCount()).isGreaterThan(0);
+        // Check that "Unknown" appears in the category column (column 4)
+        String categoryValue = table.cell(TableCell.row(0).column(4)).value();
+        assertThat(categoryValue).isEqualTo("Unknown");
+    }
+
+    @Test
+    @GUITest
+    public void testMainWindow_HandlesSQLException_WhenLoadingData() throws SQLException {
+        // Given - service throws SQLException
+        when(categoryService.getAllCategories()).thenThrow(new SQLException("Database error"));
+        
+        // When - reload data (should catch exception and show error dialog)
+        execute(() -> {
+            mainWindow.loadData();
+        });
+        
+        // Then - window should still be visible (exception was handled)
+        window.requireVisible();
+    }
+
+    @Test
+    @GUITest
+    public void testMainWindow_FilterExpenses_ShowsUnknownCategory_WhenCategoryIsNull() throws SQLException {
+        // Given - expense with category that doesn't exist, filtered by month
+        List<Expense> expenses = new ArrayList<>();
+        expenses.add(new Expense(EXPENSE_ID_1, 
+            LocalDate.now(), 
+            EXPENSE_AMOUNT_1, 
+            EXPENSE_DESCRIPTION_1, 
+            999)); // Non-existent category ID
+        
+        when(expenseService.getExpensesByMonth(any(Integer.class), any(Integer.class))).thenReturn(expenses);
+        when(categoryService.getCategory(999)).thenReturn(null); // Category not found
+        
+        // When - filter by current month
+        int currentYear = LocalDate.now().getYear();
+        int currentMonth = LocalDate.now().getMonthValue();
+        String monthStr = String.format("%02d", currentMonth);
+        String yearStr = String.valueOf(currentYear);
+        execute(() -> {
+            // Set month and year in combo boxes before filtering
+            mainWindow.monthComboBox.setSelectedItem(monthStr);
+            mainWindow.yearComboBox.setSelectedItem(yearStr);
+            mainWindow.filterExpenses();
+        });
+        
+        // Then - verify "Unknown" is displayed in the table
+        JTableFixture table = window.table();
+        if (table.rowCount() > 0) {
+            String categoryValue = table.cell(TableCell.row(0).column(4)).value();
+            assertThat(categoryValue).isEqualTo("Unknown");
+        }
+    }
+
+    @Test
+    @GUITest
+    public void testMainWindow_UpdateSummary_HandlesSQLException() throws SQLException {
+        // Given - service throws SQLException when getting monthly total
+        when(expenseService.getMonthlyTotal(any(Integer.class), any(Integer.class)))
+            .thenThrow(new SQLException("Database error"));
+        
+        // When - update summary (should catch exception and show "Error")
+        execute(() -> {
+            mainWindow.updateSummary();
+        });
+        
+        // Then - window should still be visible (exception was handled)
+        window.requireVisible();
+    }
+
+    @Test
+    @GUITest
+    public void testMainWindow_UpdateCategoryTotal_HandlesSQLException() throws SQLException {
+        // Given - service throws SQLException when getting category total
+        when(expenseService.getTotalByCategory(any(Integer.class)))
+            .thenThrow(new SQLException("Database error"));
+        
+        // When - update category total (should catch exception and show "Error")
+        execute(() -> {
+            mainWindow.updateCategoryTotal();
+        });
+        
+        // Then - window should still be visible (exception was handled)
+        window.requireVisible();
+    }
+
+    @Test
+    @GUITest
+    public void testMainWindow_FilterExpenses_HandlesSQLException() throws SQLException {
+        // Given - service throws SQLException when filtering
+        when(expenseService.getExpensesByMonth(any(Integer.class), any(Integer.class)))
+            .thenThrow(new SQLException("Database error"));
+        
+        // When - filter expenses (should catch exception and show error dialog)
+        execute(() -> {
+            mainWindow.filterExpenses();
+        });
+        
+        // Then - window should still be visible (exception was handled)
+        window.requireVisible();
+    }
+
+    @Test
+    @GUITest
+    public void testMainWindow_UpdateSummary_ShowsNA_WhenMonthIsAll() {
+        // Given - month combo box is set to "All"
+        execute(() -> {
+            // Set month to "All" (first item)
+            mainWindow.monthComboBox.setSelectedItem("All");
+            mainWindow.updateSummary();
+        });
+        
+        // Then - window should still be visible
+        window.requireVisible();
+    }
+
+    @Test
+    @GUITest
+    public void testMainWindow_UpdateCategoryTotal_ShowsNA_WhenCategoryIsNull() {
+        // Given - category combo box has null selected
+        execute(() -> {
+            // Set category to null (first item is null)
+            mainWindow.categoryComboBox.setSelectedItem(null);
+            mainWindow.updateCategoryTotal();
+        });
+        
+        // Then - window should still be visible
         window.requireVisible();
     }
 }

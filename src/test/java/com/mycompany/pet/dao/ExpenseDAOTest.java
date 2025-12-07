@@ -395,6 +395,50 @@ public class ExpenseDAOTest {
     }
 
     @Test
+    public void testFindByMonth_MixedMatches() throws SQLException {
+        // Given - some expenses match, some don't (to cover both branches of the if condition)
+        int year = 2024;
+        int month = 1;
+        LocalDate date1 = LocalDate.of(year, month, 15); // Matches - TRUE branch
+        LocalDate date2 = LocalDate.of(year, 2, 20); // Year matches but month doesn't - FALSE branch (second part fails)
+        LocalDate date3 = LocalDate.of(2023, month, 25); // Year doesn't match - FALSE branch (first part fails, short-circuit)
+        LocalDate date4 = LocalDate.of(year, month, 30); // Matches - TRUE branch
+        Document doc1 = new Document("expenseId", 1)
+                .append("date", date1.toString())
+                .append("amount", "100.50")
+                .append("description", "Lunch")
+                .append("categoryId", 1);
+        Document doc2 = new Document("expenseId", 2)
+                .append("date", date2.toString())
+                .append("amount", "50.00")
+                .append("description", "Coffee")
+                .append("categoryId", 1);
+        Document doc3 = new Document("expenseId", 3)
+                .append("date", date3.toString())
+                .append("amount", "25.00")
+                .append("description", "Snack")
+                .append("categoryId", 1);
+        Document doc4 = new Document("expenseId", 4)
+                .append("date", date4.toString())
+                .append("amount", "75.00")
+                .append("description", "Dinner")
+                .append("categoryId", 1);
+
+        MongoCursor<Document> cursor = mock(MongoCursor.class);
+        when(expensesCollection.find()).thenReturn(findIterable);
+        when(findIterable.iterator()).thenReturn(cursor);
+        when(cursor.hasNext()).thenReturn(true, true, true, true, false);
+        when(cursor.next()).thenReturn(doc1, doc2, doc3, doc4);
+
+        // When
+        List<Expense> result = expenseDAO.findByMonth(year, month);
+
+        // Then - should only return expenses that match (doc1 and doc4)
+        assertNotNull(result);
+        assertEquals(2, result.size()); // Only doc1 and doc4 match
+    }
+
+    @Test
     public void testGetMonthlyTotal_NoMatches() throws SQLException {
         // Given - expenses exist but none match the month
         int year = 2024;
@@ -418,6 +462,50 @@ public class ExpenseDAOTest {
         // Then
         assertNotNull(result);
         assertEquals(BigDecimal.ZERO, result);
+    }
+
+    @Test
+    public void testGetMonthlyTotal_MixedMatches() throws SQLException {
+        // Given - some expenses match, some don't (to cover both branches of the if condition)
+        int year = 2024;
+        int month = 1;
+        LocalDate date1 = LocalDate.of(year, month, 15); // Matches - TRUE branch
+        LocalDate date2 = LocalDate.of(year, 2, 20); // Year matches but month doesn't - FALSE branch (second part fails)
+        LocalDate date3 = LocalDate.of(2023, month, 25); // Year doesn't match - FALSE branch (first part fails, short-circuit)
+        LocalDate date4 = LocalDate.of(year, month, 30); // Matches - TRUE branch
+        Document doc1 = new Document("expenseId", 1)
+                .append("date", date1.toString())
+                .append("amount", "100.50")
+                .append("description", "Lunch")
+                .append("categoryId", 1);
+        Document doc2 = new Document("expenseId", 2)
+                .append("date", date2.toString())
+                .append("amount", "50.00")
+                .append("description", "Coffee")
+                .append("categoryId", 1);
+        Document doc3 = new Document("expenseId", 3)
+                .append("date", date3.toString())
+                .append("amount", "25.00")
+                .append("description", "Snack")
+                .append("categoryId", 1);
+        Document doc4 = new Document("expenseId", 4)
+                .append("date", date4.toString())
+                .append("amount", "75.00")
+                .append("description", "Dinner")
+                .append("categoryId", 1);
+
+        MongoCursor<Document> cursor = mock(MongoCursor.class);
+        when(expensesCollection.find()).thenReturn(findIterable);
+        when(findIterable.iterator()).thenReturn(cursor);
+        when(cursor.hasNext()).thenReturn(true, true, true, true, false);
+        when(cursor.next()).thenReturn(doc1, doc2, doc3, doc4);
+
+        // When
+        BigDecimal result = expenseDAO.getMonthlyTotal(year, month);
+
+        // Then - should only sum expenses that match (doc1 and doc4)
+        assertNotNull(result);
+        assertEquals(new BigDecimal("175.50"), result); // 100.50 + 75.00
     }
 
     @Test

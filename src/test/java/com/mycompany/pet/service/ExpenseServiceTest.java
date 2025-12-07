@@ -89,6 +89,15 @@ public class ExpenseServiceTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
+    public void testUpdateExpense_ZeroAmount() throws SQLException {
+        Expense existingExpense = new Expense(1, LocalDate.now(), new BigDecimal("100"), "Lunch", 1);
+        Category category = new Category(1, "Food");
+        when(expenseDAO.findById(1)).thenReturn(existingExpense);
+        when(categoryDAO.findById(1)).thenReturn(category);
+        expenseService.updateExpense(1, LocalDate.now(), BigDecimal.ZERO, "Description", 1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
     public void testCreateExpense_NegativeAmount() throws SQLException {
         expenseService.createExpense(LocalDate.now(), new BigDecimal("-10"), "Description", 1);
     }
@@ -201,8 +210,19 @@ public class ExpenseServiceTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testUpdateExpense_NotFound() throws SQLException {
-        when(expenseDAO.findById(1)).thenReturn(null);
-        expenseService.updateExpense(1, LocalDate.now(), new BigDecimal("100"), "Description", 1);
+        // Given - validation passes but expense doesn't exist
+        Integer expenseId = 1;
+        LocalDate date = LocalDate.now();
+        BigDecimal amount = new BigDecimal("100");
+        String description = "Description";
+        Integer categoryId = 1;
+        Category category = new Category(categoryId, "Food");
+        
+        when(categoryDAO.findById(categoryId)).thenReturn(category); // Validation passes
+        when(expenseDAO.findById(expenseId)).thenReturn(null); // Expense not found
+        
+        // When
+        expenseService.updateExpense(expenseId, date, amount, description, categoryId);
     }
 
     @Test

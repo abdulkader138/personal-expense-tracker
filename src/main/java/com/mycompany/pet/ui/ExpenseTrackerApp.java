@@ -43,6 +43,7 @@ public class ExpenseTrackerApp {
 
                 // Create and show main window
                 MainWindow mainWindow = new MainWindow(categoryService, expenseService);
+                mainWindow.loadData(); // Load data after window is created
                 mainWindow.setVisible(true);
             } catch (Exception e) {
                 String errorMsg = "Failed to initialize MongoDB database: " + e.getMessage();
