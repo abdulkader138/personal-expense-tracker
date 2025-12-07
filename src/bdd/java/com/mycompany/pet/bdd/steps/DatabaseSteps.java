@@ -1,5 +1,4 @@
 /*
- * Database steps for the ExpenseTrackerApp BDD tests.
  * 
  * This class provides steps for setting up test data in the database.
  */
