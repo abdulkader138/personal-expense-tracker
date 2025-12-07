@@ -36,11 +36,20 @@ jobs:
               - '**/*IT.java'
               - '**/*E2E.java'
               - '**/pom.xml'
+      - name: Debug outputs
+        run: |
+          echo "java: ${{ steps.filter.outputs.java }}"
+          echo "tests: ${{ steps.filter.outputs.tests }}"
+          echo "integration: ${{ steps.filter.outputs.integration }}"
 
   # Unit Tests - Run on all Java versions
+  # Always run on push/workflow_dispatch, conditionally on PR based on file changes
   unit-tests:
     needs: detect-changes
-    if: needs.detect-changes.outputs.java == 'true'
+    if: |
+      github.event_name == 'workflow_dispatch' || 
+      github.event_name == 'push' || 
+      (github.event_name == 'pull_request' && needs.detect-changes.outputs.java == 'true')
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -80,9 +89,13 @@ jobs:
           path: target/surefire-reports/
 
   # Integration Tests - Only on Java 17 with Docker
+  # Always run on push/workflow_dispatch, conditionally on PR based on file changes
   integration-tests:
     needs: detect-changes
-    if: needs.detect-changes.outputs.integration == 'true'
+    if: |
+      github.event_name == 'workflow_dispatch' || 
+      github.event_name == 'push' || 
+      (github.event_name == 'pull_request' && needs.detect-changes.outputs.integration == 'true')
     runs-on: ubuntu-latest
     name: Integration Tests
     steps:
@@ -109,9 +122,12 @@ jobs:
           path: target/failsafe-reports/
 
   # Mutation Testing - Only on Java 8
+  # Run on push/workflow_dispatch, conditionally on PR based on test file changes
   mutation-testing:
     needs: detect-changes
-    if: needs.detect-changes.outputs.tests == 'true' && github.event_name == 'push'
+    if: |
+      (github.event_name == 'workflow_dispatch' || github.event_name == 'push') ||
+      (github.event_name == 'pull_request' && needs.detect-changes.outputs.tests == 'true')
     runs-on: ubuntu-latest
     name: Mutation Testing
     steps:
@@ -138,9 +154,14 @@ jobs:
           path: target/pit-reports/
 
   # Coverage Check - Only on Java 17
+  # Run after unit-tests complete
   coverage-check:
     needs: [unit-tests, detect-changes]
-    if: needs.detect-changes.outputs.java == 'true'
+    if: |
+      (needs.unit-tests.result == 'success' || needs.unit-tests.result == 'failure') &&
+      (github.event_name == 'workflow_dispatch' || 
+       github.event_name == 'push' || 
+       (github.event_name == 'pull_request' && needs.detect-changes.outputs.java == 'true'))
     runs-on: ubuntu-latest
     name: Coverage Check
     steps:
@@ -165,9 +186,12 @@ jobs:
         continue-on-error: true
 
   # SonarCloud Analysis
+  # Only run on push events (not PRs) after coverage check
   sonarcloud:
     needs: [unit-tests, coverage-check]
-    if: needs.detect-changes.outputs.java == 'true' && github.event_name == 'push'
+    if: |
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      (needs.coverage-check.result == 'success' || needs.coverage-check.result == 'failure')
     runs-on: ubuntu-latest
     name: SonarCloud Analysis
     steps:
