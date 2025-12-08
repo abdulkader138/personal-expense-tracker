@@ -74,6 +74,13 @@
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
+        <!-- Mockito Inline for static mocks (requires Java 11+) -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-inline</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
 
         <!-- SLF4J API -->
         <dependency>
@@ -208,6 +215,7 @@
                         <exclude>**/CategoryDialogTest.java</exclude>
                         <exclude>**/ExpenseDialogTest.java</exclude>
                         <exclude>**/MainWindowTest.java</exclude>
+                        <exclude>**/DatabaseConnectionTest.java</exclude>
                     </excludes>
                     <argLine>${argLine} --add-opens java.base/java.util=ALL-UNNAMED --add-opens java.desktop/java.awt=ALL-UNNAMED --add-opens java.desktop/javax.swing=ALL-UNNAMED</argLine>
                     <forkCount>1</forkCount>
@@ -631,6 +639,23 @@
                     <scope>test</scope>
                 </dependency>
             </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/*IT.java</exclude>
+                                <exclude>**/CategoryDialogTest.java</exclude>
+                                <exclude>**/ExpenseDialogTest.java</exclude>
+                                <exclude>**/MainWindowTest.java</exclude>
+                                <!-- DatabaseConnectionTest is included on Java 11+ -->
+                            </excludes>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 </project>

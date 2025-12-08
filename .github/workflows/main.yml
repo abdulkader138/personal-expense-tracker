@@ -131,7 +131,7 @@ jobs:
           name: failsafe-reports
           path: target/failsafe-reports/
 
-  # Mutation Testing - Only on Java 8
+  # Mutation Testing - On Java 8
   # Run on push/workflow_dispatch, conditionally on PR based on test file changes
   mutation-testing:
     needs: detect-changes
