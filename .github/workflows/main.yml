@@ -72,7 +72,7 @@ jobs:
           sudo apt-get install -y xvfb
       
       - name: Run unit tests with coverage
-        run: xvfb-run -a mvn clean test jacoco:report -Dmaven.compiler.source=${{ matrix.java-version }} -Dmaven.compiler.target=${{ matrix.java-version }}
+        run: xvfb-run -a mvn clean test jacoco:report -U -Dmaven.compiler.source=${{ matrix.java-version }} -Dmaven.compiler.target=${{ matrix.java-version }}
         continue-on-error: ${{ matrix.java-version != 17 }}
       
       - name: Generate JaCoCo report
@@ -119,7 +119,7 @@ jobs:
           sudo apt-get install -y xvfb
       
       - name: Run integration tests
-        run: xvfb-run -a mvn verify -DskipITs=false
+        run: xvfb-run -a mvn clean verify -U -DskipITs=false -Dmaven.compiler.source=17 -Dmaven.compiler.target=17
         env:
           DOCKER_HOST: unix:///var/run/docker.sock
         continue-on-error: true
@@ -156,7 +156,7 @@ jobs:
           sudo apt-get install -y xvfb
       
       - name: Run PIT mutation testing
-        run: xvfb-run -a mvn clean test-compile org.pitest:pitest-maven:mutationCoverage -Dmaven.compiler.source=8 -Dmaven.compiler.target=8
+        run: xvfb-run -a mvn clean test-compile org.pitest:pitest-maven:mutationCoverage -U -Dmaven.compiler.source=8 -Dmaven.compiler.target=8
         continue-on-error: true
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
@@ -194,13 +194,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y xvfb
       
-      - name: Install xvfb
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y xvfb
-      
       - name: Run tests and generate JaCoCo report
-        run: xvfb-run -a mvn clean test jacoco:report
+        run: xvfb-run -a mvn clean test jacoco:report -U -Dmaven.compiler.source=17 -Dmaven.compiler.target=17
         continue-on-error: true
       
       - name: Upload JaCoCo report for SonarCloud
@@ -214,7 +209,7 @@ jobs:
         if: github.event_name == 'push'
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-        run: xvfb-run -a mvn coveralls:report
+        run: xvfb-run -a mvn coveralls:report -U -Dmaven.compiler.source=17 -Dmaven.compiler.target=17
         continue-on-error: true
 
   # SonarCloud Analysis
@@ -256,12 +251,12 @@ jobs:
       - name: Run tests and generate JaCoCo report (if not downloaded)
         if: failure()
         run: |
-          xvfb-run -a mvn clean test jacoco:report -Djava.version=17
+          xvfb-run -a mvn clean test jacoco:report -U -Dmaven.compiler.source=17 -Dmaven.compiler.target=17
         continue-on-error: true
       
       - name: Compile code for SonarCloud analysis
         run: |
-          xvfb-run -a mvn compile -Djava.version=17
+          xvfb-run -a mvn compile -U -Dmaven.compiler.source=17 -Dmaven.compiler.target=17
         continue-on-error: true
       
       - name: SonarCloud Scan
@@ -299,5 +294,5 @@ jobs:
           cache: maven
       
       - name: Build project
-        run: mvn clean install -DskipITs=true
+        run: mvn clean install -U -DskipITs=true -Dmaven.compiler.source=17 -Dmaven.compiler.target=17
 
