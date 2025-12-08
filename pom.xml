@@ -30,6 +30,9 @@
         <skipITs>false</skipITs>
         
         <!-- SonarCloud configuration -->
+        <sonar.projectKey>abdulkader138_personal-expense-tracker</sonar.projectKey>
+        <sonar.organization>abdulkader138</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.coverage.exclusions>
             **/model/**,
             **/ExpenseTrackerApp.*
