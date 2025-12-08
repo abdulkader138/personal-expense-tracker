@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockedStatic;
@@ -28,6 +29,11 @@ public class DatabaseConnectionTest {
 
     @Before
     public void setUp() {
+        // Skip tests on Java 8 as mockito-inline requires Java 11+
+        String javaVersion = System.getProperty("java.version");
+        boolean isJava8 = javaVersion != null && (javaVersion.startsWith("1.8") || javaVersion.startsWith("8."));
+        Assume.assumeFalse("Static mocks require Java 11+, skipping on Java 8", isJava8);
+        
         // Mock MongoClients static methods
         mockedMongoClients = Mockito.mockStatic(MongoClients.class);
     }
