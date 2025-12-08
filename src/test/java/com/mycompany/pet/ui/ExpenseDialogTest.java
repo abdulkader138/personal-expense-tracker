@@ -72,11 +72,18 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
                 invocation.getArgument(3));
         });
         
-        // Create parent frame (MainWindow)
-        mainWindow = execute(() -> new MainWindow(categoryService, expenseService));
+        // Create parent frame (MainWindow) and make it visible first
+        mainWindow = execute(() -> {
+            MainWindow mw = new MainWindow(categoryService, expenseService);
+            mw.setVisible(true);
+            return mw;
+        });
         parentFrame = new FrameFixture(robot(), mainWindow);
         
-        // Create dialog on EDT (don't show it yet)
+        // Wait a moment for parent to be ready
+        robot().waitForIdle();
+        
+        // Create dialog on EDT (set modal to false before showing)
         expenseDialog = execute(() -> {
             ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, null);
             ed.setModal(false); // Make non-modal for tests to prevent blocking
@@ -90,6 +97,9 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         execute(() -> {
             expenseDialog.setVisible(true);
         });
+        
+        // Wait for dialog to be ready
+        robot().waitForIdle();
     }
 
     @Override
