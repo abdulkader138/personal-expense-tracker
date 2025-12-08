@@ -259,6 +259,11 @@ jobs:
           xvfb-run -a mvn clean test jacoco:report
         continue-on-error: true
       
+      - name: Compile code for SonarCloud analysis
+        run: |
+          xvfb-run -a mvn compile
+        continue-on-error: true
+      
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         with:
