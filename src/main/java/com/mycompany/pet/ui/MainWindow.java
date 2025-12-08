@@ -1,32 +1,17 @@
 package com.mycompany.pet.ui;
 
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
+import com.mycompany.pet.model.Category;
+import com.mycompany.pet.model.Expense;
+import com.mycompany.pet.service.CategoryService;
+import com.mycompany.pet.service.ExpenseService;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Locale.Category;
-
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
-import javax.swing.WindowConstants;
-import javax.swing.table.DefaultTableModel;
-
-import com.mycompany.pet.model.Expense;
-import com.mycompany.pet.service.CategoryService;
-import com.mycompany.pet.service.ExpenseService;
 
 /**
  * Main window for the Expense Tracker application.
@@ -284,7 +269,7 @@ public class MainWindow extends JFrame {
                 monthlyTotalLabel.setText("Monthly Total: $" + total.toString());
             }
             updateCategoryTotal();
-         catch (Exception e) {
+        } catch (Exception e) {
             monthlyTotalLabel.setText("Monthly Total: Error");
         }
     }
