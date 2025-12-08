@@ -219,6 +219,11 @@ public class MainWindow extends JFrame {
             String selectedMonth = (String) monthComboBox.getSelectedItem();
             String selectedYear = (String) yearComboBox.getSelectedItem();
 
+            // Handle null values gracefully
+            if (selectedMonth == null || selectedYear == null) {
+                return;
+            }
+
             List<Expense> expenses;
             if ("All".equals(selectedMonth)) {
                 expenses = expenseService.getAllExpenses();
