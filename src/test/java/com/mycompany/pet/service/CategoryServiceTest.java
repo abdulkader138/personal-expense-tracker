@@ -70,14 +70,15 @@ public class CategoryServiceTest {
     public void testGetCategory_Success() throws SQLException {
         // Given
         Integer categoryId = 1;
-        when(categoryDAO.findById(categoryId)).thenReturn(new Category(categoryId, "Food"));
+        Category expectedCategory = new Category(categoryId, "Food");
+        when(categoryDAO.findById(categoryId)).thenReturn(expectedCategory);
 
         // When
         Category result = categoryService.getCategory(categoryId);
 
         // Then
         assertNotNull(result);
-        assertEquals(new Category(categoryId, "Food"), result);
+        assertEquals(expectedCategory, result);
         verify(categoryDAO, times(1)).findById(categoryId);
     }
 

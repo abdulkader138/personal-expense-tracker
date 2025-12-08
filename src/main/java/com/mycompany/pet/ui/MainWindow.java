@@ -12,14 +12,11 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Main window for the Expense Tracker application.
  */
 public class MainWindow extends JFrame {
-    private static final Logger LOGGER = Logger.getLogger(MainWindow.class.getName());
     private static final String ERROR_TITLE = "Error";
     
     private transient CategoryService categoryService;
@@ -160,18 +157,9 @@ public class MainWindow extends JFrame {
             loadCategories();
             loadExpenses();
             updateSummary();
-        } catch (SQLException e) {
+        } catch (SQLException | Exception e) {
             // Don't show dialog during tests - it can block execution
             // Only show dialog if window is visible, showing, and not in a test environment
-            if (isVisible() && isShowing() && !isTestEnvironment()) {
-                JOptionPane.showMessageDialog(this,
-                    "Error loading data: " + e.getMessage(),
-                    ERROR_TITLE,
-                    JOptionPane.ERROR_MESSAGE);
-            }
-        } catch (Exception e) {
-            // Catch any other exceptions to prevent blocking
-            // Don't show dialog during tests
             if (isVisible() && isShowing() && !isTestEnvironment()) {
                 JOptionPane.showMessageDialog(this,
                     "Error loading data: " + e.getMessage(),
