@@ -157,7 +157,7 @@ public class MainWindow extends JFrame {
             loadCategories();
             loadExpenses();
             updateSummary();
-        } catch (SQLException | Exception e) {
+        } catch (Exception e) {
             // Don't show dialog during tests - it can block execution
             // Only show dialog if window is visible, showing, and not in a test environment
             if (isVisible() && isShowing() && !isTestEnvironment()) {
