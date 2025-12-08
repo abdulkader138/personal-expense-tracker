@@ -16,9 +16,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>17</java.version>
-        <!-- Use release property which automatically sets source and target to match the JDK version -->
-        <maven.compiler.release>${java.version}</maven.compiler.release>
-        <!-- Fallback for older Maven versions -->
+        <!-- Use source/target for compatibility with all Java versions (including Java 8) -->
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <junit.version>4.13.2</junit.version>
@@ -186,7 +184,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
-                    <!-- For Java 8, use source/target. For Java 9+, use release -->
+                    <!-- Use source/target for compatibility with all Java versions (including Java 8) -->
                     <source>${maven.compiler.source}</source>
                     <target>${maven.compiler.target}</target>
                     <compilerArgs>
