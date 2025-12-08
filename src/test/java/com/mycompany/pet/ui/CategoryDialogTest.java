@@ -5,9 +5,10 @@ import static org.assertj.swing.core.matcher.JButtonMatcher.withText;
 import static org.assertj.swing.edt.GuiActionRunner.execute;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import java.sql.SQLException;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale.Category;
 
 import org.assertj.swing.annotation.GUITest;
 import org.assertj.swing.fixture.DialogFixture;
@@ -21,7 +22,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import com.mycompany.pet.model.Category;
 import com.mycompany.pet.service.CategoryService;
 
 /**
@@ -73,8 +73,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         
         // Create and show dialog on EDT
         categoryDialog = execute(() -> {
-            CategoryDialog cd = new CategoryDialog(parent, categoryService);
-            return cd;
+            return new CategoryDialog(parent, categoryService);
         });
         
         dialog = new DialogFixture(robot(), categoryDialog);
