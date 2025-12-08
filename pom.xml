@@ -303,6 +303,33 @@
                         <exclude>**/model/**</exclude>
                         <exclude>**/ExpenseTrackerApp.*</exclude>
                     </excludes>
+                    <!-- Rules for check goal when called directly (e.g., mvn jacoco:check) -->
+                    <rules>
+                        <rule>
+                            <element>BUNDLE</element>
+                            <limits>
+                                <limit>
+                                    <counter>LINE</counter>
+                                    <value>COVEREDRATIO</value>
+                                    <minimum>0.70</minimum>
+                                </limit>
+                                <limit>
+                                    <counter>BRANCH</counter>
+                                    <value>COVEREDRATIO</value>
+                                    <minimum>0.60</minimum>
+                                </limit>
+                                <limit>
+                                    <counter>METHOD</counter>
+                                    <value>COVEREDRATIO</value>
+                                    <minimum>0.70</minimum>
+                                </limit>
+                            </limits>
+                            <excludes>
+                                <exclude>**/model/**</exclude>
+                                <exclude>**/ExpenseTrackerApp.*</exclude>
+                            </excludes>
+                        </rule>
+                    </rules>
                 </configuration>
             </plugin>
 
@@ -369,6 +396,13 @@
                 <groupId>org.eluder.coveralls</groupId>
                 <artifactId>coveralls-maven-plugin</artifactId>
                 <version>4.3.0</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>javax.xml.bind</groupId>
+                        <artifactId>jaxb-api</artifactId>
+                        <version>2.3.1</version>
+                    </dependency>
+                </dependencies>
                 <configuration>
                     <repoToken>${env.COVERALLS_REPO_TOKEN}</repoToken>
                     <jacocoReportPath>${project.build.directory}/site/jacoco/jacoco.xml</jacocoReportPath>
@@ -464,6 +498,13 @@
                         <groupId>org.eluder.coveralls</groupId>
                         <artifactId>coveralls-maven-plugin</artifactId>
                         <version>4.3.0</version>
+                        <dependencies>
+                            <dependency>
+                                <groupId>javax.xml.bind</groupId>
+                                <artifactId>jaxb-api</artifactId>
+                                <version>2.3.1</version>
+                            </dependency>
+                        </dependencies>
                         <executions>
                             <execution>
                                 <phase>verify</phase>

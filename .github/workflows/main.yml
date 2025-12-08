@@ -203,10 +203,6 @@ jobs:
         run: xvfb-run -a mvn clean test jacoco:report
         continue-on-error: true
       
-      - name: Check coverage thresholds
-        run: mvn jacoco:check
-        continue-on-error: true
-      
       - name: Upload JaCoCo report for SonarCloud
         if: always()
         uses: actions/upload-artifact@v4
@@ -275,6 +271,7 @@ jobs:
             -Dsonar.sources=src/main/java
             -Dsonar.tests=src/test/java
             -Dsonar.java.binaries=target/classes
+            -Dsonar.ci.autoconfig.disabled=false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
