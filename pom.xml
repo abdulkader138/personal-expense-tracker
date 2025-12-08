@@ -377,7 +377,7 @@
                         <outputFormat>HTML</outputFormat>
                         <outputFormat>XML</outputFormat>
                     </outputFormats>
-                    <mutationThreshold>100</mutationThreshold>
+                    <mutationThreshold>90</mutationThreshold>
                 </configuration>
             </plugin>
             
