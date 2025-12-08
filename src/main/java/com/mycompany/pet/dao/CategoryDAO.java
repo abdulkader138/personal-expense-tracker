@@ -17,6 +17,8 @@ import com.mycompany.pet.model.Category;
  * Data Access Object for Category entities.
  */
 public class CategoryDAO {
+    private static final String FIELD_CATEGORY_ID = "categoryId";
+    
     private final MongoCollection<Document> collection;
     private final MongoCollection<Document> expensesCollection;
 
@@ -30,16 +32,16 @@ public class CategoryDAO {
         try {
             // Generate a simple incremental ID
             Document last = collection.find()
-                    .sort(Sorts.descending("categoryId"))
+                    .sort(Sorts.descending(FIELD_CATEGORY_ID))
                     .first();
             int nextId = 1;
-            if (last != null && last.get("categoryId") != null) {
-                nextId = last.getInteger("categoryId") + 1;
+            if (last != null && last.get(FIELD_CATEGORY_ID) != null) {
+                nextId = last.getInteger(FIELD_CATEGORY_ID) + 1;
             }
             category.setCategoryId(nextId);
 
             Document doc = new Document("_id", nextId)
-                    .append("categoryId", nextId)
+                    .append(FIELD_CATEGORY_ID, nextId)
                     .append("name", category.getName());
             collection.insertOne(doc);
             return category;
@@ -50,7 +52,7 @@ public class CategoryDAO {
 
     public Category findById(Integer categoryId) throws SQLException {
         try {
-            Document doc = collection.find(Filters.eq("categoryId", categoryId)).first();
+            Document doc = collection.find(Filters.eq(FIELD_CATEGORY_ID, categoryId)).first();
             return doc != null ? mapDocumentToCategory(doc) : null;
         } catch (Exception e) {
             throw new SQLException("Error finding category in MongoDB", e);
@@ -73,7 +75,7 @@ public class CategoryDAO {
         try {
             Document update = new Document("$set",
                     new Document("name", category.getName()));
-            collection.updateOne(Filters.eq("categoryId", category.getCategoryId()), update);
+            collection.updateOne(Filters.eq(FIELD_CATEGORY_ID, category.getCategoryId()), update);
             return category;
         } catch (Exception e) {
             throw new SQLException("Error updating category in MongoDB", e);
@@ -83,10 +85,10 @@ public class CategoryDAO {
     public boolean delete(Integer categoryId) throws SQLException {
         try {
             // Delete the category itself
-            long deletedCount = collection.deleteOne(Filters.eq("categoryId", categoryId)).getDeletedCount();
+            long deletedCount = collection.deleteOne(Filters.eq(FIELD_CATEGORY_ID, categoryId)).getDeletedCount();
 
             // Cascade delete expenses with this categoryId to mimic the former FK constraint
-            expensesCollection.deleteMany(Filters.eq("categoryId", categoryId));
+            expensesCollection.deleteMany(Filters.eq(FIELD_CATEGORY_ID, categoryId));
 
             return deletedCount > 0;
         } catch (Exception e) {
@@ -96,7 +98,7 @@ public class CategoryDAO {
 
     private Category mapDocumentToCategory(Document doc) {
         Category category = new Category();
-        category.setCategoryId(doc.getInteger("categoryId"));
+        category.setCategoryId(doc.getInteger(FIELD_CATEGORY_ID));
         category.setName(doc.getString("name"));
         return category;
     }

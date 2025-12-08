@@ -19,6 +19,11 @@ import com.mycompany.pet.model.Expense;
  * Data Access Object for Expense entities.
  */
 public class ExpenseDAO {
+    private static final String FIELD_EXPENSE_ID = "expenseId";
+    private static final String FIELD_AMOUNT = "amount";
+    private static final String FIELD_DESCRIPTION = "description";
+    private static final String FIELD_CATEGORY_ID = "categoryId";
+    
     private final MongoCollection<Document> collection;
 
     public ExpenseDAO(DatabaseConnection dbConnection) {
@@ -30,20 +35,20 @@ public class ExpenseDAO {
         try {
             // Generate a simple incremental ID
             Document last = collection.find()
-                    .sort(Sorts.descending("expenseId"))
+                    .sort(Sorts.descending(FIELD_EXPENSE_ID))
                     .first();
             int nextId = 1;
-            if (last != null && last.get("expenseId") != null) {
-                nextId = last.getInteger("expenseId") + 1;
+            if (last != null && last.get(FIELD_EXPENSE_ID) != null) {
+                nextId = last.getInteger(FIELD_EXPENSE_ID) + 1;
             }
             expense.setExpenseId(nextId);
 
             Document doc = new Document("_id", nextId)
-                    .append("expenseId", nextId)
+                    .append(FIELD_EXPENSE_ID, nextId)
                     .append("date", expense.getDate().toString()) // store as ISO date string
-                    .append("amount", expense.getAmount().toString()) // store as string
-                    .append("description", expense.getDescription())
-                    .append("categoryId", expense.getCategoryId());
+                    .append(FIELD_AMOUNT, expense.getAmount().toString()) // store as string
+                    .append(FIELD_DESCRIPTION, expense.getDescription())
+                    .append(FIELD_CATEGORY_ID, expense.getCategoryId());
 
             collection.insertOne(doc);
             return expense;
@@ -54,7 +59,7 @@ public class ExpenseDAO {
 
     public Expense findById(Integer expenseId) throws SQLException {
         try {
-            Document doc = collection.find(Filters.eq("expenseId", expenseId)).first();
+            Document doc = collection.find(Filters.eq(FIELD_EXPENSE_ID, expenseId)).first();
             return doc != null ? mapDocumentToExpense(doc) : null;
         } catch (Exception e) {
             throw new SQLException("Error finding expense in MongoDB", e);
@@ -92,7 +97,7 @@ public class ExpenseDAO {
     public List<Expense> findByCategory(Integer categoryId) throws SQLException {
         List<Expense> expenses = new ArrayList<>();
         try {
-            for (Document doc : collection.find(Filters.eq("categoryId", categoryId)).sort(Sorts.descending("date"))) {
+            for (Document doc : collection.find(Filters.eq(FIELD_CATEGORY_ID, categoryId)).sort(Sorts.descending("date"))) {
                 expenses.add(mapDocumentToExpense(doc));
             }
             return expenses;
@@ -105,10 +110,10 @@ public class ExpenseDAO {
         try {
             Document update = new Document("$set",
                     new Document("date", expense.getDate().toString())
-                            .append("amount", expense.getAmount().toString())
-                            .append("description", expense.getDescription())
-                            .append("categoryId", expense.getCategoryId()));
-            collection.updateOne(Filters.eq("expenseId", expense.getExpenseId()), update);
+                            .append(FIELD_AMOUNT, expense.getAmount().toString())
+                            .append(FIELD_DESCRIPTION, expense.getDescription())
+                            .append(FIELD_CATEGORY_ID, expense.getCategoryId()));
+            collection.updateOne(Filters.eq(FIELD_EXPENSE_ID, expense.getExpenseId()), update);
             return expense;
         } catch (Exception e) {
             throw new SQLException("Error updating expense in MongoDB", e);
@@ -117,7 +122,7 @@ public class ExpenseDAO {
 
     public boolean delete(Integer expenseId) throws SQLException {
         try {
-            long deleted = collection.deleteOne(Filters.eq("expenseId", expenseId)).getDeletedCount();
+            long deleted = collection.deleteOne(Filters.eq(FIELD_EXPENSE_ID, expenseId)).getDeletedCount();
             return deleted > 0;
         } catch (Exception e) {
             throw new SQLException("Error deleting expense in MongoDB", e);
@@ -127,7 +132,7 @@ public class ExpenseDAO {
     public BigDecimal getTotalByCategory(Integer categoryId) throws SQLException {
         try {
             BigDecimal total = BigDecimal.ZERO;
-            for (Document doc : collection.find(Filters.eq("categoryId", categoryId))) {
+            for (Document doc : collection.find(Filters.eq(FIELD_CATEGORY_ID, categoryId))) {
                 Expense expense = mapDocumentToExpense(doc);
                 total = total.add(expense.getAmount());
             }
@@ -154,13 +159,13 @@ public class ExpenseDAO {
 
     private Expense mapDocumentToExpense(Document doc) {
         Expense expense = new Expense();
-        expense.setExpenseId(doc.getInteger("expenseId"));
+        expense.setExpenseId(doc.getInteger(FIELD_EXPENSE_ID));
         String dateStr = doc.getString("date");
         expense.setDate(LocalDate.parse(dateStr));
-        String amountStr = doc.getString("amount");
+        String amountStr = doc.getString(FIELD_AMOUNT);
         expense.setAmount(new BigDecimal(amountStr));
-        expense.setDescription(doc.getString("description"));
-        expense.setCategoryId(doc.getInteger("categoryId"));
+        expense.setDescription(doc.getString(FIELD_DESCRIPTION));
+        expense.setCategoryId(doc.getInteger(FIELD_CATEGORY_ID));
         return expense;
     }
 }

@@ -1,6 +1,8 @@
 package com.mycompany.pet.ui;
 
 import java.awt.GraphicsEnvironment;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -16,15 +18,17 @@ import com.mycompany.pet.service.ExpenseService;
  * Main application entry point for the Expense Tracker.
  */
 public class ExpenseTrackerApp {
+    private static final Logger LOGGER = Logger.getLogger(ExpenseTrackerApp.class.getName());
+    
     public static void main(String[] args) {
         // Check if running in headless mode
         if (GraphicsEnvironment.isHeadless()) {
-            System.err.println("ERROR: This application requires a graphical display.");
-            System.err.println("Please run this application in an environment with X11 display support.");
-            System.err.println("\nFor WSL, you can:");
-            System.err.println("1. Install an X server (e.g., VcXsrv, Xming) on Windows");
-            System.err.println("2. Set DISPLAY variable: export DISPLAY=:0.0");
-            System.err.println("3. Or run from Eclipse IDE which handles the display automatically");
+            LOGGER.severe("ERROR: This application requires a graphical display.");
+            LOGGER.severe("Please run this application in an environment with X11 display support.");
+            LOGGER.severe("\nFor WSL, you can:");
+            LOGGER.severe("1. Install an X server (e.g., VcXsrv, Xming) on Windows");
+            LOGGER.severe("2. Set DISPLAY variable: export DISPLAY=:0.0");
+            LOGGER.severe("3. Or run from Eclipse IDE which handles the display automatically");
             System.exit(1);
         }
 
@@ -47,10 +51,10 @@ public class ExpenseTrackerApp {
                 mainWindow.setVisible(true);
             } catch (Exception e) {
                 String errorMsg = "Failed to initialize MongoDB database: " + e.getMessage();
-                System.err.println(errorMsg);
-                System.err.println("\nPlease ensure:");
-                System.err.println("1. MongoDB is running (default: mongodb://localhost:27017)");
-                System.err.println("2. The 'expense_tracker' database is accessible");
+                LOGGER.log(Level.SEVERE, errorMsg, e);
+                LOGGER.severe("\nPlease ensure:");
+                LOGGER.severe("1. MongoDB is running (default: mongodb://localhost:27017)");
+                LOGGER.severe("2. The 'expense_tracker' database is accessible");
                 
                 if (!GraphicsEnvironment.isHeadless()) {
                     JOptionPane.showMessageDialog(null,

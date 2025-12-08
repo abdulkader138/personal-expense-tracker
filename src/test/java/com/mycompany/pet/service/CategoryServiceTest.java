@@ -40,7 +40,6 @@ public class CategoryServiceTest {
     public void testCreateCategory_Success() throws SQLException {
         // Given
         String name = "Food";
-        Category expectedCategory = new Category(1, name);
         when(categoryDAO.create(any(Category.class))).thenAnswer(invocation -> {
             Category cat = invocation.getArgument(0);
             cat.setCategoryId(1);
@@ -71,15 +70,14 @@ public class CategoryServiceTest {
     public void testGetCategory_Success() throws SQLException {
         // Given
         Integer categoryId = 1;
-        Category expectedCategory = new Category(categoryId, "Food");
-        when(categoryDAO.findById(categoryId)).thenReturn(expectedCategory);
+        when(categoryDAO.findById(categoryId)).thenReturn(new Category(categoryId, "Food"));
 
         // When
         Category result = categoryService.getCategory(categoryId);
 
         // Then
         assertNotNull(result);
-        assertEquals(expectedCategory, result);
+        assertEquals(new Category(categoryId, "Food"), result);
         verify(categoryDAO, times(1)).findById(categoryId);
     }
 

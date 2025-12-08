@@ -12,22 +12,27 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Main window for the Expense Tracker application.
  */
 public class MainWindow extends JFrame {
-    private CategoryService categoryService;
-    private ExpenseService expenseService;
+    private static final Logger LOGGER = Logger.getLogger(MainWindow.class.getName());
+    private static final String ERROR_TITLE = "Error";
+    
+    private transient CategoryService categoryService;
+    private transient ExpenseService expenseService;
 
-    private JTable expenseTable;
-    private DefaultTableModel expenseTableModel;
+    JTable expenseTable;
+    DefaultTableModel expenseTableModel;
     JComboBox<Category> categoryComboBox;
     JComboBox<String> monthComboBox;
     JComboBox<String> yearComboBox;
     private JLabel monthlyTotalLabel;
     private JLabel categoryTotalLabel;
-    private boolean isInitializing = true; // Flag to prevent action listeners during initialization
+    boolean isInitializing = true; // Flag to prevent action listeners during initialization
 
     public MainWindow(CategoryService categoryService, ExpenseService expenseService) {
         this.categoryService = categoryService;
@@ -39,7 +44,7 @@ public class MainWindow extends JFrame {
 
     private void initializeUI() {
         setTitle("Personal Expense Tracker");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setBounds(100, 100, 1000, 700);
 
         // Create menu bar
@@ -151,37 +156,29 @@ public class MainWindow extends JFrame {
     }
 
     public void loadData() {
-        System.out.println("MainWindow.loadData() - START");
         try {
-            System.out.println("MainWindow.loadData() - Loading categories");
             loadCategories();
-            System.out.println("MainWindow.loadData() - Loading expenses");
             loadExpenses();
-            System.out.println("MainWindow.loadData() - Updating summary");
             updateSummary();
-            System.out.println("MainWindow.loadData() - Summary updated");
         } catch (SQLException e) {
-            System.out.println("MainWindow.loadData() - SQLException: " + e.getMessage());
             // Don't show dialog during tests - it can block execution
             // Only show dialog if window is visible, showing, and not in a test environment
             if (isVisible() && isShowing() && !isTestEnvironment()) {
                 JOptionPane.showMessageDialog(this,
                     "Error loading data: " + e.getMessage(),
-                    "Error",
+                    ERROR_TITLE,
                     JOptionPane.ERROR_MESSAGE);
             }
         } catch (Exception e) {
-            System.out.println("MainWindow.loadData() - Exception: " + e.getMessage());
             // Catch any other exceptions to prevent blocking
             // Don't show dialog during tests
             if (isVisible() && isShowing() && !isTestEnvironment()) {
                 JOptionPane.showMessageDialog(this,
                     "Error loading data: " + e.getMessage(),
-                    "Error",
+                    ERROR_TITLE,
                     JOptionPane.ERROR_MESSAGE);
             }
         }
-        System.out.println("MainWindow.loadData() - END");
     }
     
     /**
@@ -203,7 +200,7 @@ public class MainWindow extends JFrame {
         return false;
     }
 
-    private void loadCategories() throws SQLException {
+    void loadCategories() throws SQLException {
         List<Category> categories = categoryService.getAllCategories();
         categoryComboBox.removeAllItems();
         categoryComboBox.addItem(null);
@@ -212,7 +209,7 @@ public class MainWindow extends JFrame {
         }
     }
 
-    private void loadExpenses() throws SQLException {
+    void loadExpenses() throws SQLException {
         expenseTableModel.setRowCount(0);
         List<Expense> expenses = expenseService.getAllExpenses();
         for (Expense expense : expenses) {
@@ -256,10 +253,12 @@ public class MainWindow extends JFrame {
             }
             updateSummary();
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this,
-                "Error filtering expenses: " + e.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
+            if (!isTestEnvironment()) {
+                JOptionPane.showMessageDialog(this,
+                    "Error filtering expenses: " + e.getMessage(),
+                    ERROR_TITLE,
+                    JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
@@ -281,17 +280,12 @@ public class MainWindow extends JFrame {
                 BigDecimal total = expenseService.getMonthlyTotal(year, month);
                 monthlyTotalLabel.setText("Monthly Total: $" + total.toString());
             }
-            System.out.println("MainWindow.updateSummary() - About to call updateCategoryTotal()");
             updateCategoryTotal();
-            System.out.println("MainWindow.updateSummary() - updateCategoryTotal() completed");
         } catch (SQLException e) {
-            System.out.println("MainWindow.updateSummary() - SQLException: " + e.getMessage());
             monthlyTotalLabel.setText("Monthly Total: Error");
         } catch (Exception e) {
-            System.out.println("MainWindow.updateSummary() - Exception: " + e.getMessage());
             monthlyTotalLabel.setText("Monthly Total: Error");
         }
-        System.out.println("MainWindow.updateSummary() - END");
     }
 
     public void updateCategoryTotal() {
@@ -308,7 +302,7 @@ public class MainWindow extends JFrame {
         }
     }
 
-    private void showAddExpenseDialog() {
+    public void showAddExpenseDialog() {
         ExpenseDialog dialog = new ExpenseDialog(this, categoryService, null);
         dialog.setVisible(true);
         if (dialog.isSaved()) {
@@ -316,13 +310,15 @@ public class MainWindow extends JFrame {
         }
     }
 
-    private void showEditExpenseDialog() {
+    public void showEditExpenseDialog() {
         int selectedRow = expenseTable.getSelectedRow();
         if (selectedRow < 0) {
-            JOptionPane.showMessageDialog(this,
-                "Please select an expense to edit.",
-                "No Selection",
-                JOptionPane.WARNING_MESSAGE);
+            if (!isTestEnvironment()) {
+                JOptionPane.showMessageDialog(this,
+                    "Please select an expense to edit.",
+                    "No Selection",
+                    JOptionPane.WARNING_MESSAGE);
+            }
             return;
         }
 
@@ -335,27 +331,34 @@ public class MainWindow extends JFrame {
                 loadData();
             }
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(this,
-                "Error loading expense: " + e.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
+            if (!isTestEnvironment()) {
+                JOptionPane.showMessageDialog(this,
+                    "Error loading expense: " + e.getMessage(),
+                    ERROR_TITLE,
+                    JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
-    private void deleteSelectedExpense() {
+    public void deleteSelectedExpense() {
         int selectedRow = expenseTable.getSelectedRow();
         if (selectedRow < 0) {
-            JOptionPane.showMessageDialog(this,
-                "Please select an expense to delete.",
-                "No Selection",
-                JOptionPane.WARNING_MESSAGE);
+            if (!isTestEnvironment()) {
+                JOptionPane.showMessageDialog(this,
+                    "Please select an expense to delete.",
+                    "No Selection",
+                    JOptionPane.WARNING_MESSAGE);
+            }
             return;
         }
 
-        int confirm = JOptionPane.showConfirmDialog(this,
-            "Are you sure you want to delete this expense?",
-            "Confirm Delete",
-            JOptionPane.YES_NO_OPTION);
+        int confirm = JOptionPane.YES_OPTION; // Default to YES in tests to avoid blocking
+        if (!isTestEnvironment()) {
+            confirm = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to delete this expense?",
+                "Confirm Delete",
+                JOptionPane.YES_NO_OPTION);
+        }
 
         if (confirm == JOptionPane.YES_OPTION) {
             Integer expenseId = (Integer) expenseTableModel.getValueAt(selectedRow, 0);
@@ -363,15 +366,17 @@ public class MainWindow extends JFrame {
                 expenseService.deleteExpense(expenseId);
                 loadData();
             } catch (SQLException e) {
-                JOptionPane.showMessageDialog(this,
-                    "Error deleting expense: " + e.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+                if (!isTestEnvironment()) {
+                    JOptionPane.showMessageDialog(this,
+                        "Error deleting expense: " + e.getMessage(),
+                        ERROR_TITLE,
+                        JOptionPane.ERROR_MESSAGE);
+                }
             }
         }
     }
 
-    private void showCategoryDialog() {
+    public void showCategoryDialog() {
         CategoryDialog dialog = new CategoryDialog(this, categoryService);
         dialog.setVisible(true);
         loadData();

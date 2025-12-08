@@ -39,6 +39,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
     private DialogFixture dialog;
     private FrameFixture parentFrame;
     private ExpenseDialog expenseDialog;
+    private MainWindow mainWindow;
     
     @Mock
     private CategoryService categoryService;
@@ -51,8 +52,6 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
     private static final Integer CATEGORY_ID_1 = 1;
     private static final String CATEGORY_NAME_1 = "Food";
     private static final Integer EXPENSE_ID_1 = 1;
-    private static final BigDecimal EXPENSE_AMOUNT_1 = new BigDecimal("100.50");
-    private static final String EXPENSE_DESCRIPTION_1 = "Lunch";
 
     @Override
     protected void onSetUp() throws Exception {
@@ -66,29 +65,31 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         when(categoryService.getAllCategories()).thenReturn(categories);
         when(expenseService.createExpense(any(LocalDate.class), any(BigDecimal.class), 
             any(String.class), any(Integer.class))).thenAnswer(invocation -> {
-            Expense exp = new Expense(EXPENSE_ID_1, 
+            return new Expense(EXPENSE_ID_1, 
                 invocation.getArgument(0),
                 invocation.getArgument(1),
                 invocation.getArgument(2),
                 invocation.getArgument(3));
-            return exp;
         });
         
         // Create parent frame (MainWindow)
-        MainWindow mainWindow = execute(() -> {
-            MainWindow mw = new MainWindow(categoryService, expenseService);
-            return mw;
-        });
+        mainWindow = execute(() -> new MainWindow(categoryService, expenseService));
         parentFrame = new FrameFixture(robot(), mainWindow);
         
-        // Create and show dialog on EDT
+        // Create dialog on EDT (don't show it yet)
         expenseDialog = execute(() -> {
             ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, null);
+            ed.setModal(false); // Make non-modal for tests to prevent blocking
             return ed;
         });
         
+        // Create fixture first
         dialog = new DialogFixture(robot(), expenseDialog);
-        dialog.show();
+        
+        // Then show it on EDT
+        execute(() -> {
+            expenseDialog.setVisible(true);
+        });
     }
 
     @Override
@@ -152,5 +153,80 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         // Then - verify date field is pre-filled with today's date
         // Note: This test verifies the dialog initializes correctly
         dialog.requireVisible();
+    }
+
+    @Test
+    @GUITest
+    public void testExpenseDialog_Save_WithNoCategory() {
+        // Given - no category selected
+        execute(() -> {
+            expenseDialog.categoryComboBox.setSelectedItem(null);
+            expenseDialog.dateField.setText("2024-01-01");
+            expenseDialog.amountField.setText("100.00");
+            expenseDialog.descriptionField.setText("Test");
+        });
+        
+        // When - click Save button
+        dialog.button(withText("Save")).click();
+        
+        // Then - dialog should still be visible (validation error shown)
+        dialog.requireVisible();
+    }
+
+    @Test
+    @GUITest
+    public void testExpenseDialog_Save_WithError() throws SQLException {
+        // Given - service throws exception
+        when(expenseService.createExpense(any(), any(), any(), any()))
+            .thenThrow(new SQLException("Database error"));
+        
+        execute(() -> {
+            if (expenseDialog.categoryComboBox.getItemCount() > 0) {
+                expenseDialog.categoryComboBox.setSelectedIndex(0);
+            }
+            expenseDialog.dateField.setText("2024-01-01");
+            expenseDialog.amountField.setText("100.00");
+            expenseDialog.descriptionField.setText("Test");
+        });
+        
+        // When - click Save button
+        dialog.button(withText("Save")).click();
+        
+        // Then - dialog should still be visible (error handled)
+        dialog.requireVisible();
+    }
+
+    @Test
+    @GUITest
+    public void testExpenseDialog_LoadExpenseData() throws SQLException {
+        // Given - expense with data
+        Expense expense = new Expense(1, LocalDate.now(), new BigDecimal("50.00"), "Test Expense", 1);
+        when(categoryService.getCategory(1)).thenReturn(new Category(1, "Food"));
+        
+        // When - create dialog with expense
+        ExpenseDialog editDialog = execute(() -> new ExpenseDialog(mainWindow, categoryService, expense));
+        DialogFixture editDialogFixture = new DialogFixture(robot(), editDialog);
+        editDialogFixture.show();
+        
+        // Then - dialog should be visible
+        editDialogFixture.requireVisible();
+        editDialogFixture.cleanUp();
+    }
+
+    @Test
+    @GUITest
+    public void testExpenseDialog_LoadCategories_HandlesSQLException() throws SQLException {
+        // Given - service throws exception
+        when(categoryService.getAllCategories())
+            .thenThrow(new SQLException("Database error"));
+        
+        // When - create dialog (categories loaded in constructor)
+        ExpenseDialog errorDialog = execute(() -> new ExpenseDialog(mainWindow, categoryService, null));
+        DialogFixture errorDialogFixture = new DialogFixture(robot(), errorDialog);
+        errorDialogFixture.show();
+        
+        // Then - dialog should still be visible (error handled)
+        errorDialogFixture.requireVisible();
+        errorDialogFixture.cleanUp();
     }
 }
