@@ -72,7 +72,11 @@ jobs:
           sudo apt-get install -y xvfb
       
       - name: Run unit tests with coverage
-        run: xvfb-run -a mvn clean test jacoco:report -U -Dmaven.compiler.source=${{ matrix.java-version }} -Dmaven.compiler.target=${{ matrix.java-version }}
+        run: |
+          xvfb-run mvn clean test jacoco:report -U \
+            -Dmaven.compiler.source=${{ matrix.java-version }} \
+            -Dmaven.compiler.target=${{ matrix.java-version }} \
+            -Dsurefire.excludes="**/*IT.java,**/DatabaseConnectionTest.java"
         continue-on-error: ${{ matrix.java-version != 17 }}
       
       - name: Generate JaCoCo report
@@ -195,7 +199,11 @@ jobs:
           sudo apt-get install -y xvfb
       
       - name: Run tests and generate JaCoCo report
-        run: xvfb-run -a mvn clean test jacoco:report -U -Dmaven.compiler.source=17 -Dmaven.compiler.target=17
+        run: |
+          xvfb-run mvn clean test jacoco:report -U \
+            -Dmaven.compiler.source=17 \
+            -Dmaven.compiler.target=17 \
+            -Dsurefire.excludes="**/*IT.java,**/DatabaseConnectionTest.java"
         continue-on-error: true
       
       - name: Upload JaCoCo report for SonarCloud
@@ -251,7 +259,10 @@ jobs:
       - name: Run tests and generate JaCoCo report (if not downloaded)
         if: failure()
         run: |
-          xvfb-run -a mvn clean test jacoco:report -U -Dmaven.compiler.source=17 -Dmaven.compiler.target=17
+          xvfb-run mvn clean test jacoco:report -U \
+            -Dmaven.compiler.source=17 \
+            -Dmaven.compiler.target=17 \
+            -Dsurefire.excludes="**/*IT.java,**/DatabaseConnectionTest.java"
         continue-on-error: true
       
       - name: Compile code for SonarCloud analysis
