@@ -8,7 +8,8 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale.Category;
+
+import com.mycompany.pet.model.Category;
 
 import org.assertj.swing.annotation.GUITest;
 import org.assertj.swing.fixture.DialogFixture;
