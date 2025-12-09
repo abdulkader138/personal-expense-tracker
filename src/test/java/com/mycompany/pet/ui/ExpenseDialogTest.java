@@ -20,7 +20,7 @@ import org.assertj.swing.fixture.JButtonFixture;
 import org.assertj.swing.fixture.JComboBoxFixture;
 import org.assertj.swing.junit.runner.GUITestRunner;
 import org.assertj.swing.junit.testcase.AssertJSwingJUnitTestCase;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -56,9 +56,10 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
     private static final String CATEGORY_NAME_1 = "Food";
     private static final Integer EXPENSE_ID_1 = 1;
 
-    @Before
-    public void checkHeadless() {
-        // Skip UI tests if running in headless mode (without xvfb)
+    @BeforeClass
+    public static void checkHeadless() {
+        // Check for headless mode BEFORE any test runs
+        // This runs before setUp() which initializes the robot
         assumeFalse("Skipping UI test - running in headless mode", 
             GraphicsEnvironment.isHeadless());
     }

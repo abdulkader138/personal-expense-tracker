@@ -76,6 +76,7 @@ jobs:
           xvfb-run mvn clean test jacoco:report -U \
             -Dmaven.compiler.source=${{ matrix.java-version }} \
             -Dmaven.compiler.target=${{ matrix.java-version }} \
+            -Pui-tests \
             -Dsurefire.excludes="**/*IT.java,**/DatabaseConnectionTest.java"
         continue-on-error: ${{ matrix.java-version != 17 }}
       
@@ -203,6 +204,7 @@ jobs:
           xvfb-run mvn clean test jacoco:report -U \
             -Dmaven.compiler.source=17 \
             -Dmaven.compiler.target=17 \
+            -Pui-tests \
             -Dsurefire.excludes="**/*IT.java,**/DatabaseConnectionTest.java"
         continue-on-error: true
       
@@ -262,6 +264,7 @@ jobs:
           xvfb-run mvn clean test jacoco:report -U \
             -Dmaven.compiler.source=17 \
             -Dmaven.compiler.target=17 \
+            -Pui-tests \
             -Dsurefire.excludes="**/*IT.java,**/DatabaseConnectionTest.java"
         continue-on-error: true
       
