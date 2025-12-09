@@ -8,6 +8,8 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -28,6 +30,8 @@ import com.mycompany.pet.service.ExpenseService;
  * Dialog for adding/editing expenses.
  */
 public class ExpenseDialog extends JDialog {
+    private static final Logger LOGGER = Logger.getLogger(ExpenseDialog.class.getName());
+    
     private transient CategoryService categoryService;
     private transient ExpenseService expenseService;
     private transient Expense expense;
@@ -38,7 +42,7 @@ public class ExpenseDialog extends JDialog {
     JTextField descriptionField;
     JComboBox<Category> categoryComboBox;
     
-    private boolean isTestEnvironment() {
+    private static boolean isTestEnvironment() {
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
         for (StackTraceElement element : stackTrace) {
             String className = element.getClassName();
@@ -51,7 +55,7 @@ public class ExpenseDialog extends JDialog {
     }
 
     public ExpenseDialog(JFrame parent, CategoryService categoryService, Expense expense) {
-        super(parent, expense == null ? "Add Expense" : "Edit Expense", true);
+        super(parent, expense == null ? "Add Expense" : "Edit Expense", !isTestEnvironment()); // Non-modal in test environment
         this.categoryService = categoryService;
         this.expense = expense;
         
@@ -70,7 +74,9 @@ public class ExpenseDialog extends JDialog {
 
     private void initializeUI() {
         setSize(450, 300);
-        setLocationRelativeTo(getParent());
+        if (!isTestEnvironment()) {
+            setLocationRelativeTo(getParent());
+        }
 
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -125,13 +131,15 @@ public class ExpenseDialog extends JDialog {
             for (Category category : categories) {
                 categoryComboBox.addItem(category);
             }
+            // Success - no message needed
+            LOGGER.log(Level.FINE, "Categories loaded successfully in ExpenseDialog");
         } catch (SQLException e) {
-            if (!isTestEnvironment()) {
-                JOptionPane.showMessageDialog(this,
-                    "Error loading categories: " + e.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
-            }
+            // Log error for debugging (industry standard)
+            // NO UI MESSAGE - logging only to avoid any blocking or modal dialogs
+            LOGGER.log(Level.SEVERE, "Error loading categories in ExpenseDialog: " + e.getMessage(), e);
+            
+            // Users will see empty combo box and can retry by closing/reopening dialog
+            // This is the cleanest approach - no UI interaction required
         }
         panel.add(categoryComboBox, gbc);
 

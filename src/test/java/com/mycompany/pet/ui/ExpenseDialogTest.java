@@ -93,10 +93,10 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         // Small delay to ensure parent is ready
         Thread.sleep(100);
         
-        // Create dialog on EDT (already non-modal in test environment)
+        // Create dialog on EDT (non-modal in test environment)
         expenseDialog = execute(() -> {
             ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, null);
-            // Double-check it's non-modal
+            // Ensure non-modal (should already be non-modal in test env, but double-check)
             if (ed.isModal()) {
                 ed.setModal(false);
             }
@@ -227,9 +227,16 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         when(categoryService.getCategory(1)).thenReturn(new Category(1, "Food"));
         
         // When - create dialog with expense
-        ExpenseDialog editDialog = execute(() -> new ExpenseDialog(mainWindow, categoryService, expense));
+        ExpenseDialog editDialog = execute(() -> {
+            ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, expense);
+            // Ensure non-modal
+            if (ed.isModal()) {
+                ed.setModal(false);
+            }
+            ed.setVisible(true);
+            return ed;
+        });
         DialogFixture editDialogFixture = new DialogFixture(robot(), editDialog);
-        editDialogFixture.show();
         
         // Then - dialog should be visible
         editDialogFixture.requireVisible();
@@ -244,9 +251,16 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
             .thenThrow(new SQLException("Database error"));
         
         // When - create dialog (categories loaded in constructor)
-        ExpenseDialog errorDialog = execute(() -> new ExpenseDialog(mainWindow, categoryService, null));
+        ExpenseDialog errorDialog = execute(() -> {
+            ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, null);
+            // Ensure non-modal
+            if (ed.isModal()) {
+                ed.setModal(false);
+            }
+            ed.setVisible(true);
+            return ed;
+        });
         DialogFixture errorDialogFixture = new DialogFixture(robot(), errorDialog);
-        errorDialogFixture.show();
         
         // Then - dialog should still be visible (error handled)
         errorDialogFixture.requireVisible();
@@ -345,9 +359,16 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
             any(BigDecimal.class), any(String.class), any(Integer.class))).thenReturn(expense);
         
         // When - create edit dialog
-        ExpenseDialog editDialog = execute(() -> new ExpenseDialog(mainWindow, categoryService, expense));
+        ExpenseDialog editDialog = execute(() -> {
+            ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, expense);
+            // Ensure non-modal
+            if (ed.isModal()) {
+                ed.setModal(false);
+            }
+            ed.setVisible(true);
+            return ed;
+        });
         DialogFixture editDialogFixture = new DialogFixture(robot(), editDialog);
-        editDialogFixture.show();
         
         // Then - verify it's in edit mode
         assertThat(editDialogFixture.target().getTitle()).isEqualTo("Edit Expense");
@@ -401,9 +422,16 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         when(categoryService.getCategory(1)).thenReturn(category);
         
         // When - create edit dialog
-        ExpenseDialog editDialog = execute(() -> new ExpenseDialog(mainWindow, categoryService, expense));
+        ExpenseDialog editDialog = execute(() -> {
+            ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, expense);
+            // Ensure non-modal
+            if (ed.isModal()) {
+                ed.setModal(false);
+            }
+            ed.setVisible(true);
+            return ed;
+        });
         DialogFixture editDialogFixture = new DialogFixture(robot(), editDialog);
-        editDialogFixture.show();
         
         // Then - fields should be populated
         execute(() -> {
@@ -423,9 +451,16 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         when(categoryService.getCategory(999)).thenReturn(null);
         
         // When - create edit dialog
-        ExpenseDialog editDialog = execute(() -> new ExpenseDialog(mainWindow, categoryService, expense));
+        ExpenseDialog editDialog = execute(() -> {
+            ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, expense);
+            // Ensure non-modal
+            if (ed.isModal()) {
+                ed.setModal(false);
+            }
+            ed.setVisible(true);
+            return ed;
+        });
         DialogFixture editDialogFixture = new DialogFixture(robot(), editDialog);
-        editDialogFixture.show();
         
         // Then - dialog should still be visible (category not set but no error)
         editDialogFixture.requireVisible();
@@ -440,9 +475,16 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         when(categoryService.getCategory(1)).thenThrow(new SQLException("Database error"));
         
         // When - create edit dialog
-        ExpenseDialog editDialog = execute(() -> new ExpenseDialog(mainWindow, categoryService, expense));
+        ExpenseDialog editDialog = execute(() -> {
+            ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, expense);
+            // Ensure non-modal
+            if (ed.isModal()) {
+                ed.setModal(false);
+            }
+            ed.setVisible(true);
+            return ed;
+        });
         DialogFixture editDialogFixture = new DialogFixture(robot(), editDialog);
-        editDialogFixture.show();
         
         // Then - dialog should still be visible (error handled)
         editDialogFixture.requireVisible();
