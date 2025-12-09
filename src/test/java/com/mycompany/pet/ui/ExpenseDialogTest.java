@@ -3,8 +3,10 @@ package com.mycompany.pet.ui;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.swing.core.matcher.JButtonMatcher.withText;
 import static org.assertj.swing.edt.GuiActionRunner.execute;
+import static org.junit.Assume.assumeFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import java.awt.GraphicsEnvironment;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -18,6 +20,7 @@ import org.assertj.swing.fixture.JButtonFixture;
 import org.assertj.swing.fixture.JComboBoxFixture;
 import org.assertj.swing.junit.runner.GUITestRunner;
 import org.assertj.swing.junit.testcase.AssertJSwingJUnitTestCase;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -53,6 +56,13 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
     private static final String CATEGORY_NAME_1 = "Food";
     private static final Integer EXPENSE_ID_1 = 1;
 
+    @Before
+    public void checkHeadless() {
+        // Skip UI tests if running in headless mode (without xvfb)
+        assumeFalse("Skipping UI test - running in headless mode", 
+            GraphicsEnvironment.isHeadless());
+    }
+
     @Override
     protected void onSetUp() throws Exception {
         closeable = MockitoAnnotations.openMocks(this);
@@ -80,26 +90,29 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         });
         parentFrame = new FrameFixture(robot(), mainWindow);
         
-        // Wait a moment for parent to be ready
-        robot().waitForIdle();
+        // Small delay to ensure parent is ready
+        Thread.sleep(100);
         
-        // Create dialog on EDT (set modal to false before showing)
+        // Create dialog on EDT (already non-modal in test environment)
         expenseDialog = execute(() -> {
             ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, null);
-            ed.setModal(false); // Make non-modal for tests to prevent blocking
+            // Double-check it's non-modal
+            if (ed.isModal()) {
+                ed.setModal(false);
+            }
             return ed;
         });
         
-        // Create fixture first
+        // Create fixture BEFORE showing dialog
         dialog = new DialogFixture(robot(), expenseDialog);
         
-        // Then show it on EDT
+        // Show dialog on EDT
         execute(() -> {
             expenseDialog.setVisible(true);
         });
         
-        // Wait for dialog to be ready
-        robot().waitForIdle();
+        // Small delay for dialog to appear
+        Thread.sleep(100);
     }
 
     @Override
@@ -243,21 +256,41 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
     @Test
     @GUITest
     public void testExpenseDialog_Save_WithValidData() throws SQLException {
-        // Given - valid data
+        // Given - valid data with category selected
         execute(() -> {
-            if (expenseDialog.categoryComboBox.getItemCount() > 0) {
-                expenseDialog.categoryComboBox.setSelectedIndex(0);
+            // Wait for categories to be loaded
+            int itemCount = expenseDialog.categoryComboBox.getItemCount();
+            // Select first non-null category (skip null placeholder if any)
+            for (int i = 0; i < itemCount; i++) {
+                Object item = expenseDialog.categoryComboBox.getItemAt(i);
+                if (item != null && item instanceof Category) {
+                    expenseDialog.categoryComboBox.setSelectedItem(item);
+                    break;
+                }
             }
             expenseDialog.dateField.setText("2024-01-01");
             expenseDialog.amountField.setText("100.00");
             expenseDialog.descriptionField.setText("Test Expense");
         });
         
+        // Small delay to ensure selection is set
+        try {
+            Thread.sleep(50);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        
         // When - click Save button
         dialog.button(withText("Save")).click();
         
-        // Then - dialog should be closed (saved = true)
-        // Note: In test mode, dialog might still be visible, but saved flag should be true
+        // Small delay for save to complete
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        
+        // Then - dialog should be saved (saved = true)
         boolean saved = execute(() -> expenseDialog.isSaved());
         assertThat(saved).isTrue();
     }
@@ -319,17 +352,37 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         // Then - verify it's in edit mode
         assertThat(editDialogFixture.target().getTitle()).isEqualTo("Edit Expense");
         
-        // When - save
+        // When - save with valid category selected
         execute(() -> {
-            if (editDialog.categoryComboBox.getItemCount() > 0) {
-                editDialog.categoryComboBox.setSelectedIndex(0);
+            // Select first non-null category
+            int itemCount = editDialog.categoryComboBox.getItemCount();
+            for (int i = 0; i < itemCount; i++) {
+                Object item = editDialog.categoryComboBox.getItemAt(i);
+                if (item != null && item instanceof Category) {
+                    editDialog.categoryComboBox.setSelectedItem(item);
+                    break;
+                }
             }
             editDialog.dateField.setText("2024-02-01");
             editDialog.amountField.setText("75.00");
             editDialog.descriptionField.setText("Updated Expense");
         });
         
+        // Small delay to ensure selection is set
+        try {
+            Thread.sleep(50);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        
         editDialogFixture.button(withText("Save")).click();
+        
+        // Small delay for save to complete
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
         
         // Then - should be saved
         boolean saved = execute(() -> editDialog.isSaved());

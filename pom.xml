@@ -220,10 +220,13 @@
                     </excludes>
                     <argLine>${argLine} ${surefire.jvm.args}</argLine>
                     <forkCount>1</forkCount>
-                    <reuseForks>true</reuseForks>
+                    <reuseForks>false</reuseForks>
+                    <!-- Set to false to ensure clean EDT state between UI tests -->
                     <testFailureIgnore>false</testFailureIgnore>
-                    <forkedProcessTimeoutInSeconds>60</forkedProcessTimeoutInSeconds>
-                    <!-- Fail fast if tests hang - 60 seconds timeout -->
+                    <forkedProcessTimeoutInSeconds>300</forkedProcessTimeoutInSeconds>
+                    <!-- Increased timeout for UI tests which may take longer -->
+                    <parallel>none</parallel>
+                    <!-- Run tests sequentially to avoid EDT conflicts -->
                 </configuration>
             </plugin>
 

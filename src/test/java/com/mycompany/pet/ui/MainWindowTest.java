@@ -3,13 +3,18 @@ package com.mycompany.pet.ui;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.swing.core.matcher.JButtonMatcher.withText;
 import static org.assertj.swing.edt.GuiActionRunner.execute;
+import static org.junit.Assume.assumeFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+
+import java.awt.GraphicsEnvironment;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.swing.JComboBox;
 
 import org.assertj.swing.annotation.GUITest;
 import org.assertj.swing.core.GenericTypeMatcher;
@@ -20,7 +25,7 @@ import org.assertj.swing.fixture.JComboBoxFixture;
 import org.assertj.swing.fixture.JTableFixture;
 import org.assertj.swing.junit.runner.GUITestRunner;
 import org.assertj.swing.junit.testcase.AssertJSwingJUnitTestCase;
-import javax.swing.JComboBox;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -55,6 +60,13 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     private static final Integer EXPENSE_ID_1 = 1;
     private static final BigDecimal EXPENSE_AMOUNT_1 = new BigDecimal("100.50");
     private static final String EXPENSE_DESCRIPTION_1 = "Lunch";
+
+    @Before
+    public void checkHeadless() {
+        // Skip UI tests if running in headless mode (without xvfb)
+        assumeFalse("Skipping UI test - running in headless mode", 
+            GraphicsEnvironment.isHeadless());
+    }
 
     @Override
     protected void onSetUp() throws Exception {
@@ -232,7 +244,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         
         // Then - verify "Unknown" is displayed in the table
         JTableFixture table = window.table();
-        assertThat(table.rowCount()).isGreaterThan(0);
+        assertThat(table.target().getRowCount()).isGreaterThan(0);
         // Check that "Unknown" appears in the category column (column 4)
         String categoryValue = table.cell(TableCell.row(0).column(4)).value();
         assertThat(categoryValue).isEqualTo("Unknown");
@@ -281,7 +293,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         
         // Then - verify "Unknown" is displayed in the table
         JTableFixture table = window.table();
-        if (table.rowCount() > 0) {
+        if (table.target().getRowCount() > 0) {
             String categoryValue = table.cell(TableCell.row(0).column(4)).value();
             assertThat(categoryValue).isEqualTo("Unknown");
         }
@@ -399,7 +411,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         
         // Then - expenses should be loaded
         JTableFixture table = window.table();
-        assertThat(table.rowCount()).isGreaterThanOrEqualTo(0);
+        assertThat(table.target().getRowCount()).isGreaterThanOrEqualTo(0);
     }
 
     @Test

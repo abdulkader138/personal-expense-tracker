@@ -20,26 +20,28 @@ import javax.swing.table.DefaultTableModel;
 import com.mycompany.pet.model.Category;
 import com.mycompany.pet.service.CategoryService;
 
-/**
- * Dialog for managing categories.
- */
 public class CategoryDialog extends JDialog {
+
     private static final String ERROR_TITLE = "Error";
-    
+
     private transient CategoryService categoryService;
+
     JTable categoryTable;
     DefaultTableModel categoryTableModel;
     JTextField nameField;
     JButton addButton;
     JButton updateButton;
     JButton deleteButton;
-    
+
+    // NEW: for tests
+    JLabel labelMessage;
+
     private static boolean isTestEnvironment() {
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
         for (StackTraceElement element : stackTrace) {
             String className = element.getClassName();
-            if (className.contains("junit") || className.contains("test") || 
-                className.contains("AssertJSwing") || className.contains("GUITest")) {
+            if (className.contains("junit") || className.contains("test")
+                    || className.contains("AssertJSwing") || className.contains("GUITest")) {
                 return true;
             }
         }
@@ -47,18 +49,18 @@ public class CategoryDialog extends JDialog {
     }
 
     public CategoryDialog(JFrame parent, CategoryService categoryService) {
-        super(parent, "Manage Categories", !isTestEnvironment()); // Non-modal in test environment
+        super(parent, "Manage Categories", !isTestEnvironment());
         this.categoryService = categoryService;
         initializeUI();
-        // Defer loadCategories() to avoid blocking during construction
-        // It will be called when dialog is shown or explicitly via loadCategories()
+
+        // In real app: load immediately
         if (!isTestEnvironment()) {
             loadCategories();
         }
     }
 
     private void initializeUI() {
-        setSize(500, 400);
+        setSize(500, 420);
         if (!isTestEnvironment()) {
             setLocationRelativeTo(getParent());
         }
@@ -66,55 +68,48 @@ public class CategoryDialog extends JDialog {
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Top panel for add category
+        // -------- TOP (Add category) --------
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         nameField = new JTextField(15);
         addButton = new JButton("Add Category");
+
         addButton.addActionListener(e -> {
             String name = nameField.getText().trim();
             if (name.isEmpty()) {
-                if (!isTestEnvironment()) {
-                    JOptionPane.showMessageDialog(this,
-                        "Category name cannot be empty.",
-                        "Validation Error",
-                        JOptionPane.WARNING_MESSAGE);
-                }
+                showMessage("Category name cannot be empty.");
                 return;
             }
             try {
                 categoryService.createCategory(name);
                 nameField.setText("");
+                showMessage(""); // clear
                 loadCategories();
             } catch (SQLException ex) {
-                if (!isTestEnvironment()) {
-                    JOptionPane.showMessageDialog(this,
-                        "Error adding category: " + ex.getMessage(),
-                        ERROR_TITLE,
-                        JOptionPane.ERROR_MESSAGE);
-                }
+                showMessage("Error adding category: " + ex.getMessage());
             }
         });
+
         topPanel.add(new JLabel("Name:"));
         topPanel.add(nameField);
         topPanel.add(addButton);
         mainPanel.add(topPanel, BorderLayout.NORTH);
 
-        // Center panel for category table
-        String[] columnNames = {"ID", "Name"};
+        // -------- TABLE --------
+        String[] columnNames = { "ID", "Name" };
         categoryTableModel = new DefaultTableModel(columnNames, 0) {
             @Override
-            public boolean isCellEditable(int row, int column) {
-                return column == 1; // Only name is editable
+            public boolean isCellEditable(int row, int col) {
+                return col == 1; // only name
             }
         };
+
         categoryTable = new JTable(categoryTableModel);
-        categoryTable.getColumnModel().getColumn(0).setPreferredWidth(50);
-        categoryTable.getColumnModel().getColumn(1).setPreferredWidth(300);
         JScrollPane scrollPane = new JScrollPane(categoryTable);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
-        // Bottom panel for buttons
+        // -------- BOTTOM PANEL --------
         JPanel bottomPanel = new JPanel(new FlowLayout());
+
         updateButton = new JButton("Update Selected");
         updateButton.addActionListener(e -> updateSelectedCategory());
         bottomPanel.add(updateButton);
@@ -126,9 +121,27 @@ public class CategoryDialog extends JDialog {
         JButton closeButton = new JButton("Close");
         closeButton.addActionListener(e -> dispose());
         bottomPanel.add(closeButton);
+
         mainPanel.add(bottomPanel, BorderLayout.SOUTH);
 
+        // -------- MESSAGE AREA --------
+        labelMessage = new JLabel("");
+        labelMessage.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        mainPanel.add(labelMessage, BorderLayout.PAGE_END);
+
         add(mainPanel);
+    }
+
+    private void showMessage(String msg) {
+        if (isTestEnvironment()) {
+            labelMessage.setText(msg);
+        } else {
+            if (msg == null || msg.isEmpty()) {
+                labelMessage.setText("");
+                return;
+            }
+            JOptionPane.showMessageDialog(this, msg, "Info", JOptionPane.WARNING_MESSAGE);
+        }
     }
 
     void loadCategories() {
@@ -136,100 +149,71 @@ public class CategoryDialog extends JDialog {
             categoryTableModel.setRowCount(0);
             List<Category> categories = categoryService.getAllCategories();
             for (Category category : categories) {
-                categoryTableModel.addRow(new Object[]{
-                    category.getCategoryId(),
-                    category.getName()
+                categoryTableModel.addRow(new Object[] {
+                        category.getCategoryId(),
+                        category.getName()
                 });
             }
+            showMessage("");
         } catch (SQLException e) {
-            if (!isTestEnvironment()) {
-                JOptionPane.showMessageDialog(this,
-                    "Error loading categories: " + e.getMessage(),
-                    ERROR_TITLE,
-                    JOptionPane.ERROR_MESSAGE);
-            }
+            showMessage("Error loading categories: " + e.getMessage());
         }
     }
 
     void updateSelectedCategory() {
-        // Stop any cell editing that might be in progress
         if (categoryTable.isEditing()) {
             categoryTable.getCellEditor().stopCellEditing();
         }
-        
-        int selectedRow = categoryTable.getSelectedRow();
-        if (selectedRow < 0) {
-            if (!isTestEnvironment()) {
-                JOptionPane.showMessageDialog(this,
-                    "Please select a category to update.",
-                    "No Selection",
-                    JOptionPane.WARNING_MESSAGE);
-            }
+
+        int row = categoryTable.getSelectedRow();
+        if (row < 0) {
+            showMessage("Please select a category to update.");
             return;
         }
 
-        Integer categoryId = (Integer) categoryTableModel.getValueAt(selectedRow, 0);
-        String name = (String) categoryTableModel.getValueAt(selectedRow, 1);
-        
+        Integer id = (Integer) categoryTableModel.getValueAt(row, 0);
+        String name = (String) categoryTableModel.getValueAt(row, 1);
+
         if (name == null || name.trim().isEmpty()) {
-            if (!isTestEnvironment()) {
-                JOptionPane.showMessageDialog(this,
-                    "Category name cannot be empty.",
-                    "Validation Error",
-                    JOptionPane.WARNING_MESSAGE);
-            }
+            showMessage("Category name cannot be empty.");
             loadCategories();
             return;
         }
 
         try {
-            categoryService.updateCategory(categoryId, name.trim());
+            categoryService.updateCategory(id, name.trim());
+            showMessage("");
             loadCategories();
         } catch (SQLException e) {
-            if (!isTestEnvironment()) {
-                JOptionPane.showMessageDialog(this,
-                    "Error updating category: " + e.getMessage(),
-                    ERROR_TITLE,
-                    JOptionPane.ERROR_MESSAGE);
-                }
+            showMessage("Error updating category: " + e.getMessage());
             loadCategories();
         }
     }
 
     void deleteSelectedCategory() {
-        int selectedRow = categoryTable.getSelectedRow();
-        if (selectedRow < 0) {
-            if (!isTestEnvironment()) {
-                JOptionPane.showMessageDialog(this,
-                    "Please select a category to delete.",
-                    "No Selection",
-                    JOptionPane.WARNING_MESSAGE);
-            }
+        int row = categoryTable.getSelectedRow();
+        if (row < 0) {
+            showMessage("Please select a category to delete.");
             return;
         }
 
-        int confirm = JOptionPane.YES_OPTION; // Default to YES in tests to avoid blocking
+        int confirm = JOptionPane.YES_OPTION;
         if (!isTestEnvironment()) {
             confirm = JOptionPane.showConfirmDialog(this,
-                "Are you sure you want to delete this category? All associated expenses will also be deleted.",
-                "Confirm Delete",
-                JOptionPane.YES_NO_OPTION);
+                    "Are you sure you want to delete this category?",
+                    "Confirm Delete",
+                    JOptionPane.YES_NO_OPTION);
         }
 
         if (confirm == JOptionPane.YES_OPTION) {
-            Integer categoryId = (Integer) categoryTableModel.getValueAt(selectedRow, 0);
+            Integer id = (Integer) categoryTableModel.getValueAt(row, 0);
             try {
-                categoryService.deleteCategory(categoryId);
+                categoryService.deleteCategory(id);
+                showMessage("");
                 loadCategories();
             } catch (SQLException e) {
-                if (!isTestEnvironment()) {
-                    JOptionPane.showMessageDialog(this,
-                        "Error deleting category: " + e.getMessage(),
-                        ERROR_TITLE,
-                        JOptionPane.ERROR_MESSAGE);
-                }
+                showMessage("Error deleting category: " + e.getMessage());
             }
         }
     }
 }
-
