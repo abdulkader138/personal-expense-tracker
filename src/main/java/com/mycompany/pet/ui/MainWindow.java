@@ -1,5 +1,7 @@
 package com.mycompany.pet.ui;
 
+import com.mycompany.pet.controller.CategoryController;
+import com.mycompany.pet.controller.ExpenseController;
 import com.mycompany.pet.model.Category;
 import com.mycompany.pet.model.Expense;
 import com.mycompany.pet.service.CategoryService;
@@ -15,13 +17,23 @@ import java.util.List;
 
 /**
  * Main window for the Expense Tracker application.
+ * 
+ * This window uses ExpenseController and CategoryController to separate UI concerns from business logic.
+ * All database operations are handled asynchronously by the controllers.
  */
 public class MainWindow extends JFrame {
+    private static final long serialVersionUID = 1L;
     private static final String ERROR_TITLE = "Error";
     
+    // Controllers (preferred)
+    private final ExpenseController expenseController;
+    private final CategoryController categoryController;
+    
+    // Services (for backward compatibility and deprecated methods)
     private transient CategoryService categoryService;
     private transient ExpenseService expenseService;
 
+    // UI Components (package-private for testing)
     JTable expenseTable;
     DefaultTableModel expenseTableModel;
     JComboBox<Category> categoryComboBox;
@@ -31,12 +43,34 @@ public class MainWindow extends JFrame {
     private JLabel categoryTotalLabel;
     boolean isInitializing = true; // Flag to prevent action listeners during initialization
 
+    /**
+     * Creates a new MainWindow with controllers.
+     * 
+     * @param expenseController Expense controller
+     * @param categoryController Category controller
+     */
+    public MainWindow(ExpenseController expenseController, CategoryController categoryController) {
+        this.expenseController = expenseController;
+        this.categoryController = categoryController;
+        initializeUI();
+    }
+    
+    /**
+     * Creates a MainWindow with services (for backward compatibility).
+     * This constructor creates controllers internally.
+     * 
+     * @param categoryService Category service
+     * @param expenseService Expense service
+     * @deprecated Use MainWindow(ExpenseController, CategoryController) instead
+     */
+    @Deprecated
     public MainWindow(CategoryService categoryService, ExpenseService expenseService) {
         this.categoryService = categoryService;
         this.expenseService = expenseService;
+        // Create controllers from services
+        this.categoryController = new CategoryController(categoryService);
+        this.expenseController = new ExpenseController(expenseService);
         initializeUI();
-        // Don't call loadData() here - it will be called explicitly when needed
-        // This prevents blocking during construction, especially in tests
     }
 
     private void initializeUI() {
@@ -81,10 +115,9 @@ public class MainWindow extends JFrame {
 
         topPanel.add(new JLabel("Month:"));
         monthComboBox = new JComboBox<>(new String[]{"All", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"});
-        monthComboBox.setSelectedItem("All"); // Set default selection
-        // Add action listener - will be disabled during initialization
+        monthComboBox.setSelectedItem("All");
         monthComboBox.addActionListener(e -> {
-            if (!isInitializing && expenseService != null && expenseTableModel != null) {
+            if (!isInitializing && expenseController != null && expenseTableModel != null) {
                 filterExpenses();
             }
         });
@@ -93,10 +126,9 @@ public class MainWindow extends JFrame {
         topPanel.add(new JLabel("Year:"));
         String[] yearOptions = getYearOptions();
         yearComboBox = new JComboBox<>(yearOptions);
-        yearComboBox.setSelectedItem(yearOptions[2]); // Set default to current year (middle of array)
-        // Add action listener - will be disabled during initialization
+        yearComboBox.setSelectedItem(yearOptions[2]); // Current year
         yearComboBox.addActionListener(e -> {
-            if (!isInitializing && expenseService != null && expenseTableModel != null) {
+            if (!isInitializing && expenseController != null && expenseTableModel != null) {
                 filterExpenses();
             }
         });
@@ -107,6 +139,8 @@ public class MainWindow extends JFrame {
         // Center panel for expense table
         String[] columnNames = {"ID", "Date", "Amount", "Description", "Category"};
         expenseTableModel = new DefaultTableModel(columnNames, 0) {
+            private static final long serialVersionUID = 1L;
+            
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -125,9 +159,8 @@ public class MainWindow extends JFrame {
         bottomPanel.add(new JLabel("Category:"));
         categoryComboBox = new JComboBox<>();
         categoryComboBox.addItem(null); // "All categories" option
-        // Add action listener - will be disabled during initialization
         categoryComboBox.addActionListener(e -> {
-            if (!isInitializing && expenseService != null) {
+            if (!isInitializing && expenseController != null) {
                 updateCategoryTotal();
             }
         });
@@ -136,10 +169,7 @@ public class MainWindow extends JFrame {
         bottomPanel.add(categoryTotalLabel);
         mainPanel.add(bottomPanel, BorderLayout.SOUTH);
 
-        // Use setContentPane instead of add() - matches Project-Test-Driven-Development pattern
         setContentPane(mainPanel);
-        
-        // Mark initialization as complete
         isInitializing = false;
     }
 
@@ -152,229 +182,284 @@ public class MainWindow extends JFrame {
         return years;
     }
 
-    public void loadData() {
-        try {
-            loadCategories();
-            loadExpenses();
-            updateSummary();
-        } catch (Exception e) {
-            // Don't show dialog during tests - it can block execution
-            // Only show dialog if window is visible, showing, and not in a test environment
-            if (isVisible() && isShowing() && !isTestEnvironment()) {
-                JOptionPane.showMessageDialog(this,
-                    "Error loading data: " + e.getMessage(),
-                    ERROR_TITLE,
-                    JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-    
     /**
-     * Check if we're running in a test environment.
-     * This prevents blocking dialogs during tests.
+     * Loads all data (categories, expenses, and summary).
+     * Uses controllers for async operations.
      */
-    private boolean isTestEnvironment() {
-        // Check if we're running under JUnit or AssertJ Swing test framework
-        StackTraceElement[] stack = Thread.currentThread().getStackTrace();
-        for (StackTraceElement element : stack) {
-            String className = element.getClassName();
-            if (className.contains("junit") || 
-                className.contains("assertj") || 
-                className.contains("Test") ||
-                className.contains("Mockito")) {
-                return true;
+    public void loadData() {
+        loadCategories();
+        loadExpenses();
+        updateSummary();
+    }
+
+    /**
+     * Loads categories into the combo box.
+     * Uses controller for async operation.
+     */
+    void loadCategories() {
+        categoryController.loadCategories(
+            categories -> {
+                // Success: populate combo box
+                categoryComboBox.removeAllItems();
+                categoryComboBox.addItem(null);
+                for (Category category : categories) {
+                    categoryComboBox.addItem(category);
+                }
+            },
+            error -> {
+                // Error: show message only if window is visible
+                if (isVisible() && isShowing()) {
+                    JOptionPane.showMessageDialog(this,
+                        error,
+                        ERROR_TITLE,
+                        JOptionPane.ERROR_MESSAGE);
+                }
             }
-        }
-        return false;
+        );
     }
 
-    void loadCategories() throws SQLException {
-        List<Category> categories = categoryService.getAllCategories();
-        categoryComboBox.removeAllItems();
-        categoryComboBox.addItem(null);
-        for (Category category : categories) {
-            categoryComboBox.addItem(category);
-        }
+    /**
+     * Loads expenses into the table.
+     * Uses controller for async operation.
+     */
+    void loadExpenses() {
+        expenseController.loadExpenses(
+            expenses -> {
+                // Success: populate table
+                expenseTableModel.setRowCount(0);
+                for (Expense expense : expenses) {
+                    Category category = null;
+                    try {
+                        category = categoryController.getCategory(expense.getCategoryId());
+                    } catch (SQLException e) {
+                        // Ignore - will show "Unknown"
+                    }
+                    String categoryName = category != null ? category.getName() : "Unknown";
+                    expenseTableModel.addRow(new Object[]{
+                        expense.getExpenseId(),
+                        expense.getDate().toString(),
+                        expense.getAmount().toString(),
+                        expense.getDescription(),
+                        categoryName
+                    });
+                }
+            },
+            error -> {
+                // Error: show message only if window is visible
+                if (isVisible() && isShowing()) {
+                    JOptionPane.showMessageDialog(this,
+                        error,
+                        ERROR_TITLE,
+                        JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        );
     }
 
-    void loadExpenses() throws SQLException {
-        expenseTableModel.setRowCount(0);
-        List<Expense> expenses = expenseService.getAllExpenses();
-        for (Expense expense : expenses) {
-            Category category = categoryService.getCategory(expense.getCategoryId());
-            String categoryName = category != null ? category.getName() : "Unknown";
-            expenseTableModel.addRow(new Object[]{
-                expense.getExpenseId(),
-                expense.getDate().toString(),
-                expense.getAmount().toString(),
-                expense.getDescription(),
-                categoryName
-            });
-        }
-    }
-
+    /**
+     * Filters expenses by month and year.
+     * Uses controller for async operation.
+     */
     public void filterExpenses() {
-        try {
-            expenseTableModel.setRowCount(0);
-            String selectedMonth = (String) monthComboBox.getSelectedItem();
-            String selectedYear = (String) yearComboBox.getSelectedItem();
+        String selectedMonth = (String) monthComboBox.getSelectedItem();
+        String selectedYear = (String) yearComboBox.getSelectedItem();
 
-            // Handle null values gracefully
-            if (selectedMonth == null || selectedYear == null) {
-                return;
-            }
+        if (selectedMonth == null || selectedYear == null) {
+            return;
+        }
 
-            List<Expense> expenses;
-            if ("All".equals(selectedMonth)) {
-                expenses = expenseService.getAllExpenses();
-            } else {
+        if ("All".equals(selectedMonth)) {
+            loadExpenses();
+        } else {
+            try {
                 int year = Integer.parseInt(selectedYear);
                 int month = Integer.parseInt(selectedMonth);
-                expenses = expenseService.getExpensesByMonth(year, month);
-            }
-
-            for (Expense expense : expenses) {
-                Category category = categoryService.getCategory(expense.getCategoryId());
-                String categoryName = category != null ? category.getName() : "Unknown";
-                expenseTableModel.addRow(new Object[]{
-                    expense.getExpenseId(),
-                    expense.getDate().toString(),
-                    expense.getAmount().toString(),
-                    expense.getDescription(),
-                    categoryName
-                });
-            }
-            updateSummary();
-        } catch (SQLException e) {
-            if (!isTestEnvironment()) {
-                JOptionPane.showMessageDialog(this,
-                    "Error filtering expenses: " + e.getMessage(),
-                    ERROR_TITLE,
-                    JOptionPane.ERROR_MESSAGE);
+                expenseController.loadExpensesByMonth(year, month,
+                    expenses -> {
+                        // Success: populate table
+                        expenseTableModel.setRowCount(0);
+                        for (Expense expense : expenses) {
+                            Category category = null;
+                            try {
+                                category = categoryController.getCategory(expense.getCategoryId());
+                            } catch (SQLException e) {
+                                // Ignore - will show "Unknown"
+                            }
+                            String categoryName = category != null ? category.getName() : "Unknown";
+                            expenseTableModel.addRow(new Object[]{
+                                expense.getExpenseId(),
+                                expense.getDate().toString(),
+                                expense.getAmount().toString(),
+                                expense.getDescription(),
+                                categoryName
+                            });
+                        }
+                        updateSummary();
+                    },
+                    error -> {
+                        // Error: show message
+                        if (isVisible() && isShowing()) {
+                            JOptionPane.showMessageDialog(this,
+                                error,
+                                ERROR_TITLE,
+                                JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                );
+            } catch (NumberFormatException e) {
+                // Invalid month/year - ignore
             }
         }
     }
 
+    /**
+     * Updates the monthly total summary.
+     * Uses controller for async operation.
+     */
     public void updateSummary() {
-        try {
-            String selectedMonth = (String) monthComboBox.getSelectedItem();
-            String selectedYear = (String) yearComboBox.getSelectedItem();
+        String selectedMonth = (String) monthComboBox.getSelectedItem();
+        String selectedYear = (String) yearComboBox.getSelectedItem();
 
-            if (selectedMonth == null || selectedYear == null) {
-                monthlyTotalLabel.setText("Monthly Total: N/A");
-                return;
-            }
+        if (selectedMonth == null || selectedYear == null) {
+            monthlyTotalLabel.setText("Monthly Total: N/A");
+            return;
+        }
 
-            if ("All".equals(selectedMonth)) {
-                monthlyTotalLabel.setText("Monthly Total: N/A");
-            } else {
+        if ("All".equals(selectedMonth)) {
+            monthlyTotalLabel.setText("Monthly Total: N/A");
+        } else {
+            try {
                 int year = Integer.parseInt(selectedYear);
                 int month = Integer.parseInt(selectedMonth);
-                BigDecimal total = expenseService.getMonthlyTotal(year, month);
-                monthlyTotalLabel.setText("Monthly Total: $" + total.toString());
+                expenseController.getMonthlyTotal(year, month,
+                    total -> {
+                        monthlyTotalLabel.setText("Monthly Total: $" + total.toString());
+                        updateCategoryTotal();
+                    },
+                    error -> {
+                        monthlyTotalLabel.setText("Monthly Total: Error");
+                    }
+                );
+            } catch (NumberFormatException e) {
+                monthlyTotalLabel.setText("Monthly Total: Error");
             }
-            updateCategoryTotal();
-        } catch (Exception e) {
-            monthlyTotalLabel.setText("Monthly Total: Error");
         }
     }
 
+    /**
+     * Updates the category total summary.
+     * Uses controller for async operation.
+     */
     public void updateCategoryTotal() {
-        try {
-            Category selectedCategory = (Category) categoryComboBox.getSelectedItem();
-            if (selectedCategory == null) {
-                categoryTotalLabel.setText("Category Total: N/A");
-            } else {
-                BigDecimal total = expenseService.getTotalByCategory(selectedCategory.getCategoryId());
-                categoryTotalLabel.setText("Category Total: $" + total.toString());
-            }
-        } catch (SQLException e) {
-            categoryTotalLabel.setText("Category Total: Error");
+        Category selectedCategory = (Category) categoryComboBox.getSelectedItem();
+        if (selectedCategory == null) {
+            categoryTotalLabel.setText("Category Total: N/A");
+        } else {
+            expenseController.getTotalByCategory(selectedCategory.getCategoryId(),
+                total -> {
+                    categoryTotalLabel.setText("Category Total: $" + total.toString());
+                },
+                error -> {
+                    categoryTotalLabel.setText("Category Total: Error");
+                }
+            );
         }
     }
 
+    /**
+     * Shows the add expense dialog.
+     */
     public void showAddExpenseDialog() {
-        ExpenseDialog dialog = new ExpenseDialog(this, categoryService, null);
+        ExpenseDialog dialog = new ExpenseDialog(this, expenseController, categoryController, null);
         dialog.setVisible(true);
         if (dialog.isSaved()) {
             loadData();
         }
     }
 
+    /**
+     * Shows the edit expense dialog.
+     */
     public void showEditExpenseDialog() {
         int selectedRow = expenseTable.getSelectedRow();
         if (selectedRow < 0) {
-            if (!isTestEnvironment()) {
-                JOptionPane.showMessageDialog(this,
-                    "Please select an expense to edit.",
-                    "No Selection",
-                    JOptionPane.WARNING_MESSAGE);
-            }
+            JOptionPane.showMessageDialog(this,
+                "Please select an expense to edit.",
+                "No Selection",
+                JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         Integer expenseId = (Integer) expenseTableModel.getValueAt(selectedRow, 0);
         try {
-            Expense expense = expenseService.getExpense(expenseId);
-            ExpenseDialog dialog = new ExpenseDialog(this, categoryService, expense);
+            Expense expense = expenseController.getExpense(expenseId);
+            ExpenseDialog dialog = new ExpenseDialog(this, expenseController, categoryController, expense);
             dialog.setVisible(true);
             if (dialog.isSaved()) {
                 loadData();
             }
         } catch (SQLException e) {
-            if (!isTestEnvironment()) {
-                JOptionPane.showMessageDialog(this,
-                    "Error loading expense: " + e.getMessage(),
-                    ERROR_TITLE,
-                    JOptionPane.ERROR_MESSAGE);
-            }
+            JOptionPane.showMessageDialog(this,
+                "Error loading expense: " + e.getMessage(),
+                ERROR_TITLE,
+                JOptionPane.ERROR_MESSAGE);
         }
     }
 
+    /**
+     * Deletes the selected expense.
+     * Uses controller for async operation.
+     */
     public void deleteSelectedExpense() {
         int selectedRow = expenseTable.getSelectedRow();
         if (selectedRow < 0) {
-            if (!isTestEnvironment()) {
-                JOptionPane.showMessageDialog(this,
-                    "Please select an expense to delete.",
-                    "No Selection",
-                    JOptionPane.WARNING_MESSAGE);
-            }
+            JOptionPane.showMessageDialog(this,
+                "Please select an expense to delete.",
+                "No Selection",
+                JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        int confirm = JOptionPane.YES_OPTION; // Default to YES in tests to avoid blocking
-        if (!isTestEnvironment()) {
-            confirm = JOptionPane.showConfirmDialog(this,
-                "Are you sure you want to delete this expense?",
-                "Confirm Delete",
-                JOptionPane.YES_NO_OPTION);
-        }
+        int confirm = JOptionPane.showConfirmDialog(this,
+            "Are you sure you want to delete this expense?",
+            "Confirm Delete",
+            JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
             Integer expenseId = (Integer) expenseTableModel.getValueAt(selectedRow, 0);
-            try {
-                expenseService.deleteExpense(expenseId);
-                loadData();
-            } catch (SQLException e) {
-                if (!isTestEnvironment()) {
+            expenseController.deleteExpense(expenseId,
+                () -> {
+                    // Success: reload data
+                    loadData();
+                },
+                error -> {
+                    // Error: show message
                     JOptionPane.showMessageDialog(this,
-                        "Error deleting expense: " + e.getMessage(),
+                        error,
                         ERROR_TITLE,
                         JOptionPane.ERROR_MESSAGE);
                 }
-            }
+            );
         }
     }
 
+    /**
+     * Shows the category management dialog.
+     */
     public void showCategoryDialog() {
-        CategoryDialog dialog = new CategoryDialog(this, categoryService);
+        CategoryDialog dialog = new CategoryDialog(this, categoryController);
         dialog.setVisible(true);
         loadData();
     }
 
+    /**
+     * Gets the expense service (for backward compatibility).
+     * 
+     * @return Expense service or null if using controller-only constructor
+     * @deprecated Use ExpenseController instead
+     */
+    @Deprecated
     public ExpenseService getExpenseService() {
         return expenseService;
     }
 }
-

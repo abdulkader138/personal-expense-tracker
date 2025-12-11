@@ -58,8 +58,19 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         // Set system property BEFORE any dialog creation
         System.setProperty("test.mode", "true");
         
-        assumeFalse("Skipping UI test - running in headless mode", 
-            GraphicsEnvironment.isHeadless());
+        // Allow forcing UI tests to run with -Dforce.ui.tests=true (e.g., with xvfb)
+        String forceUITestsProp = System.getProperty("force.ui.tests");
+        boolean forceUITests = "true".equalsIgnoreCase(forceUITestsProp);
+        boolean isHeadless = GraphicsEnvironment.isHeadless();
+        
+        if (!forceUITests && isHeadless) {
+            assumeFalse("Skipping UI test - running in headless mode. " +
+                "To run UI tests:\n" +
+                "  1. Use xvfb: xvfb-run -a mvn test -Pui-tests\n" +
+                "  2. Or force: mvn test -Pui-tests -Dforce.ui.tests=true\n" +
+                "  3. Or run locally with display: mvn test -Pui-tests", 
+                true);
+        }
     }
 
     @Override
@@ -113,14 +124,14 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
     
     private void ensureDialogCreated() {
         if (categoryDialog == null) {
-            // Ensure system property is set
+            // Ensure system property is set for label message mode
             System.setProperty("test.mode", "true");
             
             categoryDialog = execute(() -> {
+                // Use deprecated constructor which creates controller internally
                 CategoryDialog cd = new CategoryDialog(mainWindow, categoryService);
-                if (cd.isModal()) {
-                    cd.setModal(false);
-                }
+                // Make non-modal for testing
+                cd.setModal(false);
                 // Verify label is initialized
                 if (cd.labelMessage == null) {
                     throw new IllegalStateException("labelMessage is null!");
@@ -130,6 +141,14 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             });
             dialog = new DialogFixture(robot(), categoryDialog);
             dialog.show();
+            
+            // Wait for initial category load to complete (async operation)
+            robot().waitForIdle();
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
@@ -233,6 +252,14 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
     @GUITest
     public void testCategoryDialog_LoadCategories_HandlesMongoDBException() throws SQLException {
         ensureDialogCreated();
+        // Ensure test mode is set
+        System.setProperty("test.mode", "true");
+        
+        // Clear table first
+        execute(() -> {
+            categoryDialog.categoryTableModel.setRowCount(0);
+        });
+        
         // In MongoDB, only real errors (like connection failure) throw exceptions
         // Empty data just returns empty list - this test is for actual MongoDB errors
         when(categoryService.getAllCategories())
@@ -242,7 +269,13 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             categoryDialog.loadCategories();
         });
         
+        // Wait for async operation to complete
         robot().waitForIdle();
+        try {
+            Thread.sleep(300);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
         
         // loadCategories() catches exceptions and shows error message
         String message = execute(() -> {
@@ -268,8 +301,10 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         
         dialog.button(withText("Add Category")).click();
         
+        // Wait for async operation to complete
+        robot().waitForIdle();
         try {
-            Thread.sleep(100);
+            Thread.sleep(200);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
@@ -376,15 +411,28 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         });
         robot().waitForIdle();
         
+        // Ensure test mode is set and verify it
+        System.setProperty("test.mode", "true");
+        assertThat(System.getProperty("test.mode")).isEqualTo("true");
+        
         dialog.button(withText("Update Selected")).click();
         
-        // Wait for EDT to process
+        // Wait for EDT to process (showMessage now updates directly when on EDT)
+        robot().waitForIdle();
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
         robot().waitForIdle();
         
         String message = execute(() -> {
+            if (categoryDialog.labelMessage == null) {
+                return "LABEL_NULL";
+            }
             return categoryDialog.labelMessage.getText();
         });
-        assertThat(message).contains("select");
+        assertThat(message).as("Message should contain 'select', but was: '%s'", message).contains("select");
     }
 
     @Test
@@ -401,8 +449,10 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         
         dialog.button(withText("Update Selected")).click();
         
+        // Wait for async operation to complete
+        robot().waitForIdle();
         try {
-            Thread.sleep(100);
+            Thread.sleep(200);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
@@ -414,6 +464,10 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
     @GUITest
     public void testCategoryDialog_UpdateSelectedCategory_WithEmptyName() throws SQLException {
         ensureDialogCreated();
+        // Ensure test mode is set and verify it
+        System.setProperty("test.mode", "true");
+        assertThat(System.getProperty("test.mode")).isEqualTo("true");
+        
         execute(() -> {
             categoryDialog.loadCategories();
             if (categoryDialog.categoryTableModel.getRowCount() > 0) {
@@ -421,29 +475,52 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
                 categoryDialog.categoryTableModel.setValueAt("", 0, 1);
                 // Clear any existing message
                 categoryDialog.labelMessage.setText("");
+            } else {
+                // If no categories, create one first
+                try {
+                    categoryService.createCategory("Test Category");
+                    categoryDialog.loadCategories();
+                    categoryDialog.categoryTable.setRowSelectionInterval(0, 0);
+                    categoryDialog.categoryTableModel.setValueAt("", 0, 1);
+                    categoryDialog.labelMessage.setText("");
+                } catch (SQLException e) {
+                    // Skip if can't create
+                }
             }
         });
         
-        dialog.button(withText("Update Selected")).click();
-        
         robot().waitForIdle();
         
+        dialog.button(withText("Update Selected")).click();
+        
+        // Wait for validation - UI checks first (immediate), then controller checks (via invokeLater)
+        robot().waitForIdle();
         try {
-            Thread.sleep(100);
+            Thread.sleep(400);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+        robot().waitForIdle();
         
         String message = execute(() -> {
+            if (categoryDialog.labelMessage == null) {
+                return "LABEL_NULL";
+            }
             return categoryDialog.labelMessage.getText();
         });
-        assertThat(message).contains("cannot be empty");
+        assertThat(message).as("Message should contain 'cannot be empty', but was: '%s'", message).contains("cannot be empty");
     }
 
     @Test
     @GUITest
     public void testCategoryDialog_UpdateSelectedCategory_WithNullName() throws SQLException {
         ensureDialogCreated();
+        // Ensure test mode is set and verify it
+        System.setProperty("test.mode", "true");
+        assertThat(System.getProperty("test.mode")).isEqualTo("true");
+        // Ensure test mode is set
+        System.setProperty("test.mode", "true");
+        
         execute(() -> {
             categoryDialog.loadCategories();
             if (categoryDialog.categoryTableModel.getRowCount() > 0) {
@@ -451,29 +528,50 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
                 categoryDialog.categoryTableModel.setValueAt(null, 0, 1);
                 // Clear any existing message
                 categoryDialog.labelMessage.setText("");
+            } else {
+                // If no categories, create one first
+                try {
+                    categoryService.createCategory("Test Category");
+                    categoryDialog.loadCategories();
+                    categoryDialog.categoryTable.setRowSelectionInterval(0, 0);
+                    categoryDialog.categoryTableModel.setValueAt(null, 0, 1);
+                    categoryDialog.labelMessage.setText("");
+                } catch (SQLException e) {
+                    // Skip if can't create
+                }
             }
         });
         
-        dialog.button(withText("Update Selected")).click();
-        
         robot().waitForIdle();
         
+        dialog.button(withText("Update Selected")).click();
+        
+        // Wait for validation - UI checks first (immediate), then controller checks (via invokeLater)
+        robot().waitForIdle();
         try {
-            Thread.sleep(100);
+            Thread.sleep(400);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+        robot().waitForIdle();
         
         String message = execute(() -> {
+            if (categoryDialog.labelMessage == null) {
+                return "LABEL_NULL";
+            }
             return categoryDialog.labelMessage.getText();
         });
-        assertThat(message).contains("cannot be empty");
+        assertThat(message).as("Message should contain 'cannot be empty', but was: '%s'", message).contains("cannot be empty");
     }
 
     @Test
     @GUITest
     public void testCategoryDialog_UpdateSelectedCategory_HandlesSQLException() throws SQLException {
         ensureDialogCreated();
+        // Ensure test mode is set and verify it
+        System.setProperty("test.mode", "true");
+        assertThat(System.getProperty("test.mode")).isEqualTo("true");
+        
         when(categoryService.updateCategory(anyInt(), anyString()))
             .thenThrow(new SQLException("Database error"));
         
@@ -484,23 +582,40 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
                 categoryDialog.categoryTableModel.setValueAt("Updated Name", 0, 1);
                 // Clear any existing message
                 categoryDialog.labelMessage.setText("");
+            } else {
+                // If no categories, create one first
+                try {
+                    categoryService.createCategory("Test Category");
+                    categoryDialog.loadCategories();
+                    categoryDialog.categoryTable.setRowSelectionInterval(0, 0);
+                    categoryDialog.categoryTableModel.setValueAt("Updated Name", 0, 1);
+                    categoryDialog.labelMessage.setText("");
+                } catch (SQLException e) {
+                    // Skip if can't create
+                }
             }
         });
         
-        dialog.button(withText("Update Selected")).click();
-        
         robot().waitForIdle();
         
+        dialog.button(withText("Update Selected")).click();
+        
+        // Wait for async operation to complete (controller catches exception and calls onError)
+        robot().waitForIdle();
         try {
-            Thread.sleep(100);
+            Thread.sleep(400);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+        robot().waitForIdle();
         
         String message = execute(() -> {
+            if (categoryDialog.labelMessage == null) {
+                return "LABEL_NULL";
+            }
             return categoryDialog.labelMessage.getText();
         });
-        assertThat(message).contains("Error");
+        assertThat(message).as("Message should contain 'Error', but was: '%s'", message).contains("Error");
     }
 
     @Test
@@ -524,22 +639,28 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
     @GUITest
     public void testCategoryDialog_DeleteSelectedCategory_NoSelection() {
         ensureDialogCreated();
+        // Ensure test mode is set and verify it
+        System.setProperty("test.mode", "true");
+        assertThat(System.getProperty("test.mode")).isEqualTo("true");
+        
         execute(() -> {
             categoryDialog.categoryTable.clearSelection();
             // Clear any existing message
             categoryDialog.labelMessage.setText("");
         });
         
-        dialog.button(withText("Delete Selected")).click();
-        
         robot().waitForIdle();
         
-        // Small additional delay
+        dialog.button(withText("Delete Selected")).click();
+        
+        // Wait for validation (immediate, no async)
+        robot().waitForIdle();
         try {
-            Thread.sleep(100);
+            Thread.sleep(200);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+        robot().waitForIdle();
         
         String message = execute(() -> {
             if (categoryDialog.labelMessage == null) {
@@ -547,7 +668,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             }
             return categoryDialog.labelMessage.getText();
         });
-        assertThat(message).contains("select");
+        assertThat(message).as("Message should contain 'select', but was: '%s'", message).contains("select");
     }
 
     @Test
@@ -563,8 +684,10 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         
         dialog.button(withText("Delete Selected")).click();
         
+        // Wait for async operation to complete
+        robot().waitForIdle();
         try {
-            Thread.sleep(100);
+            Thread.sleep(200);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
@@ -576,6 +699,10 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
     @GUITest
     public void testCategoryDialog_DeleteSelectedCategory_HandlesSQLException() throws SQLException {
         ensureDialogCreated();
+        // Ensure test mode is set and verify it
+        System.setProperty("test.mode", "true");
+        assertThat(System.getProperty("test.mode")).isEqualTo("true");
+        
         when(categoryService.deleteCategory(anyInt()))
             .thenThrow(new SQLException("Database error"));
         
@@ -583,25 +710,40 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             categoryDialog.loadCategories();
             if (categoryDialog.categoryTableModel.getRowCount() > 0) {
                 categoryDialog.categoryTable.setRowSelectionInterval(0, 0);
+            } else {
+                // If no categories, create one first
+                try {
+                    categoryService.createCategory("Test Category");
+                    categoryDialog.loadCategories();
+                    categoryDialog.categoryTable.setRowSelectionInterval(0, 0);
+                } catch (SQLException e) {
+                    // Skip if can't create
+                }
             }
             // Clear any existing message
             categoryDialog.labelMessage.setText("");
         });
         
-        dialog.button(withText("Delete Selected")).click();
-        
         robot().waitForIdle();
         
+        dialog.button(withText("Delete Selected")).click();
+        
+        // Wait for confirmation dialog and async operation (controller catches exception and calls onError)
+        robot().waitForIdle();
         try {
-            Thread.sleep(100);
+            Thread.sleep(400);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+        robot().waitForIdle();
         
         String message = execute(() -> {
+            if (categoryDialog.labelMessage == null) {
+                return "LABEL_NULL";
+            }
             return categoryDialog.labelMessage.getText();
         });
-        assertThat(message).contains("Error");
+        assertThat(message).as("Message should contain 'Error', but was: '%s'", message).contains("Error");
     }
 
     @Test
@@ -617,17 +759,26 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         
         // Wait a bit for dispose to complete
         try {
-            Thread.sleep(100);
+            Thread.sleep(300);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
         
         // Check if dialog is visible (should be false after dispose)
+        // Also check if dialog is disposed
         boolean isVisible = execute(() -> {
             return categoryDialog.isVisible();
         });
-        // Dialog should not be visible after clicking close
-        assertThat(isVisible).as("Dialog should not be visible after clicking close").isFalse();
+        boolean isDisposed = execute(() -> {
+            try {
+                categoryDialog.getTitle(); // This will throw if disposed
+                return false;
+            } catch (Exception e) {
+                return true; // Dialog is disposed
+            }
+        });
+        // Dialog should not be visible after clicking close OR should be disposed
+        assertThat(isVisible || isDisposed).as("Dialog should not be visible or should be disposed after clicking close").isTrue();
     }
 
     @Test

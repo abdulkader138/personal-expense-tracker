@@ -2,10 +2,7 @@ package com.mycompany.pet.ui;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.sql.SQLException;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -17,61 +14,60 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
+import com.mycompany.pet.controller.CategoryController;
 import com.mycompany.pet.model.Category;
-import com.mycompany.pet.service.CategoryService;
 
 /**
  * Dialog for managing categories.
+ * 
+ * This dialog uses CategoryController to separate UI concerns from business logic.
+ * All database operations are handled asynchronously by the controller.
  */
 public class CategoryDialog extends JDialog {
-    private static final String ERROR_TITLE = "Error";
-    private static final Logger LOGGER = Logger.getLogger(CategoryDialog.class.getName());
+    private static final long serialVersionUID = 1L;
     
-    private transient CategoryService categoryService;
+    private final CategoryController controller;
+    
+    // UI Components (package-private for testing)
     JTable categoryTable;
     DefaultTableModel categoryTableModel;
     JTextField nameField;
     JButton addButton;
     JButton updateButton;
     JButton deleteButton;
-    JLabel labelMessage; // For test-friendly message display
+    JLabel labelMessage; // For displaying messages to user
     
-    private static boolean isTestEnvironment() {
-        // Check system property first (most reliable)
-        if ("true".equals(System.getProperty("test.mode"))) {
-            return true;
-        }
-        // Check stack trace
-        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-        for (StackTraceElement element : stackTrace) {
-            String className = element.getClassName();
-            if (className.contains("junit") || className.contains("test") || 
-                className.contains("AssertJSwing") || className.contains("GUITest")) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public CategoryDialog(JFrame parent, CategoryService categoryService) {
-        super(parent, "Manage Categories", !isTestEnvironment()); // Non-modal in test environment
-        this.categoryService = categoryService;
+    /**
+     * Creates a new CategoryDialog.
+     * 
+     * @param parent Parent frame
+     * @param controller Category controller for business logic
+     */
+    public CategoryDialog(JFrame parent, CategoryController controller) {
+        super(parent, "Manage Categories", true); // Always modal
+        this.controller = controller;
         initializeUI();
-        // Defer loadCategories() to avoid blocking during construction
-        // It will be called when dialog is shown or explicitly via loadCategories()
-        if (!isTestEnvironment()) {
-            loadCategories();
-        }
+        loadCategories();
+    }
+    
+    /**
+     * Creates a CategoryDialog with CategoryService (for backward compatibility).
+     * This constructor creates a controller internally.
+     * 
+     * @param parent Parent frame
+     * @param categoryService Category service (will be wrapped in controller)
+     * @deprecated Use CategoryDialog(JFrame, CategoryController) instead
+     */
+    @Deprecated
+    public CategoryDialog(JFrame parent, com.mycompany.pet.service.CategoryService categoryService) {
+        this(parent, new CategoryController(categoryService));
     }
 
     private void initializeUI() {
         setSize(500, 420);
-        if (!isTestEnvironment()) {
-            setLocationRelativeTo(getParent());
-        }
+        setLocationRelativeTo(getParent());
 
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -80,21 +76,7 @@ public class CategoryDialog extends JDialog {
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         nameField = new JTextField(15);
         addButton = new JButton("Add Category");
-        addButton.addActionListener(e -> {
-            String name = nameField.getText().trim();
-            if (name.isEmpty()) {
-                showMessage("Category name cannot be empty.");
-                return;
-            }
-            try {
-                categoryService.createCategory(name);
-                nameField.setText("");
-                showMessage(""); // clear
-                loadCategories();
-            } catch (SQLException ex) {
-                showMessage("Error adding category: " + ex.getMessage());
-            }
-        });
+        addButton.addActionListener(e -> onAddButtonClick());
         topPanel.add(new JLabel("Name:"));
         topPanel.add(nameField);
         topPanel.add(addButton);
@@ -103,6 +85,8 @@ public class CategoryDialog extends JDialog {
         // Center panel for category table
         String[] columnNames = {"ID", "Name"};
         categoryTableModel = new DefaultTableModel(columnNames, 0) {
+            private static final long serialVersionUID = 1L;
+            
             @Override
             public boolean isCellEditable(int row, int column) {
                 return column == 1; // Only name is editable
@@ -117,21 +101,22 @@ public class CategoryDialog extends JDialog {
         // Bottom panel for buttons
         JPanel bottomPanel = new JPanel(new FlowLayout());
         updateButton = new JButton("Update Selected");
-        updateButton.addActionListener(e -> updateSelectedCategory());
+        updateButton.addActionListener(e -> onUpdateButtonClick());
         bottomPanel.add(updateButton);
 
         deleteButton = new JButton("Delete Selected");
-        deleteButton.addActionListener(e -> deleteSelectedCategory());
+        deleteButton.addActionListener(e -> onDeleteButtonClick());
         bottomPanel.add(deleteButton);
 
         JButton closeButton = new JButton("Close");
         closeButton.addActionListener(e -> {
+            setVisible(false);
             dispose();
         });
         bottomPanel.add(closeButton);
         mainPanel.add(bottomPanel, BorderLayout.SOUTH);
 
-        // Message area for test-friendly error display
+        // Message area for user feedback
         labelMessage = new JLabel("");
         labelMessage.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         mainPanel.add(labelMessage, BorderLayout.PAGE_END);
@@ -139,79 +124,36 @@ public class CategoryDialog extends JDialog {
         add(mainPanel);
     }
 
-    void showMessage(String msg) {
-        // Always check system property first - most reliable
-        boolean isTest = "true".equals(System.getProperty("test.mode"));
-        boolean isTestEnv = isTestEnvironment();
-        
-        if (isTest || isTestEnv) {
-            // In test mode, always set label text directly
-            // Action listeners run on EDT, so this should be safe
-            if (labelMessage == null) {
-                // Label not initialized yet - this shouldn't happen but handle it
-                return;
-            }
-            String messageToSet = (msg != null) ? msg : "";
-            // ROOT CAUSE FIX: Set text directly and synchronously on EDT
-            // We're already on EDT from action listener, so setText() is safe and immediate
-            labelMessage.setText(messageToSet);
-            // Ensure label is visible
-            labelMessage.setVisible(true);
-            // Force immediate repaint (we're on EDT, so this is synchronous)
-            labelMessage.repaint();
-            labelMessage.validate();
-        } else {
-            if (msg == null || msg.isEmpty()) {
-                if (labelMessage != null) {
-                    labelMessage.setText("");
-                }
-                return;
-            }
-            JOptionPane.showMessageDialog(this, msg, "Info", JOptionPane.WARNING_MESSAGE);
+    /**
+     * Handles add button click.
+     * Delegates to controller for business logic.
+     */
+    private void onAddButtonClick() {
+        String name = nameField.getText().trim();
+        if (name.isEmpty()) {
+            showMessage("Category name cannot be empty.");
+            return;
         }
+        
+        controller.createCategory(name,
+            category -> {
+                // Success: clear field and reload
+                nameField.setText("");
+                showMessage("");
+                loadCategories();
+            },
+            error -> {
+                // Error: show message
+                showMessage(error);
+            }
+        );
     }
 
     /**
-     * Loads categories from the database and populates the table.
-     * Errors are logged only (no UI messages) to avoid any blocking or user interaction.
-     * 
-     * Industry best practice: Background operations should fail silently and log errors.
-     * Users can retry by closing and reopening the dialog.
+     * Handles update button click.
+     * Delegates to controller for business logic.
      */
-    void loadCategories() {
-        try {
-            categoryTableModel.setRowCount(0);
-            List<Category> categories = categoryService.getAllCategories();
-            for (Category category : categories) {
-                categoryTableModel.addRow(new Object[]{
-                    category.getCategoryId(),
-                    category.getName()
-                });
-            }
-            // Only clear message if it's empty or a success message
-            // Don't clear error or validation messages - preserve them
-            if (labelMessage != null) {
-                String currentMsg = labelMessage.getText();
-                // Only clear if message is empty or doesn't contain error/validation keywords
-                // Preserve any message that contains: Error, select, cannot be empty, Please
-                if (currentMsg == null || currentMsg.isEmpty()) {
-                    // Empty message - safe to keep it empty
-                    labelMessage.setText("");
-                } else if (currentMsg.contains("Error") || currentMsg.contains("select") || 
-                          currentMsg.contains("cannot be empty") || currentMsg.contains("Please")) {
-                    // This is an error or validation message - DO NOT clear it
-                    // Keep it visible
-                } else {
-                    // This is likely a success message - safe to clear
-                    labelMessage.setText("");
-                }
-            }
-        } catch (SQLException e) {
-            showMessage("Error loading categories: " + e.getMessage());
-        }
-    }
-
-    void updateSelectedCategory() {
+    private void onUpdateButtonClick() {
         // Stop any cell editing that might be in progress
         if (categoryTable.isEditing()) {
             categoryTable.getCellEditor().stopCellEditing();
@@ -220,10 +162,6 @@ public class CategoryDialog extends JDialog {
         int selectedRow = categoryTable.getSelectedRow();
         if (selectedRow < 0) {
             showMessage("Please select a category to update.");
-            // Ensure message is set and not cleared
-            if (labelMessage != null) {
-                labelMessage.setText("Please select a category to update.");
-            }
             return;
         }
 
@@ -232,57 +170,132 @@ public class CategoryDialog extends JDialog {
         
         if (name == null || name.trim().isEmpty()) {
             showMessage("Category name cannot be empty.");
-            // Ensure message is set and not cleared
-            if (labelMessage != null) {
-                labelMessage.setText("Category name cannot be empty.");
-            }
             return;
         }
 
-        try {
-            categoryService.updateCategory(categoryId, name.trim());
-            loadCategories(); // This will clear message on success
-        } catch (SQLException e) {
-            showMessage("Error updating category: " + e.getMessage());
-            // Ensure message is set and not cleared
-            if (labelMessage != null) {
-                labelMessage.setText("Error updating category: " + e.getMessage());
+        controller.updateCategory(categoryId, name.trim(),
+            category -> {
+                // Success: reload categories
+                showMessage("");
+                loadCategories();
+            },
+            error -> {
+                // Error: show message (don't reload to preserve error)
+                showMessage(error);
             }
-        }
+        );
     }
 
-    void deleteSelectedCategory() {
+    /**
+     * Handles delete button click.
+     * Delegates to controller for business logic.
+     */
+    private void onDeleteButtonClick() {
         int selectedRow = categoryTable.getSelectedRow();
         if (selectedRow < 0) {
             showMessage("Please select a category to delete.");
-            // Ensure message is set and not cleared
-            if (labelMessage != null) {
-                labelMessage.setText("Please select a category to delete.");
-            }
             return;
         }
 
-        int confirm = JOptionPane.YES_OPTION; // Default to YES in tests to avoid blocking
-        if (!isTestEnvironment()) {
-            confirm = JOptionPane.showConfirmDialog(this,
-                "Are you sure you want to delete this category?",
-                "Confirm Delete",
-                JOptionPane.YES_NO_OPTION);
-        }
+        int confirm = JOptionPane.showConfirmDialog(this,
+            "Are you sure you want to delete this category?",
+            "Confirm Delete",
+            JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
             Integer categoryId = (Integer) categoryTableModel.getValueAt(selectedRow, 0);
-            try {
-                categoryService.deleteCategory(categoryId);
-                loadCategories(); // This will clear message on success
-            } catch (SQLException e) {
-                showMessage("Error deleting category: " + e.getMessage());
-                // Ensure message is set and not cleared
-                if (labelMessage != null) {
-                    labelMessage.setText("Error deleting category: " + e.getMessage());
+            controller.deleteCategory(categoryId,
+                () -> {
+                    // Success: reload categories
+                    showMessage("");
+                    loadCategories();
+                },
+                error -> {
+                    // Error: show message (don't reload to preserve error)
+                    showMessage(error);
                 }
+            );
+        }
+    }
+
+    /**
+     * Shows a message to the user.
+     * In production, uses JOptionPane. For testing, uses labelMessage.
+     * 
+     * @param msg Message to show (empty string clears message)
+     */
+    void showMessage(String msg) {
+        if (msg == null || msg.isEmpty()) {
+            if (labelMessage != null) {
+                labelMessage.setText("");
+            }
+            return;
+        }
+        
+        // Check if we're in a test environment by checking if labelMessage is being monitored
+        // This is a cleaner approach than stack trace inspection
+        boolean useLabel = isLabelMessageMode();
+        
+        // Always update label if in test mode, regardless of whether we show dialog
+        if (useLabel && labelMessage != null) {
+            // Test mode: use label for assertions
+            labelMessage.setText(msg);
+            labelMessage.setVisible(true);
+        }
+        
+        // In production mode, show dialog
+        if (!useLabel) {
+            JOptionPane.showMessageDialog(this, msg, "Info", JOptionPane.WARNING_MESSAGE);
+            // Also update label if it exists (for consistency)
+            if (labelMessage != null) {
+                labelMessage.setText("");
             }
         }
     }
-}
+    
+    /**
+     * Determines if label message mode should be used.
+     * This checks if the label is being actively monitored (test scenario).
+     * 
+     * @return true if label message mode should be used
+     */
+    private boolean isLabelMessageMode() {
+        // Check system property for explicit test mode
+        String testMode = System.getProperty("test.mode");
+        if ("true".equals(testMode)) {
+            return true;
+        }
+        // In production, always use dialogs
+        return false;
+    }
 
+    /**
+     * Loads categories from the database and populates the table.
+     * Uses controller for async operation.
+     */
+    void loadCategories() {
+        controller.loadCategories(
+            categories -> {
+                // Success: populate table
+                categoryTableModel.setRowCount(0);
+                for (Category category : categories) {
+                    categoryTableModel.addRow(new Object[]{
+                        category.getCategoryId(),
+                        category.getName()
+                    });
+                }
+                // Clear any non-error messages
+                String currentMsg = labelMessage.getText();
+                if (currentMsg != null && !currentMsg.isEmpty() && 
+                    !currentMsg.contains("Error") && !currentMsg.contains("select") &&
+                    !currentMsg.contains("cannot be empty") && !currentMsg.contains("Please")) {
+                    labelMessage.setText("");
+                }
+            },
+            error -> {
+                // Error: show message
+                showMessage(error);
+            }
+        );
+    }
+}

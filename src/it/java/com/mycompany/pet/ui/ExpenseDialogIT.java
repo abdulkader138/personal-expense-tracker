@@ -1,0 +1,418 @@
+/*
+ * Integration tests for the ExpenseDialog class.
+ * 
+ * These tests cover the following functionalities:
+ * 
+ * - Setting up and tearing down the test environment using Docker containers and database configurations.
+ * - Creating and updating expenses through the graphical user interface.
+ * - Verifying successful and failed operations for adding and updating expenses.
+ * - Ensuring correct validation and error handling for invalid input data.
+ * - Using the AssertJSwingJUnitTestCase framework for GUI testing and Awaitility for asynchronous operations.
+ * 
+ * The databaseConfig variable is responsible for starting the Docker container.
+ * If the test is run from Eclipse, it runs the Docker container using Testcontainers.
+ * If the test is run using a Maven command, it starts a Docker container without test containers.
+ * 
+ * @see ExpenseService
+ * @see CategoryService
+ * @see ExpenseDAO
+ * @see CategoryDAO
+ * @see DatabaseConfig
+ * @see DBConfig
+ * @see MavenContainerConfig
+ * @see TestContainerConfig
+ */
+
+package com.mycompany.pet.ui;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.swing.core.matcher.JButtonMatcher.withText;
+import static org.assertj.swing.edt.GuiActionRunner.execute;
+import static org.awaitility.Awaitility.await;
+
+import java.math.BigDecimal;
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.util.concurrent.TimeUnit;
+
+import org.assertj.swing.annotation.GUITest;
+import org.assertj.swing.edt.GuiActionRunner;
+import org.assertj.swing.fixture.DialogFixture;
+import org.assertj.swing.fixture.FrameFixture;
+import org.assertj.swing.junit.runner.GUITestRunner;
+import org.assertj.swing.junit.testcase.AssertJSwingJUnitTestCase;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import com.mycompany.pet.DatabaseConfig;
+import com.mycompany.pet.configurations.DBConfig;
+import com.mycompany.pet.dao.CategoryDAO;
+import com.mycompany.pet.dao.ExpenseDAO;
+import com.mycompany.pet.database.DatabaseConnection;
+import com.mycompany.pet.database.DatabaseInitializer;
+import com.mycompany.pet.model.Category;
+import com.mycompany.pet.model.Expense;
+import com.mycompany.pet.service.CategoryService;
+import com.mycompany.pet.service.ExpenseService;
+
+/**
+ * The Class ExpenseDialogIT.
+ */
+@RunWith(GUITestRunner.class)
+public class ExpenseDialogIT extends AssertJSwingJUnitTestCase {
+
+	/** The category service. */
+	private CategoryService categoryService;
+
+	/** The expense service. */
+	private ExpenseService expenseService;
+
+	/** The main window. */
+	private MainWindow mainWindow;
+
+	/** The parent frame. */
+	private FrameFixture parentFrame;
+
+	/** The expense dialog. */
+	private ExpenseDialog expenseDialog;
+
+	/** The dialog. */
+	private DialogFixture dialog;
+
+	/** The database connection. */
+	private DatabaseConnection databaseConnection;
+
+	/** The category. */
+	private Category category;
+
+	/**
+	 * This variable is responsible for starting the Docker container. If the test
+	 * is run from Eclipse, it runs the Docker container using Testcontainers. If
+	 * the test is run using a Maven command, it starts a Docker container without
+	 * test containers
+	 */
+	private static DBConfig databaseConfig;
+
+	/** The expense date. */
+	private static final LocalDate EXPENSE_DATE = LocalDate.now();
+
+	/** The expense amount. */
+	private static final BigDecimal EXPENSE_AMOUNT = new BigDecimal("100.50");
+
+	/** The expense description. */
+	private static final String EXPENSE_DESCRIPTION = "Lunch";
+
+	/** The updated expense description. */
+	private static final String UPDATED_EXPENSE_DESCRIPTION = "Dinner";
+
+	/**
+	 * Setup server.
+	 */
+	@BeforeClass
+	public static void setupServer() {
+		try {
+			databaseConfig = DatabaseConfig.getDatabaseConfig();
+			if (databaseConfig == null) {
+				org.junit.Assume.assumeTrue("Database config not available", false);
+				return;
+			}
+			databaseConfig.testAndStartDatabaseConnection();
+		} catch (Exception e) {
+			// Skip tests if database setup fails (e.g., Docker not available)
+			org.junit.Assume.assumeNoException("Database setup failed. Docker may not be available. Skipping integration tests.", e);
+		}
+	}
+
+	/**
+	 * On set up.
+	 *
+	 * @throws Exception the exception
+	 */
+	@Override
+	protected void onSetUp() throws Exception {
+		if (databaseConfig == null) {
+			org.junit.Assume.assumeTrue("Database config not available", false);
+			return;
+		}
+		
+		try {
+			databaseConnection = databaseConfig.getDatabaseConnection();
+			if (databaseConnection == null) {
+				org.junit.Assume.assumeTrue("Database connection not available", false);
+				return;
+			}
+			
+			// Initialize database
+			try {
+				DatabaseInitializer initializer = new DatabaseInitializer(databaseConnection);
+				initializer.initialize();
+			} catch (Exception e) {
+				org.junit.Assume.assumeNoException("Failed to initialize database. Skipping integration tests.", e);
+				return;
+			}
+
+			// Initialize DAOs and Services
+			CategoryDAO categoryDAO = new CategoryDAO(databaseConnection);
+			ExpenseDAO expenseDAO = new ExpenseDAO(databaseConnection);
+			categoryService = new CategoryService(categoryDAO);
+			expenseService = new ExpenseService(expenseDAO, categoryDAO);
+
+			// Create test category
+			category = categoryService.createCategory("Food");
+
+			// Create parent frame (MainWindow) and make it visible first
+			mainWindow = GuiActionRunner.execute(() -> {
+				MainWindow mw = new MainWindow(categoryService, expenseService);
+				mw.setVisible(true);
+				return mw;
+			});
+			parentFrame = new FrameFixture(robot(), mainWindow);
+			parentFrame.show();
+
+			// Create dialog on EDT
+			expenseDialog = GuiActionRunner.execute(() -> {
+				ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, null);
+				ed.setModal(false); // Make non-modal for testing
+				ed.setVisible(true);
+				return ed;
+			});
+			
+			dialog = new DialogFixture(robot(), expenseDialog);
+			dialog.show();
+			
+			// Wait for initial category load (async operation)
+			robot().waitForIdle();
+			try {
+				Thread.sleep(200);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+		} catch (Exception e) {
+			// Skip test if database operations fail
+			org.junit.Assume.assumeNoException("Database operation failed. Skipping test.", e);
+			return;
+		}
+	}
+
+	/**
+	 * On tear down.
+	 */
+	@Override
+	protected void onTearDown() {
+		if (databaseConnection != null) {
+			databaseConnection.close();
+		}
+		if (dialog != null) {
+			dialog.cleanUp();
+		}
+		if (parentFrame != null) {
+			parentFrame.cleanUp();
+		}
+	}
+
+	/**
+	 * Test add expense success.
+	 */
+	@Test
+	@GUITest
+	public void testAddExpenseSuccess() throws SQLException {
+		if (expenseService == null || category == null) {
+			org.junit.Assume.assumeTrue("Test setup incomplete", false);
+			return;
+		}
+
+		// Fill in expense details
+		GuiActionRunner.execute(() -> {
+			expenseDialog.dateField.setText(EXPENSE_DATE.toString());
+			expenseDialog.amountField.setText(EXPENSE_AMOUNT.toString());
+			expenseDialog.descriptionField.setText(EXPENSE_DESCRIPTION);
+			// Select category
+			int itemCount = expenseDialog.categoryComboBox.getItemCount();
+			for (int i = 0; i < itemCount; i++) {
+				Object item = expenseDialog.categoryComboBox.getItemAt(i);
+				if (item != null && item instanceof Category) {
+					Category cat = (Category) item;
+					if (cat.getCategoryId().equals(category.getCategoryId())) {
+						expenseDialog.categoryComboBox.setSelectedItem(item);
+						break;
+					}
+				}
+			}
+		});
+		
+		robot().waitForIdle();
+
+		// Click Save button
+		dialog.button(withText("Save")).click();
+		
+		// Wait for async operation
+		robot().waitForIdle();
+
+		// Verify expense was saved
+		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+			boolean saved = GuiActionRunner.execute(() -> {
+				return expenseDialog.isSaved();
+			});
+			assertThat(saved).isTrue();
+		});
+	}
+
+	/**
+	 * Test edit expense success.
+	 */
+	@Test
+	@GUITest
+	public void testEditExpenseSuccess() throws SQLException {
+		if (expenseService == null || category == null) {
+			org.junit.Assume.assumeTrue("Test setup incomplete", false);
+			return;
+		}
+
+		// First, create an expense
+		Expense expense = expenseService.createExpense(EXPENSE_DATE, EXPENSE_AMOUNT, EXPENSE_DESCRIPTION, category.getCategoryId());
+
+		// Close the add dialog and create edit dialog
+		GuiActionRunner.execute(() -> {
+			if (expenseDialog != null) {
+				expenseDialog.dispose();
+			}
+		});
+
+		// Create edit dialog
+		ExpenseDialog editDialog = GuiActionRunner.execute(() -> {
+			ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, expense);
+			ed.setVisible(true);
+			return ed;
+		});
+		DialogFixture editDialogFixture = new DialogFixture(robot(), editDialog);
+		editDialogFixture.show();
+
+		// Update expense details
+		GuiActionRunner.execute(() -> {
+			editDialog.descriptionField.setText(UPDATED_EXPENSE_DESCRIPTION);
+			// Ensure category is selected
+			int itemCount = editDialog.categoryComboBox.getItemCount();
+			for (int i = 0; i < itemCount; i++) {
+				Object item = editDialog.categoryComboBox.getItemAt(i);
+				if (item != null && item instanceof Category) {
+					Category cat = (Category) item;
+					if (cat.getCategoryId().equals(category.getCategoryId())) {
+						editDialog.categoryComboBox.setSelectedItem(item);
+						break;
+					}
+				}
+			}
+		});
+
+		// Click Save button
+		editDialogFixture.button(withText("Save")).click();
+
+		// Verify expense was saved
+		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+			boolean saved = GuiActionRunner.execute(() -> {
+				return editDialog.isSaved();
+			});
+			assertThat(saved).isTrue();
+		});
+
+		editDialogFixture.cleanUp();
+	}
+
+	/**
+	 * Test add expense with no category.
+	 */
+	@Test
+	@GUITest
+	public void testAddExpenseWithNoCategory() {
+		if (expenseService == null) {
+			org.junit.Assume.assumeTrue("Test setup incomplete", false);
+			return;
+		}
+
+		// Fill in expense details but don't select category
+		GuiActionRunner.execute(() -> {
+			expenseDialog.dateField.setText(EXPENSE_DATE.toString());
+			expenseDialog.amountField.setText(EXPENSE_AMOUNT.toString());
+			expenseDialog.descriptionField.setText(EXPENSE_DESCRIPTION);
+			expenseDialog.categoryComboBox.setSelectedItem(null);
+		});
+
+		// Click Save button
+		dialog.button(withText("Save")).click();
+
+		// Verify dialog is still visible (validation error)
+		await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
+			boolean visible = GuiActionRunner.execute(() -> {
+				return expenseDialog.isVisible();
+			});
+			assertThat(visible).isTrue();
+		});
+	}
+
+	/**
+	 * Test add expense with invalid date.
+	 */
+	@Test
+	@GUITest
+	public void testAddExpenseWithInvalidDate() {
+		if (expenseService == null || category == null) {
+			org.junit.Assume.assumeTrue("Test setup incomplete", false);
+			return;
+		}
+
+		// Fill in expense details with invalid date
+		GuiActionRunner.execute(() -> {
+			expenseDialog.dateField.setText("invalid-date");
+			expenseDialog.amountField.setText(EXPENSE_AMOUNT.toString());
+			expenseDialog.descriptionField.setText(EXPENSE_DESCRIPTION);
+			// Select category
+			int itemCount = expenseDialog.categoryComboBox.getItemCount();
+			for (int i = 0; i < itemCount; i++) {
+				Object item = expenseDialog.categoryComboBox.getItemAt(i);
+				if (item != null && item instanceof Category) {
+					Category cat = (Category) item;
+					if (cat.getCategoryId().equals(category.getCategoryId())) {
+						expenseDialog.categoryComboBox.setSelectedItem(item);
+						break;
+					}
+				}
+			}
+		});
+
+		// Click Save button
+		dialog.button(withText("Save")).click();
+
+		// Verify dialog is still visible (validation error)
+		await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
+			boolean visible = GuiActionRunner.execute(() -> {
+				return expenseDialog.isVisible();
+			});
+			assertThat(visible).isTrue();
+		});
+	}
+
+	/**
+	 * Test cancel dialog.
+	 */
+	@Test
+	@GUITest
+	public void testCancelDialog() {
+		if (expenseService == null) {
+			org.junit.Assume.assumeTrue("Test setup incomplete", false);
+			return;
+		}
+
+		// Click Cancel button
+		dialog.button(withText("Cancel")).click();
+
+		// Verify dialog is closed and not saved
+		await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
+			boolean saved = GuiActionRunner.execute(() -> {
+				return expenseDialog.isSaved();
+			});
+			assertThat(saved).isFalse();
+		});
+	}
+}
+

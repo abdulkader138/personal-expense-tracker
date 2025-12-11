@@ -45,8 +45,14 @@ public class ExpenseTrackerApp {
                 CategoryService categoryService = new CategoryService(categoryDAO);
                 ExpenseService expenseService = new ExpenseService(expenseDAO, categoryDAO);
 
-                // Create and show main window
-                MainWindow mainWindow = new MainWindow(categoryService, expenseService);
+                // Create controllers
+                com.mycompany.pet.controller.CategoryController categoryController = 
+                    new com.mycompany.pet.controller.CategoryController(categoryService);
+                com.mycompany.pet.controller.ExpenseController expenseController = 
+                    new com.mycompany.pet.controller.ExpenseController(expenseService);
+
+                // Create and show main window (using controllers)
+                MainWindow mainWindow = new MainWindow(expenseController, categoryController);
                 mainWindow.loadData(); // Load data after window is created
                 mainWindow.setVisible(true);
             } catch (Exception e) {

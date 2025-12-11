@@ -8,8 +8,6 @@ import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -21,52 +19,77 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import com.mycompany.pet.controller.CategoryController;
+import com.mycompany.pet.controller.ExpenseController;
 import com.mycompany.pet.model.Category;
 import com.mycompany.pet.model.Expense;
-import com.mycompany.pet.service.CategoryService;
-import com.mycompany.pet.service.ExpenseService;
 
 /**
  * Dialog for adding/editing expenses.
+ * 
+ * This dialog uses ExpenseController and CategoryController to separate UI concerns from business logic.
+ * All database operations are handled asynchronously by the controllers.
  */
 public class ExpenseDialog extends JDialog {
-    private static final Logger LOGGER = Logger.getLogger(ExpenseDialog.class.getName());
+    private static final long serialVersionUID = 1L;
     
-    private transient CategoryService categoryService;
-    private transient ExpenseService expenseService;
-    private transient Expense expense;
+    private final ExpenseController expenseController;
+    private final CategoryController categoryController;
+    private final Expense expense; // null for new expense, non-null for edit
     private boolean saved = false;
 
+    // UI Components (package-private for testing)
     JTextField dateField;
     JTextField amountField;
     JTextField descriptionField;
     JComboBox<Category> categoryComboBox;
     
-    private static boolean isTestEnvironment() {
-        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-        for (StackTraceElement element : stackTrace) {
-            String className = element.getClassName();
-            if (className.contains("junit") || className.contains("test") || 
-                className.contains("AssertJSwing") || className.contains("GUITest")) {
-                return true;
-            }
+    /**
+     * Creates a new ExpenseDialog.
+     * 
+     * @param parent Parent frame
+     * @param expenseController Expense controller for business logic
+     * @param categoryController Category controller for loading categories
+     * @param expense Expense to edit (null for new expense)
+     */
+    public ExpenseDialog(JFrame parent, ExpenseController expenseController, 
+                        CategoryController categoryController, Expense expense) {
+        super(parent, expense == null ? "Add Expense" : "Edit Expense", true); // Always modal
+        this.expenseController = expenseController;
+        this.categoryController = categoryController;
+        this.expense = expense;
+        initializeUI();
+        loadCategories();
+        if (expense != null) {
+            loadExpenseData();
         }
-        return false;
     }
-
-    public ExpenseDialog(JFrame parent, CategoryService categoryService, Expense expense) {
-        super(parent, expense == null ? "Add Expense" : "Edit Expense", !isTestEnvironment()); // Non-modal in test environment
-        this.categoryService = categoryService;
+    
+    /**
+     * Creates an ExpenseDialog with services (for backward compatibility).
+     * This constructor creates controllers internally.
+     * 
+     * @param parent Parent frame (must be MainWindow)
+     * @param categoryService Category service (will be wrapped in controller)
+     * @param expense Expense to edit (null for new expense)
+     * @deprecated Use ExpenseDialog(JFrame, ExpenseController, CategoryController, Expense) instead
+     */
+    @Deprecated
+    public ExpenseDialog(JFrame parent, com.mycompany.pet.service.CategoryService categoryService, Expense expense) {
+        super(parent, expense == null ? "Add Expense" : "Edit Expense", true);
         this.expense = expense;
         
-        // Get expense service from parent
+        // Get expense service from parent (backward compatibility)
         if (parent instanceof MainWindow) {
-            this.expenseService = ((MainWindow) parent).getExpenseService();
+            com.mycompany.pet.service.ExpenseService expenseService = ((MainWindow) parent).getExpenseService();
+            this.expenseController = new ExpenseController(expenseService);
         } else {
-            throw new IllegalArgumentException("Parent must be MainWindow");
+            throw new IllegalArgumentException("Parent must be MainWindow when using deprecated constructor");
         }
+        this.categoryController = new CategoryController(categoryService);
         
         initializeUI();
+        loadCategories();
         if (expense != null) {
             loadExpenseData();
         }
@@ -74,9 +97,7 @@ public class ExpenseDialog extends JDialog {
 
     private void initializeUI() {
         setSize(450, 300);
-        if (!isTestEnvironment()) {
-            setLocationRelativeTo(getParent());
-        }
+        setLocationRelativeTo(getParent());
 
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -126,21 +147,6 @@ public class ExpenseDialog extends JDialog {
         gbc.gridx = 1;
         gbc.weightx = 1.0;
         categoryComboBox = new JComboBox<>();
-        try {
-            List<Category> categories = categoryService.getAllCategories();
-            for (Category category : categories) {
-                categoryComboBox.addItem(category);
-            }
-            // Success - no message needed
-            LOGGER.log(Level.FINE, "Categories loaded successfully in ExpenseDialog");
-        } catch (SQLException e) {
-            // Log error for debugging (industry standard)
-            // NO UI MESSAGE - logging only to avoid any blocking or modal dialogs
-            LOGGER.log(Level.SEVERE, "Error loading categories in ExpenseDialog: " + e.getMessage(), e);
-            
-            // Users will see empty combo box and can retry by closing/reopening dialog
-            // This is the cleanest approach - no UI interaction required
-        }
         panel.add(categoryComboBox, gbc);
 
         // Buttons
@@ -152,7 +158,7 @@ public class ExpenseDialog extends JDialog {
         gbc.anchor = GridBagConstraints.CENTER;
         JPanel buttonPanel = new JPanel(new FlowLayout());
         JButton saveButton = new JButton("Save");
-        saveButton.addActionListener(e -> saveExpense());
+        saveButton.addActionListener(e -> onSaveButtonClick());
         buttonPanel.add(saveButton);
         JButton cancelButton = new JButton("Cancel");
         cancelButton.addActionListener(e -> dispose());
@@ -163,22 +169,55 @@ public class ExpenseDialog extends JDialog {
         pack();
     }
 
+    /**
+     * Loads categories into the combo box.
+     * Uses controller for async operation.
+     */
+    private void loadCategories() {
+        categoryController.loadCategories(
+            categories -> {
+                // Success: populate combo box
+                categoryComboBox.removeAllItems();
+                for (Category category : categories) {
+                    categoryComboBox.addItem(category);
+                }
+            },
+            error -> {
+                // Error: log but don't block UI
+                // User will see empty combo box and can retry
+                java.util.logging.Logger.getLogger(ExpenseDialog.class.getName())
+                    .warning("Error loading categories: " + error);
+            }
+        );
+    }
+
+    /**
+     * Loads expense data into the form fields.
+     */
     void loadExpenseData() {
+        if (expense == null) {
+            return;
+        }
+        
         dateField.setText(expense.getDate().toString());
         amountField.setText(expense.getAmount().toString());
         descriptionField.setText(expense.getDescription());
         
         try {
-            Category category = categoryService.getCategory(expense.getCategoryId());
+            Category category = categoryController.getCategory(expense.getCategoryId());
             if (category != null) {
                 categoryComboBox.setSelectedItem(category);
             }
         } catch (SQLException e) {
-            // Ignore
+            // Ignore - category will remain unselected
         }
     }
 
-    void saveExpense() {
+    /**
+     * Handles save button click.
+     * Delegates to controller for business logic.
+     */
+    private void onSaveButtonClick() {
         try {
             LocalDate date = LocalDate.parse(dateField.getText().trim());
             BigDecimal amount = new BigDecimal(amountField.getText().trim());
@@ -186,34 +225,62 @@ public class ExpenseDialog extends JDialog {
             Category selectedCategory = (Category) categoryComboBox.getSelectedItem();
             
             if (selectedCategory == null) {
-                if (!isTestEnvironment()) {
-                    JOptionPane.showMessageDialog(this,
-                        "Please select a category.",
-                        "Validation Error",
-                        JOptionPane.WARNING_MESSAGE);
-                }
+                JOptionPane.showMessageDialog(this,
+                    "Please select a category.",
+                    "Validation Error",
+                    JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
             if (expense == null) {
-                expenseService.createExpense(date, amount, description, selectedCategory.getCategoryId());
+                // Create new expense
+                expenseController.createExpense(date, amount, description, selectedCategory.getCategoryId(),
+                    createdExpense -> {
+                        // Success: close dialog
+                        saved = true;
+                        dispose();
+                    },
+                    error -> {
+                        // Error: show message
+                        JOptionPane.showMessageDialog(this,
+                            error,
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                    }
+                );
             } else {
-                expenseService.updateExpense(expense.getExpenseId(), date, amount, description, selectedCategory.getCategoryId());
+                // Update existing expense
+                expenseController.updateExpense(expense.getExpenseId(), date, amount, description, 
+                    selectedCategory.getCategoryId(),
+                    updatedExpense -> {
+                        // Success: close dialog
+                        saved = true;
+                        dispose();
+                    },
+                    error -> {
+                        // Error: show message
+                        JOptionPane.showMessageDialog(this,
+                            error,
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                    }
+                );
             }
-            saved = true;
-            dispose();
         } catch (Exception e) {
-            if (!isTestEnvironment()) {
-                JOptionPane.showMessageDialog(this,
-                    "Error saving expense: " + e.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
-            }
+            // Validation error (parse exception, etc.)
+            JOptionPane.showMessageDialog(this,
+                "Invalid input: " + e.getMessage(),
+                "Validation Error",
+                JOptionPane.ERROR_MESSAGE);
         }
     }
 
+    /**
+     * Returns whether the expense was saved.
+     * 
+     * @return true if expense was saved, false otherwise
+     */
     public boolean isSaved() {
         return saved;
     }
 }
-

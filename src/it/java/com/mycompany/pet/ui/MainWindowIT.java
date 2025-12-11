@@ -203,6 +203,14 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 
 		window = new FrameFixture(robot(), mainWindow);
 		// Don't call window.show() - it's already visible and show() can block in headless mode
+		
+		// Wait for initial data load (async operations)
+		robot().waitForIdle();
+		try {
+			Thread.sleep(200);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		}
 	}
 
 	/**

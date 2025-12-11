@@ -215,6 +215,7 @@
                     <excludes>
                         <exclude>**/*IT.java</exclude>
                         <exclude>**/DatabaseConnectionTest.java</exclude>
+                        <!-- UI tests are excluded by default but can be enabled with ui-tests profile -->
                         <!-- Exclude UI tests by default - CI/CD overrides with -Dsurefire.excludes -->
                         <exclude>**/ui/*Test.java</exclude>
                     </excludes>
@@ -227,6 +228,9 @@
                     <!-- Increased timeout for UI tests which may take longer -->
                     <parallel>none</parallel>
                     <!-- Run tests sequentially to avoid EDT conflicts -->
+                    <!-- Note: UI tests are skipped in headless mode by default.
+                         To run UI tests, use: mvn test -Pui-tests -Dforce.ui.tests=true
+                         Or set up xvfb for headless GUI testing -->
                 </configuration>
             </plugin>
 
@@ -488,6 +492,17 @@
                                 <exclude>**/DatabaseConnectionTest.java</exclude>
                                 <!-- UI tests are included when this profile is active -->
                             </excludes>
+                            <includes>
+                                <include>**/*Test.java</include>
+                            </includes>
+                            <!-- Force UI tests to run even in headless mode (requires xvfb) -->
+                            <systemPropertyVariables>
+                                <force.ui.tests>true</force.ui.tests>
+                            </systemPropertyVariables>
+                            <!-- For Linux CI/CD, use xvfb to run GUI tests -->
+                            <environmentVariables>
+                                <DISPLAY>:99</DISPLAY>
+                            </environmentVariables>
                         </configuration>
                     </plugin>
                 </plugins>

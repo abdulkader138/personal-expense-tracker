@@ -60,8 +60,19 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
     public static void checkHeadless() {
         // Check for headless mode BEFORE any test runs
         // This runs before setUp() which initializes the robot
-        assumeFalse("Skipping UI test - running in headless mode", 
-            GraphicsEnvironment.isHeadless());
+        // Allow forcing UI tests to run with -Dforce.ui.tests=true (e.g., with xvfb)
+        String forceUITestsProp = System.getProperty("force.ui.tests");
+        boolean forceUITests = "true".equalsIgnoreCase(forceUITestsProp);
+        boolean isHeadless = GraphicsEnvironment.isHeadless();
+        
+        if (!forceUITests && isHeadless) {
+            assumeFalse("Skipping UI test - running in headless mode. " +
+                "To run UI tests:\n" +
+                "  1. Use xvfb: xvfb-run -a mvn test -Pui-tests\n" +
+                "  2. Or force: mvn test -Pui-tests -Dforce.ui.tests=true\n" +
+                "  3. Or run locally with display: mvn test -Pui-tests", 
+                true);
+        }
     }
 
     @Override
@@ -94,13 +105,12 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         // Small delay to ensure parent is ready
         Thread.sleep(100);
         
-        // Create dialog on EDT (non-modal in test environment)
+        // Create dialog on EDT (make non-modal for testing)
         expenseDialog = execute(() -> {
+            // Use deprecated constructor which creates controllers internally
             ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, null);
-            // Ensure non-modal (should already be non-modal in test env, but double-check)
-            if (ed.isModal()) {
-                ed.setModal(false);
-            }
+            // Make non-modal for testing
+            ed.setModal(false);
             return ed;
         });
         
@@ -112,8 +122,9 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
             expenseDialog.setVisible(true);
         });
         
-        // Small delay for dialog to appear
-        Thread.sleep(100);
+        // Small delay for dialog to appear and categories to load (async operation)
+        Thread.sleep(200);
+        robot().waitForIdle();
     }
 
     @Override

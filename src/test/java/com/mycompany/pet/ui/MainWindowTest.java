@@ -65,8 +65,19 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     public static void checkHeadless() {
         // Check for headless mode BEFORE any test runs
         // This runs before setUp() which initializes the robot
-        assumeFalse("Skipping UI test - running in headless mode", 
-            GraphicsEnvironment.isHeadless());
+        // Allow forcing UI tests to run with -Dforce.ui.tests=true (e.g., with xvfb)
+        String forceUITestsProp = System.getProperty("force.ui.tests");
+        boolean forceUITests = "true".equalsIgnoreCase(forceUITestsProp);
+        boolean isHeadless = GraphicsEnvironment.isHeadless();
+        
+        if (!forceUITests && isHeadless) {
+            assumeFalse("Skipping UI test - running in headless mode. " +
+                "To run UI tests:\n" +
+                "  1. Use xvfb: xvfb-run -a mvn test -Pui-tests\n" +
+                "  2. Or force: mvn test -Pui-tests -Dforce.ui.tests=true\n" +
+                "  3. Or run locally with display: mvn test -Pui-tests", 
+                true);
+        }
     }
 
     @Override

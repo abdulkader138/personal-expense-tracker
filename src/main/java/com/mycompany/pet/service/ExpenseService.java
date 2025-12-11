@@ -13,8 +13,12 @@ import com.mycompany.pet.model.Expense;
  * Service layer for expense management.
  */
 public class ExpenseService {
-    private ExpenseDAO expenseDAO;
-    private CategoryDAO categoryDAO;
+
+    private final ExpenseDAO expenseDAO;
+    private final CategoryDAO categoryDAO;
+
+    // 🔒 Lock to guarantee thread-safety for create/update/delete
+    private final Object expenseLock = new Object();
 
     public ExpenseService(ExpenseDAO expenseDAO, CategoryDAO categoryDAO) {
         this.expenseDAO = expenseDAO;
@@ -23,8 +27,10 @@ public class ExpenseService {
 
     public Expense createExpense(LocalDate date, BigDecimal amount, String description, Integer categoryId) throws SQLException {
         validateExpense(date, amount, description, categoryId);
-        Expense expense = new Expense(date, amount, description, categoryId);
-        return expenseDAO.create(expense);
+        synchronized (expenseLock) {     // 🔒 Make creation atomic
+            Expense expense = new Expense(date, amount, description, categoryId);
+            return expenseDAO.create(expense);
+        }
     }
 
     public Expense getExpense(Integer expenseId) throws SQLException {
@@ -54,22 +60,28 @@ public class ExpenseService {
             throw new IllegalArgumentException("Expense ID cannot be null");
         }
         validateExpense(date, amount, description, categoryId);
-        Expense expense = expenseDAO.findById(expenseId);
-        if (expense == null) {
-            throw new IllegalArgumentException("Expense not found");
+
+        synchronized (expenseLock) {     // 🔒 Make update atomic
+            Expense expense = expenseDAO.findById(expenseId);
+            if (expense == null) {
+                throw new IllegalArgumentException("Expense not found");
+            }
+            expense.setDate(date);
+            expense.setAmount(amount);
+            expense.setDescription(description);
+            expense.setCategoryId(categoryId);
+            return expenseDAO.update(expense);
         }
-        expense.setDate(date);
-        expense.setAmount(amount);
-        expense.setDescription(description);
-        expense.setCategoryId(categoryId);
-        return expenseDAO.update(expense);
     }
 
     public boolean deleteExpense(Integer expenseId) throws SQLException {
         if (expenseId == null) {
             throw new IllegalArgumentException("Expense ID cannot be null");
         }
-        return expenseDAO.delete(expenseId);
+
+        synchronized (expenseLock) {     // 🔒 Thread-safe delete
+            return expenseDAO.delete(expenseId);
+        }
     }
 
     public BigDecimal getTotalByCategory(Integer categoryId) throws SQLException {
@@ -101,4 +113,3 @@ public class ExpenseService {
         }
     }
 }
-
