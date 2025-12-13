@@ -7,15 +7,15 @@ import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
-import com.mycompany.pet.dao.CategoryDAO;
-import com.mycompany.pet.dao.ExpenseDAO;
-import com.mycompany.pet.database.DatabaseConnection;
-import com.mycompany.pet.database.DatabaseInitializer;
-import com.mycompany.pet.service.CategoryService;
-import com.mycompany.pet.service.ExpenseService;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.mycompany.pet.di.ExpenseTrackerModule;
 
 /**
  * Main application entry point for the Expense Tracker.
+ * 
+ * This application uses Google Guice for Dependency Injection, following the pattern
+ * from "Test-Driven Development, Build Automation, Continuous Integration" book.
  */
 public class ExpenseTrackerApp {
     private static final Logger LOGGER = Logger.getLogger(ExpenseTrackerApp.class.getName());
@@ -34,26 +34,17 @@ public class ExpenseTrackerApp {
 
         SwingUtilities.invokeLater(() -> {
             try {
-                // Initialize database connection (MongoDB)
-                DatabaseConnection dbConnection = new DatabaseConnection();
-                DatabaseInitializer initializer = new DatabaseInitializer(dbConnection);
-                initializer.initialize();
+                // Create Guice injector with ExpenseTrackerModule
+                // All components will be automatically wired together by Guice
+                Injector injector = Guice.createInjector(
+                    new ExpenseTrackerModule()
+                        .mongoHost("localhost")
+                        .mongoPort(27017)
+                        .databaseName("expense_tracker")
+                );
 
-                // Initialize DAOs and Services
-                CategoryDAO categoryDAO = new CategoryDAO(dbConnection);
-                ExpenseDAO expenseDAO = new ExpenseDAO(dbConnection);
-                CategoryService categoryService = new CategoryService(categoryDAO);
-                ExpenseService expenseService = new ExpenseService(expenseDAO, categoryDAO);
-
-                // Create controllers
-                com.mycompany.pet.controller.CategoryController categoryController = 
-                    new com.mycompany.pet.controller.CategoryController(categoryService);
-                com.mycompany.pet.controller.ExpenseController expenseController = 
-                    new com.mycompany.pet.controller.ExpenseController(expenseService);
-
-                // Create and show main window (using controllers)
-                MainWindow mainWindow = new MainWindow(expenseController, categoryController);
-                mainWindow.loadData(); // Load data after window is created
+                // Get MainWindow instance from Guice (all dependencies are automatically injected)
+                MainWindow mainWindow = injector.getInstance(MainWindow.class);
                 mainWindow.setVisible(true);
             } catch (Exception e) {
                 String errorMsg = "Failed to initialize MongoDB database: " + e.getMessage();

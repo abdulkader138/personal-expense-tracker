@@ -21,6 +21,8 @@ bin/
 *.swo
 *~
 .pit/
+tdd.pdf
+tdd.md
 
 # Environment variables (never commit secrets!)
 .env
