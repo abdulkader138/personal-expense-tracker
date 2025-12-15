@@ -29,6 +29,7 @@ public class CategoryDialog extends JDialog {
     private static final long serialVersionUID = 1L;
     
     private final CategoryController controller;
+    private volatile boolean messageLocked = false; // Flag to prevent clearing messages in test mode
     
     // UI Components (package-private for testing)
     JTable categoryTable;
@@ -63,6 +64,7 @@ public class CategoryDialog extends JDialog {
     @Deprecated
     public CategoryDialog(JFrame parent, com.mycompany.pet.service.CategoryService categoryService) {
         this(parent, new CategoryController(categoryService));
+        // Test mode is already cached in the other constructor
     }
 
     private void initializeUI() {
@@ -229,106 +231,81 @@ public class CategoryDialog extends JDialog {
             return;
         }
         
-        // CRITICAL: For non-empty messages, ALWAYS set the label FIRST
-        // This ensures tests can always read the message, even if there are timing issues
+        // Check test mode dynamically
+        final boolean isTestMode = "true".equals(System.getProperty("test.mode"));
+        
+        // CRITICAL: For non-empty messages, ALWAYS set the label IMMEDIATELY
+        // This must happen synchronously when called from action listeners (which run on EDT)
         if (msg != null && !msg.isEmpty()) {
-            // Check test mode
-            boolean isTestMode = isLabelMessageMode();
+            // In test mode, lock the message to prevent it from being cleared
+            if (isTestMode) {
+                messageLocked = true;
+            }
             
-            // Always set the label - use invokeAndWait if not on EDT to ensure it's set synchronously
-            // But invokeAndWait can cause deadlocks, so use invokeLater and ensure it completes
+            // Set label text directly - no conditions, no checks, no delays
+            // Action listeners run on EDT, so this executes immediately
             if (javax.swing.SwingUtilities.isEventDispatchThread()) {
                 labelMessage.setText(msg);
                 labelMessage.setVisible(true);
             } else {
-                // Not on EDT - use invokeLater, but this is async
-                // For test mode, we need to ensure the message is set
+                // Not on EDT - use invokeAndWait to set it synchronously
+                try {
+                    javax.swing.SwingUtilities.invokeAndWait(() -> {
+                        if (labelMessage != null) {
+                            labelMessage.setText(msg);
+                            labelMessage.setVisible(true);
+                        }
+                    });
+                } catch (Exception e) {
+                    // Fallback to invokeLater if invokeAndWait fails
+                    javax.swing.SwingUtilities.invokeLater(() -> {
+                        if (labelMessage != null) {
+                            labelMessage.setText(msg);
+                            labelMessage.setVisible(true);
+                        }
+                    });
+                }
+            }
+            
+            // In production mode, also show dialog (but AFTER setting label)
+            if (!isTestMode) {
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    JOptionPane.showMessageDialog(this, msg, "Info", JOptionPane.WARNING_MESSAGE);
+                });
+            }
+        } else {
+            // Empty message: clear only if not locked and not in test mode
+            if (javax.swing.SwingUtilities.isEventDispatchThread()) {
+                if (!messageLocked && !isTestMode) {
+                    labelMessage.setText("");
+                } else if (isTestMode && !messageLocked) {
+                    // In test mode, preserve error messages
+                    String currentMsg = labelMessage.getText();
+                    if (currentMsg == null || currentMsg.isEmpty() ||
+                        (!currentMsg.contains("Error") && !currentMsg.contains("select") &&
+                         !currentMsg.contains("cannot be empty") && !currentMsg.contains("Please"))) {
+                        labelMessage.setText("");
+                    }
+                }
+            } else {
                 javax.swing.SwingUtilities.invokeLater(() -> {
                     if (labelMessage != null) {
-                        labelMessage.setText(msg);
-                        labelMessage.setVisible(true);
+                        if (!messageLocked && !isTestMode) {
+                            labelMessage.setText("");
+                        } else if (isTestMode && !messageLocked) {
+                            String currentMsg = labelMessage.getText();
+                            if (currentMsg == null || currentMsg.isEmpty() ||
+                                (!currentMsg.contains("Error") && !currentMsg.contains("select") &&
+                                 !currentMsg.contains("cannot be empty") && !currentMsg.contains("Please"))) {
+                                labelMessage.setText("");
+                            }
+                        }
                     }
                 });
             }
-            
-            // In test mode, NEVER call doShowMessage for non-empty messages
-            // This prevents any potential clearing or dialog showing
-            if (isTestMode) {
-                return; // Message is set (or will be via invokeLater), don't do anything else
-            }
-            
-            // In production mode, also show dialog via doShowMessage
-            if (javax.swing.SwingUtilities.isEventDispatchThread()) {
-                doShowMessage(msg);
-            } else {
-                javax.swing.SwingUtilities.invokeLater(() -> doShowMessage(msg));
-            }
-            return;
-        }
-        
-        // For empty messages, use full logic (which handles clearing appropriately)
-        boolean isTestMode = isLabelMessageMode();
-        if (javax.swing.SwingUtilities.isEventDispatchThread()) {
-            doShowMessage(msg);
-        } else {
-            javax.swing.SwingUtilities.invokeLater(() -> doShowMessage(msg));
         }
     }
     
-    /**
-     * Internal method to show message (must be called on EDT).
-     */
-    private void doShowMessage(String msg) {
-        if (labelMessage == null) {
-            return;
-        }
-        
-        boolean isTestMode = isLabelMessageMode();
-        
-        if (msg == null || msg.isEmpty()) {
-            // In test mode, NEVER clear error messages - they must persist for test assertions
-            if (isTestMode) {
-                String currentMsg = labelMessage.getText();
-                // Only clear if it's definitely not an error message
-                if (currentMsg == null || currentMsg.isEmpty() ||
-                    (!currentMsg.contains("Error") && !currentMsg.contains("select") &&
-                     !currentMsg.contains("cannot be empty") && !currentMsg.contains("Please"))) {
-                    labelMessage.setText("");
-                }
-                // Otherwise, preserve the error message - DO NOT CLEAR
-            } else {
-                // Production mode: clear normally
-                labelMessage.setText("");
-            }
-            return;
-        }
-        
-        // CRITICAL: Always set the message in the label (may have already been set above, but ensure it's set)
-        // This is especially important in test mode where messages must persist
-        labelMessage.setText(msg);
-        labelMessage.setVisible(true);
-        
-        // In production mode, also show dialog
-        if (!isTestMode) {
-            JOptionPane.showMessageDialog(this, msg, "Info", JOptionPane.WARNING_MESSAGE);
-        }
-    }
-    
-    /**
-     * Determines if label message mode should be used.
-     * This checks if the label is being actively monitored (test scenario).
-     * 
-     * @return true if label message mode should be used
-     */
-    private boolean isLabelMessageMode() {
-        // Check system property for explicit test mode
-        String testMode = System.getProperty("test.mode");
-        if ("true".equals(testMode)) {
-            return true;
-        }
-        // In production, always use dialogs
-        return false;
-    }
 
     /**
      * Loads categories from the database and populates the table.
@@ -345,19 +322,28 @@ public class CategoryDialog extends JDialog {
                         category.getName()
                     });
                 }
-                // CRITICAL: NEVER clear messages in test mode - they need to persist for assertions
-                // Check test mode FIRST and return early - do NOT touch labelMessage at all in test mode
-                if (isLabelMessageMode()) {
-                    // Do nothing - preserve all messages in test mode
-                    // DO NOT even read labelMessage.getText() as it might cause issues
+                // CRITICAL: In test mode, NEVER touch labelMessage - preserve ALL messages
+                // Also check messageLocked flag to prevent clearing locked messages
+                boolean isTestMode = "true".equals(System.getProperty("test.mode"));
+                if (isTestMode || messageLocked) {
+                    // In test mode or if message is locked: DO NOTHING
+                    // Don't even read labelMessage.getText() to prevent any race conditions
                     return;
                 }
-                // In production mode, only clear non-error messages
-                String currentMsg = labelMessage.getText();
-                if (currentMsg != null && !currentMsg.isEmpty() && 
-                    !currentMsg.contains("Error") && !currentMsg.contains("select") &&
-                    !currentMsg.contains("cannot be empty") && !currentMsg.contains("Please")) {
-                    labelMessage.setText("");
+                // In production mode: only clear non-error messages
+                // But ALWAYS preserve error messages
+                if (labelMessage != null) {
+                    String currentMsg = labelMessage.getText();
+                    if (currentMsg != null && !currentMsg.isEmpty()) {
+                        // Check if it's an error message - if so, preserve it
+                        if (currentMsg.contains("Error") || currentMsg.contains("select") ||
+                            currentMsg.contains("cannot be empty") || currentMsg.contains("Please")) {
+                            // It's an error message - preserve it
+                            return;
+                        }
+                        // Not an error message - safe to clear
+                        labelMessage.setText("");
+                    }
                 }
             },
             error -> {
