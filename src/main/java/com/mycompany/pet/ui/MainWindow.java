@@ -25,9 +25,9 @@ public class MainWindow extends JFrame {
     private static final long serialVersionUID = 1L;
     private static final String ERROR_TITLE = "Error";
     
-    // Controllers (preferred)
-    private final ExpenseController expenseController;
-    private final CategoryController categoryController;
+    // Controllers (preferred) - package-private for testing
+    final ExpenseController expenseController;
+    final CategoryController categoryController;
     
     // Services (for backward compatibility and deprecated methods)
     private transient CategoryService categoryService;
@@ -420,7 +420,9 @@ public class MainWindow extends JFrame {
             return;
         }
 
-        int confirm = JOptionPane.showConfirmDialog(this,
+        // In test mode, bypass confirmation dialog
+        boolean isTestMode = "true".equals(System.getProperty("test.mode"));
+        int confirm = isTestMode ? JOptionPane.YES_OPTION : JOptionPane.showConfirmDialog(this,
             "Are you sure you want to delete this expense?",
             "Confirm Delete",
             JOptionPane.YES_NO_OPTION);

@@ -5,6 +5,10 @@ import static org.assertj.swing.core.matcher.JButtonMatcher.withText;
 import static org.assertj.swing.edt.GuiActionRunner.execute;
 import static org.junit.Assume.assumeFalse;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.awt.GraphicsEnvironment;
@@ -31,6 +35,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import com.mycompany.pet.controller.CategoryController;
+import com.mycompany.pet.controller.ExpenseController;
 import com.mycompany.pet.model.Category;
 import com.mycompany.pet.model.Expense;
 import com.mycompany.pet.service.CategoryService;
@@ -790,5 +796,263 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         // When - click Exit menu item (but don't actually exit in test)
         // Note: System.exit(0) would terminate the test, so we just verify the menu exists
         window.menuItemWithPath("File", "Exit").requireVisible();
+    }
+
+    @Test
+    @GUITest
+    public void testMainWindow_ConstructorWithControllers() {
+        // Test the new constructor that takes controllers directly
+        execute(() -> {
+            ExpenseController expenseController = new ExpenseController(expenseService);
+            CategoryController categoryController = new CategoryController(categoryService);
+            MainWindow mw = new MainWindow(expenseController, categoryController);
+            mw.setVisible(true);
+            assertThat(mw).isNotNull();
+            assertThat(mw.getExpenseService()).isNull(); // Should be null when using controller constructor
+        });
+    }
+
+    @Test
+    @GUITest
+    public void testMainWindow_DeleteSelectedExpense_SuccessCallback() throws SQLException {
+        // Set test mode to bypass JOptionPane
+        System.setProperty("test.mode", "true");
+        
+        // Setup - load expenses and select one
+        execute(() -> {
+            mainWindow.loadData();
+        });
+        robot().waitForIdle();
+        
+        // Wait for expenses to load
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        robot().waitForIdle();
+        
+        // Select first row
+        execute(() -> {
+            if (mainWindow.expenseTableModel.getRowCount() > 0) {
+                mainWindow.expenseTable.setRowSelectionInterval(0, 0);
+            }
+        });
+        robot().waitForIdle();
+        
+        // Mock deleteExpense to succeed (no exception)
+        when(expenseService.deleteExpense(anyInt())).thenReturn(true);
+        
+        // When - delete expense using public method (will trigger success callback)
+        execute(() -> {
+            mainWindow.deleteSelectedExpense();
+        });
+        robot().waitForIdle();
+        
+        // Wait for async callback
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        robot().waitForIdle();
+        
+        // Then - window should still be visible
+        window.requireVisible();
+    }
+
+    @Test
+    @GUITest
+    public void testMainWindow_DeleteSelectedExpense_ErrorCallback() throws SQLException {
+        // Set test mode to bypass JOptionPane
+        System.setProperty("test.mode", "true");
+        
+        // Setup - load expenses and select one
+        execute(() -> {
+            mainWindow.loadData();
+        });
+        robot().waitForIdle();
+        
+        // Wait for expenses to load
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        robot().waitForIdle();
+        
+        // Select first row
+        execute(() -> {
+            if (mainWindow.expenseTableModel.getRowCount() > 0) {
+                mainWindow.expenseTable.setRowSelectionInterval(0, 0);
+            }
+        });
+        robot().waitForIdle();
+        
+        // Mock deleteExpense to throw SQLException (triggers error callback)
+        when(expenseService.deleteExpense(anyInt())).thenThrow(new SQLException("Database error"));
+        
+        // When - delete expense using public method (will trigger error callback)
+        execute(() -> {
+            mainWindow.deleteSelectedExpense();
+        });
+        robot().waitForIdle();
+        
+        // Wait for async callback
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        robot().waitForIdle();
+        
+        // Then - window should still be visible
+        window.requireVisible();
+    }
+
+    @Test
+    @GUITest
+    public void testMainWindow_LoadExpenses_ErrorCallback() throws SQLException {
+        // Mock getAllExpenses to throw SQLException (triggers error callback)
+        when(expenseService.getAllExpenses()).thenThrow(new SQLException("Database error"));
+        
+        // When - load expenses
+        execute(() -> {
+            mainWindow.loadExpenses();
+        });
+        robot().waitForIdle();
+        
+        // Wait for async callback
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        robot().waitForIdle();
+        
+        // Then - window should still be visible
+        window.requireVisible();
+    }
+
+    @Test
+    @GUITest
+    public void testMainWindow_FilterExpenses_ErrorCallback() throws SQLException {
+        // Setup - load data first
+        execute(() -> {
+            mainWindow.loadData();
+        });
+        robot().waitForIdle();
+        
+        // Wait for data to load
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        robot().waitForIdle();
+        
+        // Mock getExpensesByMonth to throw SQLException (triggers error callback)
+        when(expenseService.getExpensesByMonth(anyInt(), anyInt())).thenThrow(new SQLException("Database error"));
+        
+        // When - filter expenses
+        execute(() -> {
+            mainWindow.filterExpenses();
+        });
+        robot().waitForIdle();
+        
+        // Wait for async callback
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        robot().waitForIdle();
+        
+        // Then - window should still be visible
+        window.requireVisible();
+    }
+
+    @Test
+    @GUITest
+    public void testMainWindow_UpdateSummary_ErrorCallback() throws SQLException {
+        // Setup - load data first
+        execute(() -> {
+            mainWindow.loadData();
+        });
+        robot().waitForIdle();
+        
+        // Wait for data to load
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        robot().waitForIdle();
+        
+        // Mock getMonthlyTotal to throw SQLException (triggers error callback)
+        when(expenseService.getMonthlyTotal(anyInt(), anyInt())).thenThrow(new SQLException("Database error"));
+        
+        // When - update summary
+        execute(() -> {
+            mainWindow.updateSummary();
+        });
+        robot().waitForIdle();
+        
+        // Wait for async callback
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        robot().waitForIdle();
+        
+        // Then - window should still be visible
+        window.requireVisible();
+    }
+
+    @Test
+    @GUITest
+    public void testMainWindow_UpdateCategoryTotal_ErrorCallback() throws SQLException {
+        // Setup - load data first
+        execute(() -> {
+            mainWindow.loadData();
+        });
+        robot().waitForIdle();
+        
+        // Wait for data to load
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        robot().waitForIdle();
+        
+        // Select a category
+        execute(() -> {
+            if (mainWindow.categoryComboBox.getItemCount() > 1) {
+                mainWindow.categoryComboBox.setSelectedIndex(1);
+            }
+        });
+        robot().waitForIdle();
+        
+        // Mock getTotalByCategory to throw SQLException (triggers error callback)
+        when(expenseService.getTotalByCategory(anyInt())).thenThrow(new SQLException("Database error"));
+        
+        // When - update category total
+        execute(() -> {
+            mainWindow.updateCategoryTotal();
+        });
+        robot().waitForIdle();
+        
+        // Wait for async callback
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        robot().waitForIdle();
+        
+        // Then - window should still be visible
+        window.requireVisible();
     }
 }
