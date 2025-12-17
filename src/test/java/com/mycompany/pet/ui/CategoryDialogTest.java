@@ -166,8 +166,15 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
     private String getCurrentMessage() {
         return execute(() -> {
             // First try to get from stored error message (most reliable in test mode)
-            if (categoryDialog.lastErrorMessage != null && !categoryDialog.lastErrorMessage.isEmpty()) {
-                return categoryDialog.lastErrorMessage;
+            // Check this FIRST before anything else
+            String storedError = categoryDialog.getLastErrorMessage();
+            if (storedError != null && !storedError.isEmpty()) {
+                return storedError;
+            }
+            // Also check the field directly as fallback
+            storedError = categoryDialog.lastErrorMessage;
+            if (storedError != null && !storedError.isEmpty()) {
+                return storedError;
             }
             // Fallback to label text
             if (categoryDialog.labelMessage == null) {
@@ -426,17 +433,13 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         execute(() -> {
             categoryDialog.categoryTable.clearSelection();
             categoryDialog.labelMessage.setText("");
+            categoryDialog.lastErrorMessage = null; // Clear before button click
         });
         robot().waitForIdle();
         
         // Ensure test mode is set and verify it
         System.setProperty("test.mode", "true");
         assertThat(System.getProperty("test.mode")).isEqualTo("true");
-        
-        // Clear lastErrorMessage before button click to ensure fresh state
-        execute(() -> {
-            categoryDialog.lastErrorMessage = null;
-        });
         
         dialog.button(withText("Update Selected")).click();
         
@@ -505,8 +508,9 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             if (categoryDialog.categoryTableModel.getRowCount() > 0) {
                 categoryDialog.categoryTable.setRowSelectionInterval(0, 0);
                 categoryDialog.categoryTableModel.setValueAt("", 0, 1);
-                // Clear any existing message
+                // Clear any existing message and lastErrorMessage
                 categoryDialog.labelMessage.setText("");
+                categoryDialog.lastErrorMessage = null;
             } else {
                 // If no categories, create one first
                 try {
@@ -515,6 +519,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
                     categoryDialog.categoryTable.setRowSelectionInterval(0, 0);
                     categoryDialog.categoryTableModel.setValueAt("", 0, 1);
                     categoryDialog.labelMessage.setText("");
+                    categoryDialog.lastErrorMessage = null;
                 } catch (SQLException e) {
                     // Skip if can't create
                 }
@@ -528,13 +533,26 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         // Wait for validation - UI checks first (immediate), then controller checks (via invokeLater)
         robot().waitForIdle();
         try {
-            Thread.sleep(400);
+            Thread.sleep(300);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
         robot().waitForIdle();
         
-        String message = getCurrentMessage();
+        // Try multiple times to handle any timing issues
+        String message = null;
+        for (int i = 0; i < 5; i++) {
+            message = getCurrentMessage();
+            if (message != null && !message.isEmpty() && message.contains("cannot be empty")) {
+                break;
+            }
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            robot().waitForIdle();
+        }
         assertThat(message).as("Message should contain 'cannot be empty', but was: '%s'", message).contains("cannot be empty");
     }
 
@@ -553,8 +571,9 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             if (categoryDialog.categoryTableModel.getRowCount() > 0) {
                 categoryDialog.categoryTable.setRowSelectionInterval(0, 0);
                 categoryDialog.categoryTableModel.setValueAt(null, 0, 1);
-                // Clear any existing message
+                // Clear any existing message and lastErrorMessage
                 categoryDialog.labelMessage.setText("");
+                categoryDialog.lastErrorMessage = null;
             } else {
                 // If no categories, create one first
                 try {
@@ -563,6 +582,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
                     categoryDialog.categoryTable.setRowSelectionInterval(0, 0);
                     categoryDialog.categoryTableModel.setValueAt(null, 0, 1);
                     categoryDialog.labelMessage.setText("");
+                    categoryDialog.lastErrorMessage = null;
                 } catch (SQLException e) {
                     // Skip if can't create
                 }
@@ -602,8 +622,9 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             if (categoryDialog.categoryTableModel.getRowCount() > 0) {
                 categoryDialog.categoryTable.setRowSelectionInterval(0, 0);
                 categoryDialog.categoryTableModel.setValueAt("Updated Name", 0, 1);
-                // Clear any existing message
+                // Clear any existing message and lastErrorMessage
                 categoryDialog.labelMessage.setText("");
+                categoryDialog.lastErrorMessage = null;
             } else {
                 // If no categories, create one first
                 try {
@@ -612,6 +633,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
                     categoryDialog.categoryTable.setRowSelectionInterval(0, 0);
                     categoryDialog.categoryTableModel.setValueAt("Updated Name", 0, 1);
                     categoryDialog.labelMessage.setText("");
+                    categoryDialog.lastErrorMessage = null;
                 } catch (SQLException e) {
                     // Skip if can't create
                 }
@@ -662,8 +684,9 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         
         execute(() -> {
             categoryDialog.categoryTable.clearSelection();
-            // Clear any existing message
+            // Clear any existing message and lastErrorMessage
             categoryDialog.labelMessage.setText("");
+            categoryDialog.lastErrorMessage = null;
         });
         
         robot().waitForIdle();
@@ -673,14 +696,26 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         // Wait for validation (immediate, no async)
         robot().waitForIdle();
         try {
-            Thread.sleep(200);
+            Thread.sleep(300);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
         robot().waitForIdle();
         
-        // Check message using helper method (checks lastErrorMessage first)
-        String message = getCurrentMessage();
+        // Try multiple times to handle any timing issues
+        String message = null;
+        for (int i = 0; i < 5; i++) {
+            message = getCurrentMessage();
+            if (message != null && !message.isEmpty() && message.contains("select")) {
+                break;
+            }
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            robot().waitForIdle();
+        }
         assertThat(message).as("Message should contain 'select', but was: '%s'", message).contains("select");
     }
 
@@ -733,8 +768,9 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
                     // Skip if can't create
                 }
             }
-            // Clear any existing message
+            // Clear any existing message and lastErrorMessage
             categoryDialog.labelMessage.setText("");
+            categoryDialog.lastErrorMessage = null;
         });
         
         robot().waitForIdle();
