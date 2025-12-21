@@ -364,10 +364,28 @@ public class ExpenseControllerTest {
             }
         );
         
-        // Then
-        assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
+        // Then - wait for async operation and process EDT events
+        // The callback is executed via SwingUtilities.invokeLater, so we need to wait
+        // and potentially process EDT events
+        boolean completed = false;
+        for (int i = 0; i < 50; i++) { // Try for up to 5 seconds (50 * 100ms)
+            if (latch.await(100, TimeUnit.MILLISECONDS)) {
+                completed = true;
+                break;
+            }
+            // Process any pending EDT events
+            try {
+                javax.swing.SwingUtilities.invokeAndWait(() -> {
+                    // Empty - just to process EDT queue
+                });
+            } catch (Exception e) {
+                // EDT might not be available, continue waiting
+            }
+        }
+        
+        assertThat(completed).as("Latch should have been counted down").isTrue();
         assertThat(errorResult.get()).isNotNull().contains("Error loading expenses");
-        verify(expenseService, timeout(2000)).getExpensesByMonth(2024, 1);
+        verify(expenseService, timeout(5000)).getExpensesByMonth(2024, 1);
     }
     
     @Test

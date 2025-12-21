@@ -7,6 +7,7 @@ import static org.junit.Assume.assumeFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import java.awt.GraphicsEnvironment;
+import javax.swing.JFrame;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -26,6 +27,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import com.mycompany.pet.controller.CategoryController;
+import com.mycompany.pet.controller.ExpenseController;
 import com.mycompany.pet.model.Category;
 import com.mycompany.pet.model.Expense;
 import com.mycompany.pet.service.CategoryService;
@@ -571,6 +574,214 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         // Then - should handle whitespace (trimmed)
         boolean saved = execute(() -> expenseDialog.isSaved());
         assertThat(saved).isTrue();
+    }
+
+    @Test
+    @GUITest
+    public void testExpenseDialog_Save_EditMode_WithError() throws SQLException {
+        // Given - expense to edit, but update fails
+        Expense expense = new Expense(1, LocalDate.now(), new BigDecimal("50.00"), "Test Expense", 1);
+        when(categoryService.getCategory(1)).thenReturn(new Category(1, "Food"));
+        when(expenseService.updateExpense(any(Integer.class), any(LocalDate.class), 
+            any(BigDecimal.class), any(String.class), any(Integer.class)))
+            .thenThrow(new SQLException("Database error"));
+        
+        // When - create edit dialog
+        ExpenseDialog editDialog = execute(() -> {
+            ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, expense);
+            // Ensure non-modal
+            if (ed.isModal()) {
+                ed.setModal(false);
+            }
+            ed.setVisible(true);
+            return ed;
+        });
+        DialogFixture editDialogFixture = new DialogFixture(robot(), editDialog);
+        
+        // Wait for categories to load
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        robot().waitForIdle();
+        
+        // When - select category and save
+        execute(() -> {
+            // Select first non-null category
+            int itemCount = editDialog.categoryComboBox.getItemCount();
+            for (int i = 0; i < itemCount; i++) {
+                Object item = editDialog.categoryComboBox.getItemAt(i);
+                if (item != null && item instanceof Category) {
+                    editDialog.categoryComboBox.setSelectedItem(item);
+                    break;
+                }
+            }
+            editDialog.dateField.setText("2024-02-01");
+            editDialog.amountField.setText("75.00");
+            editDialog.descriptionField.setText("Updated Expense");
+        });
+        
+        // Small delay to ensure selection is set
+        try {
+            Thread.sleep(50);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        
+        editDialogFixture.button(withText("Save")).click();
+        
+        // Wait for error callback to execute (async)
+        try {
+            Thread.sleep(300);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        robot().waitForIdle();
+        
+        // Then - dialog should still be visible (error handled via error callback)
+        // The error callback lambda (lambda$onSaveButtonClick$7) should have shown error message
+        editDialogFixture.requireVisible();
+        
+        editDialogFixture.cleanUp();
+    }
+
+    @Test
+    @GUITest
+    public void testExpenseDialog_Constructor_WithControllers_NewExpense() throws SQLException {
+        // Given - controllers
+        ExpenseController expenseController = new ExpenseController(expenseService);
+        CategoryController categoryController = new CategoryController(categoryService);
+        
+        // When - create dialog with controllers, expense == null (new expense)
+        ExpenseDialog dialog = execute(() -> {
+            ExpenseDialog ed = new ExpenseDialog(mainWindow, expenseController, categoryController, null);
+            // Ensure non-modal
+            if (ed.isModal()) {
+                ed.setModal(false);
+            }
+            ed.setVisible(true);
+            return ed;
+        });
+        DialogFixture dialogFixture = new DialogFixture(robot(), dialog);
+        
+        // Wait for categories to load
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        robot().waitForIdle();
+        
+        // Then - should be in "Add Expense" mode
+        assertThat(dialogFixture.target().getTitle()).isEqualTo("Add Expense");
+        
+        // Then - date field should be pre-filled
+        String dateText = execute(() -> dialog.dateField.getText());
+        assertThat(dateText).isEqualTo(LocalDate.now().toString());
+        
+        dialogFixture.cleanUp();
+    }
+
+    @Test
+    @GUITest
+    public void testExpenseDialog_Constructor_WithControllers_EditExpense() throws SQLException {
+        // Given - expense to edit and controllers
+        Expense expense = new Expense(1, LocalDate.of(2024, 1, 15), 
+            new BigDecimal("50.00"), "Test Expense", 1);
+        when(categoryService.getCategory(1)).thenReturn(new Category(1, "Food"));
+        ExpenseController expenseController = new ExpenseController(expenseService);
+        CategoryController categoryController = new CategoryController(categoryService);
+        
+        // When - create dialog with controllers, expense != null (edit expense)
+        ExpenseDialog dialog = execute(() -> {
+            ExpenseDialog ed = new ExpenseDialog(mainWindow, expenseController, categoryController, expense);
+            // Ensure non-modal
+            if (ed.isModal()) {
+                ed.setModal(false);
+            }
+            ed.setVisible(true);
+            return ed;
+        });
+        DialogFixture dialogFixture = new DialogFixture(robot(), dialog);
+        
+        // Wait for categories and expense data to load
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        robot().waitForIdle();
+        
+        // Then - should be in "Edit Expense" mode
+        assertThat(dialogFixture.target().getTitle()).isEqualTo("Edit Expense");
+        
+        // Then - fields should be populated
+        execute(() -> {
+            assertThat(dialog.dateField.getText()).isEqualTo("2024-01-15");
+            assertThat(dialog.amountField.getText()).isEqualTo("50.00");
+            assertThat(dialog.descriptionField.getText()).isEqualTo("Test Expense");
+        });
+        
+        dialogFixture.cleanUp();
+    }
+
+    @Test
+    public void testExpenseDialog_Constructor_Deprecated_InvalidParent() {
+        // Given - invalid parent (not MainWindow), created on EDT
+        JFrame invalidParent = execute(() -> {
+            return new JFrame("Invalid Parent");
+        });
+        
+        // When/Then - should throw IllegalArgumentException
+        try {
+            execute(() -> {
+                return new ExpenseDialog(invalidParent, categoryService, null);
+            });
+            // Should not reach here
+            assertThat(false).as("Should have thrown IllegalArgumentException").isTrue();
+        } catch (Exception e) {
+            assertThat(e.getCause() instanceof IllegalArgumentException || 
+                      e instanceof IllegalArgumentException)
+                .as("Should throw IllegalArgumentException when parent is not MainWindow")
+                .isTrue();
+        }
+    }
+
+    @Test
+    @GUITest
+    public void testExpenseDialog_LoadExpenseData_WithNullExpense() throws SQLException {
+        // Given - dialog with expense == null
+        ExpenseDialog dialog = execute(() -> {
+            ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, null);
+            // Ensure non-modal
+            if (ed.isModal()) {
+                ed.setModal(false);
+            }
+            ed.setVisible(true);
+            return ed;
+        });
+        DialogFixture dialogFixture = new DialogFixture(robot(), dialog);
+        
+        // Wait for categories to load
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        robot().waitForIdle();
+        
+        // When - call loadExpenseData directly (should return early)
+        execute(() -> {
+            dialog.loadExpenseData(); // Should return early since expense is null
+        });
+        
+        // Then - no exception should be thrown
+        // Fields should remain as initialized (date pre-filled, others empty)
+        String dateText = execute(() -> dialog.dateField.getText());
+        assertThat(dateText).isEqualTo(LocalDate.now().toString());
+        
+        dialogFixture.cleanUp();
     }
 
 }

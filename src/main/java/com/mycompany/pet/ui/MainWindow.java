@@ -10,10 +10,8 @@ import com.mycompany.pet.service.ExpenseService;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.List;
 
 /**
  * Main window for the Expense Tracker application.
@@ -39,8 +37,8 @@ public class MainWindow extends JFrame {
     JComboBox<Category> categoryComboBox;
     JComboBox<String> monthComboBox;
     JComboBox<String> yearComboBox;
-    private JLabel monthlyTotalLabel;
-    private JLabel categoryTotalLabel;
+    JLabel monthlyTotalLabel; // Package-private for testing
+    JLabel categoryTotalLabel; // Package-private for testing
     boolean isInitializing = true; // Flag to prevent action listeners during initialization
 
     /**
@@ -336,9 +334,7 @@ public class MainWindow extends JFrame {
                         monthlyTotalLabel.setText("Monthly Total: $" + total.toString());
                         updateCategoryTotal();
                     },
-                    error -> {
-                        monthlyTotalLabel.setText("Monthly Total: Error");
-                    }
+                    error -> monthlyTotalLabel.setText("Monthly Total: Error")
                 );
             } catch (NumberFormatException e) {
                 monthlyTotalLabel.setText("Monthly Total: Error");
@@ -356,12 +352,8 @@ public class MainWindow extends JFrame {
             categoryTotalLabel.setText("Category Total: N/A");
         } else {
             expenseController.getTotalByCategory(selectedCategory.getCategoryId(),
-                total -> {
-                    categoryTotalLabel.setText("Category Total: $" + total.toString());
-                },
-                error -> {
-                    categoryTotalLabel.setText("Category Total: Error");
-                }
+                total -> categoryTotalLabel.setText("Category Total: $" + total.toString()),
+                error -> categoryTotalLabel.setText("Category Total: Error")
             );
         }
     }
@@ -430,17 +422,11 @@ public class MainWindow extends JFrame {
         if (confirm == JOptionPane.YES_OPTION) {
             Integer expenseId = (Integer) expenseTableModel.getValueAt(selectedRow, 0);
             expenseController.deleteExpense(expenseId,
-                () -> {
-                    // Success: reload data
-                    loadData();
-                },
-                error -> {
-                    // Error: show message
-                    JOptionPane.showMessageDialog(this,
-                        error,
-                        ERROR_TITLE,
-                        JOptionPane.ERROR_MESSAGE);
-                }
+                this::loadData,
+                error -> JOptionPane.showMessageDialog(this,
+                    error,
+                    ERROR_TITLE,
+                    JOptionPane.ERROR_MESSAGE)
             );
         }
     }

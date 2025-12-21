@@ -2,7 +2,6 @@ package com.mycompany.pet.ui;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -27,6 +26,7 @@ import com.mycompany.pet.model.Category;
  */
 public class CategoryDialog extends JDialog {
     private static final long serialVersionUID = 1L;
+    private static final String TEST_MODE_PROPERTY = "test.mode";
     
     private final CategoryController controller;
     volatile String lastErrorMessage = null; // Store last error message for test mode (package-private for tests)
@@ -60,7 +60,7 @@ public class CategoryDialog extends JDialog {
         initializeUI();
         // In test mode, don't call loadCategories from constructor to avoid race conditions
         // Tests can call it explicitly if needed, or it will be called after user actions
-        boolean isTestMode = "true".equals(System.getProperty("test.mode"));
+        boolean isTestMode = "true".equals(System.getProperty(TEST_MODE_PROPERTY));
         if (!isTestMode) {
             loadCategories();
         }
@@ -272,7 +272,7 @@ public class CategoryDialog extends JDialog {
         }
 
         // In test mode, skip confirmation dialog and proceed directly
-        boolean isTestMode = "true".equals(System.getProperty("test.mode"));
+        boolean isTestMode = "true".equals(System.getProperty(TEST_MODE_PROPERTY));
         int confirm = JOptionPane.YES_OPTION; // Default to YES in test mode
         
         if (!isTestMode) {
@@ -319,7 +319,7 @@ public class CategoryDialog extends JDialog {
             return;
         }
         
-        final boolean isTestMode = "true".equals(System.getProperty("test.mode"));
+        final boolean isTestMode = "true".equals(System.getProperty(TEST_MODE_PROPERTY));
         
         if (msg != null && !msg.isEmpty()) {
             // CRITICAL: For error messages, ALWAYS set lastErrorMessage FIRST
@@ -356,9 +356,9 @@ public class CategoryDialog extends JDialog {
             
             // Production mode: show dialog
             if (!isTestMode) {
-                javax.swing.SwingUtilities.invokeLater(() -> {
-                    JOptionPane.showMessageDialog(this, msg, "Info", JOptionPane.WARNING_MESSAGE);
-                });
+                javax.swing.SwingUtilities.invokeLater(() -> 
+                    JOptionPane.showMessageDialog(this, msg, "Info", JOptionPane.WARNING_MESSAGE)
+                );
             }
         } else {
             // Empty message: clear label but NEVER clear lastErrorMessage in test mode
@@ -368,26 +368,23 @@ public class CategoryDialog extends JDialog {
                 if (isTestMode) {
                     // In test mode: only clear label, NEVER touch lastErrorMessage
                     // Even if we want to clear, don't - tests need it
-                    if (labelMessage != null) {
-                        labelMessage.setText("");
-                    }
+                    // labelMessage is already checked for null at method start
+                    labelMessage.setText("");
                     // DO NOT clear lastErrorMessage - it must persist for tests
                 } else {
                     lastErrorMessage = null;
-                    if (labelMessage != null) {
-                        labelMessage.setText("");
-                    }
+                    // labelMessage is already checked for null at method start
+                    labelMessage.setText("");
                 }
             } else {
                 javax.swing.SwingUtilities.invokeLater(() -> {
-                    if (labelMessage != null) {
-                        if (isTestMode) {
-                            labelMessage.setText("");
-                            // DO NOT clear lastErrorMessage - it must persist for tests
-                        } else {
-                            lastErrorMessage = null;
-                            labelMessage.setText("");
-                        }
+                    // labelMessage is already checked for null at method start
+                    if (isTestMode) {
+                        labelMessage.setText("");
+                        // DO NOT clear lastErrorMessage - it must persist for tests
+                    } else {
+                        lastErrorMessage = null;
+                        labelMessage.setText("");
                     }
                 });
             }
@@ -401,7 +398,7 @@ public class CategoryDialog extends JDialog {
      */
     void loadCategories() {
         // CRITICAL: In test mode, NEVER touch labelMessage - preserve ALL messages
-        String testModeProp = System.getProperty("test.mode");
+        String testModeProp = System.getProperty(TEST_MODE_PROPERTY);
         boolean isTestMode = "true".equals(testModeProp);
         
         controller.loadCategories(

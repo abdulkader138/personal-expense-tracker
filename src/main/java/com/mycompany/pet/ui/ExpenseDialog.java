@@ -7,7 +7,6 @@ import java.awt.Insets;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -182,12 +181,11 @@ public class ExpenseDialog extends JDialog {
                     categoryComboBox.addItem(category);
                 }
             },
-            error -> {
+            error -> 
                 // Error: log but don't block UI
                 // User will see empty combo box and can retry
                 java.util.logging.Logger.getLogger(ExpenseDialog.class.getName())
-                    .warning("Error loading categories: " + error);
-            }
+                    .warning("Error loading categories: " + error)
         );
     }
 
@@ -240,13 +238,12 @@ public class ExpenseDialog extends JDialog {
                         saved = true;
                         dispose();
                     },
-                    error -> {
+                    error -> 
                         // Error: show message
                         JOptionPane.showMessageDialog(this,
                             error,
                             "Error",
-                            JOptionPane.ERROR_MESSAGE);
-                    }
+                            JOptionPane.ERROR_MESSAGE)
                 );
             } else {
                 // Update existing expense
@@ -257,13 +254,12 @@ public class ExpenseDialog extends JDialog {
                         saved = true;
                         dispose();
                     },
-                    error -> {
+                    error -> 
                         // Error: show message
                         JOptionPane.showMessageDialog(this,
                             error,
                             "Error",
-                            JOptionPane.ERROR_MESSAGE);
-                    }
+                            JOptionPane.ERROR_MESSAGE)
                 );
             }
         } catch (Exception e) {
