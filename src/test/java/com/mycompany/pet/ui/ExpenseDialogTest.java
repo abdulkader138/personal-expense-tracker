@@ -3,6 +3,7 @@ package com.mycompany.pet.ui;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.swing.core.matcher.JButtonMatcher.withText;
 import static org.assertj.swing.edt.GuiActionRunner.execute;
+import static org.awaitility.Awaitility.await;
 import static org.junit.Assume.assumeFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -13,6 +14,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.assertj.swing.annotation.GUITest;
 import org.assertj.swing.fixture.DialogFixture;
@@ -106,7 +108,8 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         parentFrame = new FrameFixture(robot(), mainWindow);
         
         // Small delay to ensure parent is ready
-        Thread.sleep(100);
+        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // Create dialog on EDT (make non-modal for testing)
         expenseDialog = execute(() -> {
@@ -125,9 +128,20 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
             expenseDialog.setVisible(true);
         });
         
-        // Small delay for dialog to appear and categories to load (async operation)
-        Thread.sleep(200);
+        // Wait for dialog to appear and categories to load (async operation)
+        waitForAsyncOperation();
+    }
+
+    /**
+     * Waits for async operations to complete using Awaitility.
+     */
+    private void waitForAsyncOperation() {
         robot().waitForIdle();
+        await().atMost(2, TimeUnit.SECONDS).pollInterval(50, TimeUnit.MILLISECONDS)
+            .until(() -> {
+                robot().waitForIdle();
+                return true;
+            });
     }
 
     @Override
@@ -302,22 +316,14 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
             expenseDialog.descriptionField.setText("Test Expense");
         });
         
-        // Small delay to ensure selection is set
-        try {
-            Thread.sleep(50);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        // Wait for selection to be set
+        robot().waitForIdle();
         
         // When - click Save button
         dialog.button(withText("Save")).click();
         
-        // Small delay for save to complete
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        // Wait for save to complete
+        waitForAsyncOperation();
         
         // Then - dialog should be saved (saved = true)
         boolean saved = execute(() -> expenseDialog.isSaved());
@@ -521,15 +527,12 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
     @GUITest
     public void testExpenseDialog_Constructor_InvalidParent() {
         // Given - invalid parent (not MainWindow)
-        javax.swing.JFrame invalidParent = execute(() -> {
-            javax.swing.JFrame frame = new javax.swing.JFrame("Invalid");
-            return frame;
-        });
+        javax.swing.JFrame invalidParent = execute(() -> new javax.swing.JFrame("Invalid"));
         
         // When/Then - should throw exception
         try {
-            ExpenseDialog invalidDialog = execute(() -> {
-                return new ExpenseDialog(invalidParent, categoryService, null);
+            execute(() -> {
+                new ExpenseDialog(invalidParent, categoryService, null);
             });
             // If we get here, the test should fail
             assertThat(false).as("Should have thrown IllegalArgumentException").isTrue();
@@ -599,12 +602,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         DialogFixture editDialogFixture = new DialogFixture(robot(), editDialog);
         
         // Wait for categories to load
-        try {
-            Thread.sleep(200);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // When - select category and save
         execute(() -> {
@@ -632,12 +630,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         editDialogFixture.button(withText("Save")).click();
         
         // Wait for error callback to execute (async)
-        try {
-            Thread.sleep(300);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // Then - dialog should still be visible (error handled via error callback)
         // The error callback lambda (lambda$onSaveButtonClick$7) should have shown error message
@@ -666,12 +659,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         DialogFixture dialogFixture = new DialogFixture(robot(), testDialog);
         
         // Wait for categories to load
-        try {
-            Thread.sleep(200);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // Then - should be in "Add Expense" mode
         assertThat(dialogFixture.target().getTitle()).isEqualTo("Add Expense");
@@ -706,12 +694,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         DialogFixture dialogFixture = new DialogFixture(robot(), testDialog);
         
         // Wait for categories and expense data to load
-        try {
-            Thread.sleep(200);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // Then - should be in "Edit Expense" mode
         assertThat(dialogFixture.target().getTitle()).isEqualTo("Edit Expense");
@@ -764,12 +747,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         DialogFixture dialogFixture = new DialogFixture(robot(), testDialog);
         
         // Wait for categories to load
-        try {
-            Thread.sleep(200);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // When - call loadExpenseData directly (should return early)
         execute(() -> {

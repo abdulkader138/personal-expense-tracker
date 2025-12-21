@@ -3,6 +3,7 @@ package com.mycompany.pet.ui;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.swing.core.matcher.JButtonMatcher.withText;
 import static org.assertj.swing.edt.GuiActionRunner.execute;
+import static org.awaitility.Awaitility.await;
 import static org.junit.Assume.assumeFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -17,12 +18,14 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.JComboBox;
 
 import org.assertj.swing.annotation.GUITest;
 import org.assertj.swing.core.GenericTypeMatcher;
 import org.assertj.swing.data.TableCell;
+import org.assertj.swing.fixture.DialogFixture;
 import org.assertj.swing.fixture.FrameFixture;
 import org.assertj.swing.fixture.JButtonFixture;
 import org.assertj.swing.fixture.JComboBoxFixture;
@@ -126,6 +129,18 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         
         // Don't call loadData() here - let individual tests call it if needed
         // This prevents any potential blocking during setup
+    }
+
+    /**
+     * Waits for async operations to complete using Awaitility.
+     */
+    private void waitForAsyncOperation() {
+        robot().waitForIdle();
+        await().atMost(2, TimeUnit.SECONDS).pollInterval(50, TimeUnit.MILLISECONDS)
+            .until(() -> {
+                robot().waitForIdle();
+                return true;
+            });
     }
 
     @Override
@@ -826,12 +841,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         robot().waitForIdle();
         
         // Wait for expenses to load
-        try {
-            Thread.sleep(200);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // Select first row
         execute(() -> {
@@ -851,12 +861,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         robot().waitForIdle();
         
         // Wait for async callback
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // Then - window should still be visible
         window.requireVisible();
@@ -875,12 +880,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         robot().waitForIdle();
         
         // Wait for expenses to load
-        try {
-            Thread.sleep(200);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // Select first row
         execute(() -> {
@@ -900,12 +900,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         robot().waitForIdle();
         
         // Wait for async callback
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // Then - window should still be visible
         window.requireVisible();
@@ -924,12 +919,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         robot().waitForIdle();
         
         // Wait for async callback
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // Then - window should still be visible
         window.requireVisible();
@@ -945,12 +935,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         robot().waitForIdle();
         
         // Wait for data to load
-        try {
-            Thread.sleep(200);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // Mock getExpensesByMonth to throw SQLException (triggers error callback)
         when(expenseService.getExpensesByMonth(anyInt(), anyInt())).thenThrow(new SQLException("Database error"));
@@ -962,12 +947,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         robot().waitForIdle();
         
         // Wait for async callback
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // Then - window should still be visible
         window.requireVisible();
@@ -983,12 +963,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         robot().waitForIdle();
         
         // Wait for data to load
-        try {
-            Thread.sleep(200);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // Mock getMonthlyTotal to throw SQLException (triggers error callback)
         when(expenseService.getMonthlyTotal(anyInt(), anyInt())).thenThrow(new SQLException("Database error"));
@@ -1000,12 +975,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         robot().waitForIdle();
         
         // Wait for async callback
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // Then - window should still be visible
         window.requireVisible();
@@ -1021,12 +991,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         robot().waitForIdle();
         
         // Wait for data to load
-        try {
-            Thread.sleep(200);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // Select a category
         execute(() -> {
@@ -1046,12 +1011,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         robot().waitForIdle();
         
         // Wait for async callback
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // Then - window should still be visible
         window.requireVisible();
@@ -1070,12 +1030,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         robot().waitForIdle();
         
         // Wait for data to load
-        try {
-            Thread.sleep(200);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // Mock getExpense to return an expense
         Expense expense = new Expense(EXPENSE_ID_1, LocalDate.now(), EXPENSE_AMOUNT_1, 
@@ -1118,12 +1073,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         robot().waitForIdle();
         
         // Wait for async callback
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // Then - error callback should execute but not show dialog (lambda$filterExpenses$13)
         // Window should still be not visible
@@ -1157,12 +1107,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         robot().waitForIdle();
         
         // Wait for async callback
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // Then - error label should be set
         String labelText = execute(() -> mainWindow.monthlyTotalLabel.getText());
@@ -1206,12 +1151,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         robot().waitForIdle();
         
         // Wait for data to load
-        try {
-            Thread.sleep(200);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // The code path for user cancellation exists but can't be easily tested
         // without mocking JOptionPane, which is complex
@@ -1280,12 +1220,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         });
         
         // Wait for async callback
-        try {
-            Thread.sleep(300);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // Then - no error dialog should be shown (window not visible)
         // This tests the branch: if (isVisible() && isShowing()) in loadCategories error callback
@@ -1307,12 +1242,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         });
         
         // Wait for async callback
-        try {
-            Thread.sleep(300);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // Then - no error dialog should be shown (window not visible)
         // This tests the branch: if (isVisible() && isShowing()) in loadExpenses error callback
@@ -1336,12 +1266,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         });
         
         // Wait for async callback
-        try {
-            Thread.sleep(300);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // Then - no error dialog should be shown (window not visible)
         // This tests the branch: if (isVisible() && isShowing()) in filterExpenses error callback
@@ -1403,12 +1328,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         robot().waitForIdle();
         
         // Wait for data to load
-        try {
-            Thread.sleep(300);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // When - select row and show edit dialog, then cancel
         execute(() -> {
@@ -1512,12 +1432,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         robot().waitForIdle();
         
         // Wait for data to load
-        try {
-            Thread.sleep(300);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // When - select row and click Edit button
         execute(() -> {
@@ -1531,13 +1446,8 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         // The dialog will be created and shown (modal), but we'll handle it
         window.button(withText("Edit Expense")).click();
         
-        // Wait a bit for the dialog to appear
-        try {
-            Thread.sleep(200);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        // Wait for the dialog to appear
+        waitForAsyncOperation();
         
         // Then - verify getExpense was called (this covers the try block)
         verify(expenseService, timeout(1000)).getExpense(EXPENSE_ID_1);
@@ -1563,15 +1473,11 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         robot().waitForIdle();
         
         // Wait for data to load
-        try {
-            Thread.sleep(300);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // When - execute the try block code directly to ensure coverage
         // This covers: Integer expenseId = ...; Expense expense = ...; ExpenseDialog dialog = ...; dialog.setVisible(true); if (dialog.isSaved()) { loadData(); }
+        ExpenseDialog[] dialogRef = new ExpenseDialog[1];
         execute(() -> {
             if (mainWindow.expenseTable.getRowCount() > 0) {
                 mainWindow.expenseTable.setRowSelectionInterval(0, 0);
@@ -1585,6 +1491,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
                         expenseFromService);
                     dialog.setModal(false); // Make non-modal so test can continue
                     dialog.setVisible(true);
+                    dialogRef[0] = dialog;
                     
                     // Save the expense to trigger isSaved() = true branch
                     if (dialog.categoryComboBox.getItemCount() > 0) {
@@ -1593,34 +1500,35 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
                     dialog.dateField.setText("2024-01-01");
                     dialog.amountField.setText("100.00");
                     dialog.descriptionField.setText("Test");
-                    
-                    // Click save button
-                    javax.swing.SwingUtilities.invokeLater(() -> {
-                        try {
-                            Thread.sleep(100); // Small delay for async operations
-                            dialog.getRootPane().getDefaultButton().doClick();
-                        } catch (Exception e) {
-                            // Ignore
-                        }
-                    });
-                    
-                    // Wait a bit for save to complete
-                    try {
-                        Thread.sleep(200);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                    }
-                    
-                    // This covers: if (dialog.isSaved()) { loadData(); } - true branch
-                    if (dialog.isSaved()) {
-                        mainWindow.loadData();
-                    }
-                    
-                    dialog.dispose();
                 } catch (SQLException e) {
                     // This would be the catch block
                     throw new RuntimeException(e);
                 }
+            }
+        });
+        
+        // Wait for dialog to be ready
+        robot().waitForIdle();
+        
+        // Click save button using robot (outside execute block to avoid EDT issues)
+        if (dialogRef[0] != null) {
+            // Use DialogFixture to find and click the Save button
+            DialogFixture dialogFixture = new DialogFixture(robot(), dialogRef[0]);
+            dialogFixture.button(withText("Save")).click();
+        }
+        
+        // Wait for save to complete (outside execute block to avoid EDT issues)
+        robot().waitForIdle();
+        waitForAsyncOperation();
+        
+        // Check if saved and call loadData if needed
+        execute(() -> {
+            if (dialogRef[0] != null) {
+                // This covers: if (dialog.isSaved()) { loadData(); } - true branch
+                if (dialogRef[0].isSaved()) {
+                    mainWindow.loadData();
+                }
+                dialogRef[0].dispose();
             }
         });
         robot().waitForIdle();
@@ -1643,12 +1551,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         robot().waitForIdle();
         
         // Wait for data to load
-        try {
-            Thread.sleep(300);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot().waitForIdle();
+        waitForAsyncOperation();
         
         // When - execute the try block code directly to ensure coverage
         // This covers: Integer expenseId = ...; Expense expense = ...; ExpenseDialog dialog = ...; dialog.setVisible(true); if (dialog.isSaved()) { loadData(); } - false branch

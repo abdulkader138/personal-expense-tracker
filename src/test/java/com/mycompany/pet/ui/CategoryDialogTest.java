@@ -246,6 +246,25 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             });
     }
 
+    /**
+     * Helper method to set up dialog with categories loaded and a row selected.
+     * Used to reduce duplication in tests.
+     */
+    private void setupDialogWithSelectedRow() {
+        execute(() -> {
+            categoryDialog.loadCategories();
+        });
+        robot().waitForIdle();
+        waitForTableRows(1);
+        int rowCount = execute(() -> categoryDialog.categoryTableModel.getRowCount());
+        if (rowCount > 0) {
+            execute(() -> {
+                categoryDialog.categoryTable.setRowSelectionInterval(0, 0);
+            });
+            robot().waitForIdle();
+        }
+    }
+
     @Test
     @GUITest
     public void testCategoryDialog_DisplaysCorrectly() {
@@ -1509,24 +1528,8 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         ensureDialogCreated();
         // Clear test mode to test JOptionPane confirmation dialog
         System.clearProperty("test.mode");
-        
-        // Load categories
-        execute(() -> {
-            categoryDialog.loadCategories();
-        });
-        robot().waitForIdle();
-        
-        // Wait for categories to load
-        int rowCount = 0;
-        waitForTableRows(1);
-        rowCount = execute(() -> categoryDialog.categoryTableModel.getRowCount());
-        
-        if (rowCount > 0) {
-            // Select a row
-            execute(() -> {
-                categoryDialog.categoryTable.setRowSelectionInterval(0, 0);
-            });
-            robot().waitForIdle();
+        try {
+            setupDialogWithSelectedRow();
             
             // Mock JOptionPane to return NO_OPTION
             // Note: This is tricky to test with real JOptionPane, so we'll test the logic
@@ -1534,10 +1537,10 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             
             // In production mode, if user clicks NO, the delete should not proceed
             // We can't easily mock JOptionPane, but we can verify the code path exists
+        } finally {
+            // Restore test mode
+            System.setProperty("test.mode", "true");
         }
-        
-        // Restore test mode
-        System.setProperty("test.mode", "true");
     }
 
     @Test
@@ -1615,18 +1618,13 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             robot().waitForIdle();
             
             // Wait for async success callback
-            for (int i = 0; i < 50; i++) {
-                robot().waitForIdle();
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                String message = execute(() -> categoryDialog.labelMessage.getText());
-                if (message.isEmpty()) {
-                    break; // Success callback cleared the message
-                }
-            }
+            // Wait for message to be cleared (success callback)
+            robot().waitForIdle();
+            await().atMost(5, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS)
+                .until(() -> {
+                    robot().waitForIdle();
+                    return execute(() -> categoryDialog.labelMessage.getText().isEmpty());
+                });
             
             // Verify message was cleared (success callback executed)
             String message = execute(() -> categoryDialog.labelMessage.getText());
@@ -1666,18 +1664,13 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             robot().waitForIdle();
             
             // Wait for async success callback
-            for (int i = 0; i < 50; i++) {
-                robot().waitForIdle();
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                String message = execute(() -> categoryDialog.labelMessage.getText());
-                if (message.isEmpty()) {
-                    break; // Success callback cleared the message
-                }
-            }
+            // Wait for message to be cleared (success callback)
+            robot().waitForIdle();
+            await().atMost(5, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS)
+                .until(() -> {
+                    robot().waitForIdle();
+                    return execute(() -> categoryDialog.labelMessage.getText().isEmpty());
+                });
             
             // Verify message was cleared (success callback executed)
             String message = execute(() -> categoryDialog.labelMessage.getText());
@@ -1787,18 +1780,9 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             
             // Wait for async error callback
             String errorMessage = null;
-            for (int i = 0; i < 100; i++) {
-                robot().waitForIdle();
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                errorMessage = execute(() -> categoryDialog.lastErrorMessage);
-                if (errorMessage != null && errorMessage.contains("Error")) {
-                    break;
-                }
-            }
+            // Wait for error message
+            waitForErrorMessage();
+            errorMessage = getCurrentMessage();
             
             // Verify error message was set
             assertThat(errorMessage).isNotNull().contains("Error");
@@ -1842,18 +1826,9 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             
             // Wait for async error callback
             String errorMessage = null;
-            for (int i = 0; i < 100; i++) {
-                robot().waitForIdle();
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                errorMessage = execute(() -> categoryDialog.lastErrorMessage);
-                if (errorMessage != null && errorMessage.contains("Error")) {
-                    break;
-                }
-            }
+            // Wait for error message
+            waitForErrorMessage();
+            errorMessage = getCurrentMessage();
             
             // Verify error message was set
             assertThat(errorMessage).isNotNull().contains("Error");
@@ -2824,32 +2799,16 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         ensureDialogCreated();
         // Clear test mode to test JOptionPane path
         System.clearProperty("test.mode");
-        
-        // Load categories
-        execute(() -> {
-            categoryDialog.loadCategories();
-        });
-        robot().waitForIdle();
-        
-        // Wait for categories to load
-        int rowCount = 0;
-        waitForTableRows(1);
-        rowCount = execute(() -> categoryDialog.categoryTableModel.getRowCount());
-        
-        if (rowCount > 0) {
-            // Select a row
-            execute(() -> {
-                categoryDialog.categoryTable.setRowSelectionInterval(0, 0);
-            });
-            robot().waitForIdle();
+        try {
+            setupDialogWithSelectedRow();
             
             // In production mode, JOptionPane will show, but we can't easily test user clicking NO
             // So we'll just verify the code path exists by checking the method doesn't throw
             // The actual NO click would require mocking JOptionPane which is complex
+        } finally {
+            // Restore test mode
+            System.setProperty("test.mode", "true");
         }
-        
-        // Restore test mode
-        System.setProperty("test.mode", "true");
     }
 
     @Test
@@ -2956,9 +2915,10 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         Thread nonEDTThread = new Thread(() -> {
             try {
                 // Block EDT briefly to create a scenario where invokeAndWait might fail
+                // NOTE: Thread.sleep() is intentional here - we're testing thread interruption behavior
                 execute(() -> {
                     try {
-                        Thread.sleep(100);
+                        Thread.sleep(100); // NOSONAR - intentional for testing thread interruption
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                     }
@@ -3315,7 +3275,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         Thread interrupterThread = new Thread(() -> {
             try {
                 // Wait a bit for the other thread to start invokeAndWait
-                Thread.sleep(10);
+                Thread.sleep(10); // NOSONAR - intentional for testing thread interruption timing
                 // Interrupt the calling thread - this should cause invokeAndWait to throw
                 callingThread[0].interrupt();
             } catch (InterruptedException e) {
@@ -3360,9 +3320,10 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         // This is a more aggressive attempt to trigger the exception handler
         
         // First, block EDT briefly
+        // NOTE: Thread.sleep() is intentional here - we're testing EDT blocking behavior
         execute(() -> {
             try {
-                Thread.sleep(50); // Block EDT briefly
+                Thread.sleep(50); // NOSONAR - intentional for testing EDT blocking
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
@@ -3372,7 +3333,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         Thread nonEDTThread = new Thread(() -> {
             try {
                 // Small delay to let EDT get busy
-                Thread.sleep(10);
+                Thread.sleep(10); // NOSONAR - intentional for testing thread timing
                 // Call showMessage - invokeAndWait might have issues if EDT is blocked
                 categoryDialog.showMessage("Test message with blocked EDT");
             } catch (InterruptedException e) {
