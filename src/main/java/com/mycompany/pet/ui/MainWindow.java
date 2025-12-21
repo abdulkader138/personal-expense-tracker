@@ -220,28 +220,8 @@ public class MainWindow extends JFrame {
      */
     void loadExpenses() {
         expenseController.loadExpenses(
-            expenses -> {
-                // Success: populate table
-                expenseTableModel.setRowCount(0);
-                for (Expense expense : expenses) {
-                    Category category = null;
-                    try {
-                        category = categoryController.getCategory(expense.getCategoryId());
-                    } catch (SQLException e) {
-                        // Ignore - will show "Unknown"
-                    }
-                    String categoryName = category != null ? category.getName() : "Unknown";
-                    expenseTableModel.addRow(new Object[]{
-                        expense.getExpenseId(),
-                        expense.getDate().toString(),
-                        expense.getAmount().toString(),
-                        expense.getDescription(),
-                        categoryName
-                    });
-                }
-            },
+            expenses -> populateExpenseTable(expenses),
             error -> {
-                // Error: show message only if window is visible
                 if (isVisible() && isShowing()) {
                     JOptionPane.showMessageDialog(this,
                         error,
@@ -250,6 +230,30 @@ public class MainWindow extends JFrame {
                 }
             }
         );
+    }
+
+    /**
+     * Populates expense table with expenses.
+     * Package-private for testing.
+     */
+    void populateExpenseTable(java.util.List<Expense> expenses) {
+        expenseTableModel.setRowCount(0);
+        for (Expense expense : expenses) {
+            Category category = null;
+            try {
+                category = categoryController.getCategory(expense.getCategoryId());
+            } catch (SQLException e) {
+                // Ignore - will show "Unknown"
+            }
+            String categoryName = category != null ? category.getName() : "Unknown";
+            expenseTableModel.addRow(new Object[]{
+                expense.getExpenseId(),
+                expense.getDate().toString(),
+                expense.getAmount().toString(),
+                expense.getDescription(),
+                categoryName
+            });
+        }
     }
 
     /**
@@ -272,28 +276,10 @@ public class MainWindow extends JFrame {
                 int month = Integer.parseInt(selectedMonth);
                 expenseController.loadExpensesByMonth(year, month,
                     expenses -> {
-                        // Success: populate table
-                        expenseTableModel.setRowCount(0);
-                        for (Expense expense : expenses) {
-                            Category category = null;
-                            try {
-                                category = categoryController.getCategory(expense.getCategoryId());
-                            } catch (SQLException e) {
-                                // Ignore - will show "Unknown"
-                            }
-                            String categoryName = category != null ? category.getName() : "Unknown";
-                            expenseTableModel.addRow(new Object[]{
-                                expense.getExpenseId(),
-                                expense.getDate().toString(),
-                                expense.getAmount().toString(),
-                                expense.getDescription(),
-                                categoryName
-                            });
-                        }
+                        populateExpenseTable(expenses);
                         updateSummary();
                     },
                     error -> {
-                        // Error: show message
                         if (isVisible() && isShowing()) {
                             JOptionPane.showMessageDialog(this,
                                 error,

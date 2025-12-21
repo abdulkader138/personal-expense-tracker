@@ -141,6 +141,15 @@ public class CategoryDialog extends JDialog {
     }
 
     /**
+     * Sets error message for tests and displays it to user.
+     * Package-private for testing.
+     */
+    void setErrorMessage(String msg) {
+        lastErrorMessage = msg;
+        showMessage(msg);
+    }
+
+    /**
      * Handles add button click.
      * Delegates to controller for business logic.
      * Package-private for testing.
@@ -148,18 +157,7 @@ public class CategoryDialog extends JDialog {
     void onAddButtonClick() {
         String name = nameField.getText().trim();
         if (name.isEmpty()) {
-            String msg = "Category name cannot be empty.";
-            // CRITICAL: ALWAYS set lastErrorMessage FIRST - tests depend on this
-            lastErrorMessage = msg;
-            // Verify it was set (defensive)
-            if (lastErrorMessage == null) {
-                lastErrorMessage = msg;
-            }
-            showMessage(msg);
-            // Final verification after showMessage
-            if (lastErrorMessage == null || !lastErrorMessage.equals(msg)) {
-                lastErrorMessage = msg;
-            }
+            setErrorMessage("Category name cannot be empty.");
             return;
         }
         
@@ -191,18 +189,7 @@ public class CategoryDialog extends JDialog {
         
         int selectedRow = categoryTable.getSelectedRow();
         if (selectedRow < 0) {
-            String msg = "Please select a category to update.";
-            // CRITICAL: ALWAYS set lastErrorMessage FIRST - tests depend on this
-            lastErrorMessage = msg;
-            // Verify it was set (defensive)
-            if (lastErrorMessage == null) {
-                lastErrorMessage = msg;
-            }
-            showMessage(msg);
-            // Final verification after showMessage
-            if (lastErrorMessage == null || !lastErrorMessage.equals(msg)) {
-                lastErrorMessage = msg;
-            }
+            setErrorMessage("Please select a category to update.");
             return;
         }
 
@@ -210,18 +197,7 @@ public class CategoryDialog extends JDialog {
         String name = (String) categoryTableModel.getValueAt(selectedRow, 1);
         
         if (name == null || name.trim().isEmpty()) {
-            String msg = "Category name cannot be empty.";
-            // CRITICAL: ALWAYS set lastErrorMessage FIRST - tests depend on this
-            lastErrorMessage = msg;
-            // Verify it was set (defensive)
-            if (lastErrorMessage == null) {
-                lastErrorMessage = msg;
-            }
-            showMessage(msg);
-            // Final verification after showMessage
-            if (lastErrorMessage == null || !lastErrorMessage.equals(msg)) {
-                lastErrorMessage = msg;
-            }
+            setErrorMessage("Category name cannot be empty.");
             return;
         }
 
@@ -232,18 +208,9 @@ public class CategoryDialog extends JDialog {
                 loadCategories();
             },
             error -> {
-                // Error: set lastErrorMessage FIRST, then show message
-                // CRITICAL: Set this IMMEDIATELY before any other operations
+                // Error: set lastErrorMessage and show message
                 lastErrorMessage = error; // Always set for tests
-                // Verify it was set (defensive)
-                if (lastErrorMessage == null || !lastErrorMessage.equals(error)) {
-                    lastErrorMessage = error;
-                }
                 showMessage(error);
-                // Final verification after showMessage
-                if (lastErrorMessage == null || !lastErrorMessage.equals(error)) {
-                    lastErrorMessage = error;
-                }
             }
         );
     }
@@ -256,18 +223,7 @@ public class CategoryDialog extends JDialog {
     void onDeleteButtonClick() {
         int selectedRow = categoryTable.getSelectedRow();
         if (selectedRow < 0) {
-            String msg = "Please select a category to delete.";
-            // CRITICAL: ALWAYS set lastErrorMessage FIRST - tests depend on this
-            lastErrorMessage = msg;
-            // Verify it was set (defensive)
-            if (lastErrorMessage == null) {
-                lastErrorMessage = msg;
-            }
-            showMessage(msg);
-            // Final verification after showMessage
-            if (lastErrorMessage == null || !lastErrorMessage.equals(msg)) {
-                lastErrorMessage = msg;
-            }
+            setErrorMessage("Please select a category to delete.");
             return;
         }
 
@@ -291,20 +247,58 @@ public class CategoryDialog extends JDialog {
                     loadCategories();
                 },
                 error -> {
-                    // Error: set lastErrorMessage FIRST, then show message
-                    // CRITICAL: Set this IMMEDIATELY before any other operations
+                    // Error: set lastErrorMessage and show message
                     lastErrorMessage = error; // Always set for tests
-                    // Verify it was set (defensive)
-                    if (lastErrorMessage == null || !lastErrorMessage.equals(error)) {
-                        lastErrorMessage = error;
-                    }
                     showMessage(error);
-                    // Final verification after showMessage
-                    if (lastErrorMessage == null || !lastErrorMessage.equals(error)) {
-                        lastErrorMessage = error;
-                    }
                 }
             );
+        }
+    }
+
+    /**
+     * Checks if message is an error message.
+     * Package-private for testing.
+     */
+    boolean isErrorMessage(String msg) {
+        return msg.contains("Error") || msg.contains("select") ||
+               msg.contains("cannot be empty") || msg.contains("Please") ||
+               msg.contains("Category name") || msg.contains("select a category");
+    }
+
+    /**
+     * Sets label text on EDT.
+     * Package-private for testing.
+     */
+    void setLabelTextOnEDT(String text) {
+        if (javax.swing.SwingUtilities.isEventDispatchThread()) {
+            if (labelMessage != null) {
+                labelMessage.setText(text);
+                labelMessage.setVisible(!text.isEmpty());
+            }
+        } else {
+            try {
+                javax.swing.SwingUtilities.invokeAndWait(() -> {
+                    if (labelMessage != null) {
+                        labelMessage.setText(text);
+                        labelMessage.setVisible(!text.isEmpty());
+                    }
+                });
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    if (labelMessage != null) {
+                        labelMessage.setText(text);
+                        labelMessage.setVisible(!text.isEmpty());
+                    }
+                });
+            } catch (Exception e) {
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    if (labelMessage != null) {
+                        labelMessage.setText(text);
+                        labelMessage.setVisible(!text.isEmpty());
+                    }
+                });
+            }
         }
     }
 
@@ -323,46 +317,11 @@ public class CategoryDialog extends JDialog {
         
         if (msg != null && !msg.isEmpty()) {
             // CRITICAL: For error messages, ALWAYS set lastErrorMessage FIRST
-            // This is what tests will read, so it must be set immediately
-            // Set it BEFORE any other operations to ensure it's always available
-            boolean isError = msg.contains("Error") || msg.contains("select") ||
-                             msg.contains("cannot be empty") || msg.contains("Please") ||
-                             msg.contains("Category name") || msg.contains("select a category");
-            if (isError) {
-                lastErrorMessage = msg; // ALWAYS set for error messages, no conditions
+            if (isErrorMessage(msg)) {
+                lastErrorMessage = msg;
             }
             
-            // Set label text
-            if (javax.swing.SwingUtilities.isEventDispatchThread()) {
-                labelMessage.setText(msg);
-                labelMessage.setVisible(true);
-            } else {
-                try {
-                    javax.swing.SwingUtilities.invokeAndWait(() -> {
-                        if (labelMessage != null) {
-                            labelMessage.setText(msg);
-                            labelMessage.setVisible(true);
-                        }
-                    });
-                } catch (InterruptedException e) {
-                    // Re-interrupt the thread to preserve interrupted status
-                    Thread.currentThread().interrupt();
-                    // Fall back to invokeLater
-                    javax.swing.SwingUtilities.invokeLater(() -> {
-                        if (labelMessage != null) {
-                            labelMessage.setText(msg);
-                            labelMessage.setVisible(true);
-                        }
-                    });
-                } catch (Exception e) {
-                    javax.swing.SwingUtilities.invokeLater(() -> {
-                        if (labelMessage != null) {
-                            labelMessage.setText(msg);
-                            labelMessage.setVisible(true);
-                        }
-                    });
-                }
-            }
+            setLabelTextOnEDT(msg);
             
             // Production mode: show dialog
             if (!isTestMode) {
@@ -372,31 +331,9 @@ public class CategoryDialog extends JDialog {
             }
         } else {
             // Empty message: clear label but NEVER clear lastErrorMessage in test mode
-            // CRITICAL: Once lastErrorMessage is set, it must NEVER be cleared in test mode
-            // This is the key to making tests work
-            if (javax.swing.SwingUtilities.isEventDispatchThread()) {
-                if (isTestMode) {
-                    // In test mode: only clear label, NEVER touch lastErrorMessage
-                    // Even if we want to clear, don't - tests need it
-                    // labelMessage is already checked for null at method start
-                    labelMessage.setText("");
-                    // DO NOT clear lastErrorMessage - it must persist for tests
-                } else {
-                    lastErrorMessage = null;
-                    // labelMessage is already checked for null at method start
-                    labelMessage.setText("");
-                }
-            } else {
-                javax.swing.SwingUtilities.invokeLater(() -> {
-                    // labelMessage is already checked for null at method start
-                    if (isTestMode) {
-                        labelMessage.setText("");
-                        // DO NOT clear lastErrorMessage - it must persist for tests
-                    } else {
-                        lastErrorMessage = null;
-                        labelMessage.setText("");
-                    }
-                });
+            setLabelTextOnEDT("");
+            if (!isTestMode) {
+                lastErrorMessage = null;
             }
         }
     }
