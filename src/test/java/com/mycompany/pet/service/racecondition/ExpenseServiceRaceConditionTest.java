@@ -74,22 +74,22 @@ public class ExpenseServiceRaceConditionTest {
 	private AutoCloseable closeable;
 
 	/** The expense id. */
-	private Integer EXPENSE_ID = 1;
+	private Integer expenseId = 1;
 
 	/** The expense date. */
-	private LocalDate EXPENSE_DATE = LocalDate.now();
+	private LocalDate expenseDate = LocalDate.now();
 
 	/** The expense amount. */
-	private BigDecimal EXPENSE_AMOUNT = new BigDecimal("100.50");
+	private BigDecimal expenseAmount = new BigDecimal("100.50");
 
 	/** The expense description. */
-	private String EXPENSE_DESCRIPTION = "Lunch";
+	private String expenseDescription = "Lunch";
 
 	/** The category id. */
-	private Integer CATEGORY_ID = 1;
+	private Integer categoryId = 1;
 
 	/** The category. */
-	private Category CATEGORY = new Category(CATEGORY_ID, "Food");
+	private Category category = new Category(categoryId, "Food");
 
 	/**
 	 * Setup.
@@ -119,10 +119,10 @@ public class ExpenseServiceRaceConditionTest {
 		List<Expense> expenses = new ArrayList<>();
 
 		// Mocks
-		when(categoryDAO.findById(anyInt())).thenAnswer(invocation -> CATEGORY);
+		when(categoryDAO.findById(anyInt())).thenAnswer(invocation -> category);
 		doAnswer(invocation -> {
 			Expense exp = invocation.getArgument(0);
-			exp.setExpenseId(EXPENSE_ID);
+			exp.setExpenseId(expenseId);
 			expenses.add(exp);
 			return exp;
 		}).when(expenseDAO).create(any(Expense.class));
@@ -131,11 +131,11 @@ public class ExpenseServiceRaceConditionTest {
 		List<Thread> threads = IntStream.range(0, 10)
 				.mapToObj(i -> new Thread(() -> {
 					try {
-						expenseService.createExpense(EXPENSE_DATE, EXPENSE_AMOUNT, EXPENSE_DESCRIPTION, CATEGORY_ID);
+						expenseService.createExpense(expenseDate, expenseAmount, expenseDescription, categoryId);
 					} catch (SQLException e) {
 						throw new RuntimeException(e);
 					}
-				})).peek(t -> t.start()).collect(Collectors.toList());
+				})).peek(Thread::start).collect(Collectors.toList());
 		await().atMost(10, TimeUnit.SECONDS).until(() -> threads.stream().noneMatch(t -> t.isAlive()));
 
 		// Verify - all 10 threads should have created expenses
@@ -149,7 +149,7 @@ public class ExpenseServiceRaceConditionTest {
 	public void testDeleteExpenseConcurrent() throws SQLException {
 		// Setup
 		List<Expense> expenses = new ArrayList<>();
-		Expense expense = new Expense(EXPENSE_ID, EXPENSE_DATE, EXPENSE_AMOUNT, EXPENSE_DESCRIPTION, CATEGORY_ID);
+		Expense expense = new Expense(expenseId, expenseDate, expenseAmount, expenseDescription, categoryId);
 		expenses.add(expense);
 
 		// Mocks
@@ -165,11 +165,11 @@ public class ExpenseServiceRaceConditionTest {
 		List<Thread> threads = IntStream.range(0, 10)
 				.mapToObj(i -> new Thread(() -> {
 					try {
-						expenseService.deleteExpense(EXPENSE_ID);
+						expenseService.deleteExpense(expenseId);
 					} catch (SQLException e) {
 						throw new RuntimeException(e);
 					}
-				})).peek(t -> t.start()).collect(Collectors.toList());
+				})).peek(Thread::start).collect(Collectors.toList());
 		await().atMost(10, TimeUnit.SECONDS).until(() -> threads.stream().noneMatch(t -> t.isAlive()));
 
 		// Verify - expense should be deleted (only once, but multiple threads may try)

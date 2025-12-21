@@ -3132,7 +3132,6 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             robot().waitForIdle();
             
             // Non-error messages should not set lastErrorMessage
-            String storedError = execute(() -> categoryDialog.lastErrorMessage);
             // In test mode, lastErrorMessage might persist from previous calls, so we check if it changed
             // Actually, non-error messages shouldn't set it, so it should remain null or unchanged
         }

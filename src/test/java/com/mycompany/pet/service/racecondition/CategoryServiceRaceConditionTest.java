@@ -67,10 +67,10 @@ public class CategoryServiceRaceConditionTest {
 	private AutoCloseable closeable;
 
 	/** The category id. */
-	private Integer CATEGORY_ID = 1;
+	private Integer categoryId = 1;
 
 	/** The category name. */
-	private String CATEGORY_NAME = "Food";
+	private String categoryName = "Food";
 
 	/**
 	 * Setup.
@@ -112,15 +112,12 @@ public class CategoryServiceRaceConditionTest {
 		List<Thread> threads = IntStream.range(0, 10)
 				.mapToObj(i -> new Thread(() -> {
 					try {
-						categoryService.createCategory(CATEGORY_NAME);
-					} catch (SQLException e) {
-						// Some threads might fail in race conditions - that's expected
-						// Don't log to avoid cluttering test output
-					} catch (Exception e) {
-						// Some validation errors might occur - that's expected in race conditions
-						// Don't log to avoid cluttering test output
-					}
-				})).peek(t -> t.start()).collect(Collectors.toList());
+					categoryService.createCategory(categoryName);
+				} catch (Exception e) {
+					// Some threads might fail in race conditions - that's expected
+					// Don't log to avoid cluttering test output
+				}
+			})).peek(Thread::start).collect(Collectors.toList());
 		await().atMost(10, TimeUnit.SECONDS).until(() -> threads.stream().noneMatch(t -> t.isAlive()));
 
 		// Verify - all 10 threads should attempt to create categories
@@ -140,7 +137,7 @@ public class CategoryServiceRaceConditionTest {
 	public void testDeleteCategoryConcurrent() throws SQLException {
 		// Setup
 		List<Category> categories = new ArrayList<>();
-		Category category = new Category(CATEGORY_ID, CATEGORY_NAME);
+		Category category = new Category(categoryId, categoryName);
 		categories.add(category);
 
 		// Mocks
@@ -156,11 +153,11 @@ public class CategoryServiceRaceConditionTest {
 		List<Thread> threads = IntStream.range(0, 10)
 				.mapToObj(i -> new Thread(() -> {
 					try {
-						categoryService.deleteCategory(CATEGORY_ID);
+						categoryService.deleteCategory(categoryId);
 					} catch (SQLException e) {
 						throw new RuntimeException(e);
 					}
-				})).peek(t -> t.start()).collect(Collectors.toList());
+				})).peek(Thread::start).collect(Collectors.toList());
 		await().atMost(10, TimeUnit.SECONDS).until(() -> threads.stream().noneMatch(t -> t.isAlive()));
 
 		// Verify - category should be deleted (only once, but multiple threads may try)
