@@ -208,6 +208,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     /**
      * Waits for error message to appear using Awaitility.
+     * Checks for any non-empty error message (contains "Error", "not found", "select", "cannot", etc.).
      */
     private void waitForErrorMessage() {
         robot().waitForIdle();
@@ -215,7 +216,13 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             .until(() -> {
                 robot().waitForIdle();
                 String message = getCurrentMessage();
-                return message != null && !message.isEmpty() && message.contains("Error");
+                if (message == null || message.isEmpty()) {
+                    return false;
+                }
+                // Check for various error indicators
+                return message.contains("Error") || message.contains("not found") || 
+                       message.contains("select") || message.contains("cannot") ||
+                       message.contains("Please") || message.contains("Category name");
             });
     }
 
@@ -987,7 +994,6 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         
         // Wait for async success callback to complete
         waitForTableRows(1);
-        int newRowCount = execute(() -> categoryDialog.categoryTableModel.getRowCount());
         
         // Verify update was called
         verify(categoryService, timeout(2000)).updateCategory(anyInt(), anyString());
@@ -1024,19 +1030,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         robot().waitForIdle();
         
         // Wait for async success callback to complete
-        for (int i = 0; i < 50; i++) {
-            robot().waitForIdle();
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-            // Success callback calls loadCategories, so table should be refreshed
-            int newRowCount = execute(() -> categoryDialog.categoryTableModel.getRowCount());
-            if (newRowCount >= 0) { // Could be 0 or more
-                break;
-            }
-        }
+        waitForAsyncOperation();
         
         // Verify delete was called
         verify(categoryService, timeout(2000)).deleteCategory(anyInt());
@@ -1571,19 +1565,13 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         });
         robot().waitForIdle();
         
-        // Wait for async success callback
-        for (int i = 0; i < 50; i++) {
-            robot().waitForIdle();
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-            String nameFieldText = execute(() -> categoryDialog.nameField.getText());
-            if (nameFieldText.isEmpty()) {
-                break; // Success callback cleared the field
-            }
-        }
+        // Wait for async success callback - field should be cleared
+        robot().waitForIdle();
+        await().atMost(5, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS)
+            .until(() -> {
+                robot().waitForIdle();
+                return execute(() -> categoryDialog.nameField.getText().isEmpty());
+            });
         
         // Verify name field was cleared (success callback executed)
         String nameFieldText = execute(() -> categoryDialog.nameField.getText());
@@ -1721,19 +1709,9 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         robot().waitForIdle();
         
         // Wait for async error callback
-        String errorMessage = null;
-        for (int i = 0; i < 100; i++) {
-            robot().waitForIdle();
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-            errorMessage = execute(() -> categoryDialog.lastErrorMessage);
-            if (errorMessage != null && errorMessage.contains("Error")) {
-                break;
-            }
-        }
+        // Wait for error message
+        waitForErrorMessage();
+        String errorMessage = getCurrentMessage();
         
         // Verify error message was set
         assertThat(errorMessage).isNotNull().contains("Error");
@@ -1763,19 +1741,9 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         robot().waitForIdle();
         
         // Wait for async error callback
-        String errorMessage = null;
-        for (int i = 0; i < 100; i++) {
-            robot().waitForIdle();
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-            errorMessage = execute(() -> categoryDialog.lastErrorMessage);
-            if (errorMessage != null && errorMessage.contains("Error")) {
-                break;
-            }
-        }
+        // Wait for error message
+        waitForErrorMessage();
+        String errorMessage = getCurrentMessage();
         
         // Verify error message was set
         assertThat(errorMessage).isNotNull().contains("Error");
@@ -2493,11 +2461,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             robot().waitForIdle();
             
             // Wait for async operation
-            try {
-                Thread.sleep(200);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+            waitForAsyncOperation();
             robot().waitForIdle();
         }
     }
@@ -2538,11 +2502,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             robot().waitForIdle();
             
             // Wait for async operation
-            try {
-                Thread.sleep(200);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+            waitForAsyncOperation();
             robot().waitForIdle();
         }
     }
@@ -2929,19 +2889,8 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             robot().waitForIdle();
             
             // Wait for async error callback
-            String errorMessage = null;
-            for (int i = 0; i < 100; i++) {
-                robot().waitForIdle();
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                errorMessage = execute(() -> categoryDialog.lastErrorMessage);
-                if (errorMessage != null && !errorMessage.isEmpty()) {
-                    break;
-                }
-            }
+            waitForErrorMessage();
+            String errorMessage = getCurrentMessage();
             
             // Verify error message was set
             assertThat(errorMessage).isNotNull().contains("not found");
@@ -2984,19 +2933,8 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             robot().waitForIdle();
             
             // Wait for async error callback
-            String errorMessage = null;
-            for (int i = 0; i < 100; i++) {
-                robot().waitForIdle();
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                errorMessage = execute(() -> categoryDialog.lastErrorMessage);
-                if (errorMessage != null && !errorMessage.isEmpty()) {
-                    break;
-                }
-            }
+            waitForErrorMessage();
+            String errorMessage = getCurrentMessage();
             
             // Verify error message was set
             assertThat(errorMessage).isNotNull().contains("not found");
@@ -3292,19 +3230,8 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             robot().waitForIdle();
             
             // Wait for async error callback
-            String errorMessage = null;
-            for (int i = 0; i < 100; i++) {
-                robot().waitForIdle();
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                errorMessage = execute(() -> categoryDialog.lastErrorMessage);
-                if (errorMessage != null && !errorMessage.isEmpty()) {
-                    break;
-                }
-            }
+            waitForErrorMessage();
+            String errorMessage = getCurrentMessage();
             
             // Verify error message was set (defensive code should ensure it)
             assertThat(errorMessage).as("lastErrorMessage should be set by error callback with defensive checks")
@@ -3350,19 +3277,8 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             robot().waitForIdle();
             
             // Wait for async error callback
-            String errorMessage = null;
-            for (int i = 0; i < 100; i++) {
-                robot().waitForIdle();
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                errorMessage = execute(() -> categoryDialog.lastErrorMessage);
-                if (errorMessage != null && !errorMessage.isEmpty()) {
-                    break;
-                }
-            }
+            waitForErrorMessage();
+            String errorMessage = getCurrentMessage();
             
             // Verify error message was set (defensive code should ensure it)
             assertThat(errorMessage).as("lastErrorMessage should be set by error callback with defensive checks")
@@ -3658,11 +3574,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             robot().waitForIdle();
             
             // Wait for categories to load
-            try {
-                Thread.sleep(300);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+            waitForTableRows(1, testDialog);
             robot().waitForIdle();
             
             // When - select a category and try to delete (but answer NO)

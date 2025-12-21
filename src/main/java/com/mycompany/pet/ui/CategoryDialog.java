@@ -266,38 +266,31 @@ public class CategoryDialog extends JDialog {
     }
 
     /**
+     * Updates label text and visibility.
+     * Package-private for testing.
+     */
+    private void updateLabelText(String text) {
+        if (labelMessage != null) {
+            labelMessage.setText(text);
+            labelMessage.setVisible(!text.isEmpty());
+        }
+    }
+
+    /**
      * Sets label text on EDT.
      * Package-private for testing.
      */
     void setLabelTextOnEDT(String text) {
         if (javax.swing.SwingUtilities.isEventDispatchThread()) {
-            if (labelMessage != null) {
-                labelMessage.setText(text);
-                labelMessage.setVisible(!text.isEmpty());
-            }
+            updateLabelText(text);
         } else {
             try {
-                javax.swing.SwingUtilities.invokeAndWait(() -> {
-                    if (labelMessage != null) {
-                        labelMessage.setText(text);
-                        labelMessage.setVisible(!text.isEmpty());
-                    }
-                });
+                javax.swing.SwingUtilities.invokeAndWait(() -> updateLabelText(text));
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                javax.swing.SwingUtilities.invokeLater(() -> {
-                    if (labelMessage != null) {
-                        labelMessage.setText(text);
-                        labelMessage.setVisible(!text.isEmpty());
-                    }
-                });
+                javax.swing.SwingUtilities.invokeLater(() -> updateLabelText(text));
             } catch (Exception e) {
-                javax.swing.SwingUtilities.invokeLater(() -> {
-                    if (labelMessage != null) {
-                        labelMessage.setText(text);
-                        labelMessage.setVisible(!text.isEmpty());
-                    }
-                });
+                javax.swing.SwingUtilities.invokeLater(() -> updateLabelText(text));
             }
         }
     }

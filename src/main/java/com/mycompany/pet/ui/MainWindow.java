@@ -220,7 +220,7 @@ public class MainWindow extends JFrame {
      */
     void loadExpenses() {
         expenseController.loadExpenses(
-            expenses -> populateExpenseTable(expenses),
+            this::populateExpenseTable,
             error -> {
                 if (isVisible() && isShowing()) {
                     JOptionPane.showMessageDialog(this,

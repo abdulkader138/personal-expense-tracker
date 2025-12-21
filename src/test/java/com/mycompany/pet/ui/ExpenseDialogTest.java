@@ -654,7 +654,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         CategoryController categoryController = new CategoryController(categoryService);
         
         // When - create dialog with controllers, expense == null (new expense)
-        ExpenseDialog dialog = execute(() -> {
+        ExpenseDialog testDialog = execute(() -> {
             ExpenseDialog ed = new ExpenseDialog(mainWindow, expenseController, categoryController, null);
             // Ensure non-modal
             if (ed.isModal()) {
@@ -663,7 +663,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
             ed.setVisible(true);
             return ed;
         });
-        DialogFixture dialogFixture = new DialogFixture(robot(), dialog);
+        DialogFixture dialogFixture = new DialogFixture(robot(), testDialog);
         
         // Wait for categories to load
         try {
@@ -677,7 +677,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         assertThat(dialogFixture.target().getTitle()).isEqualTo("Add Expense");
         
         // Then - date field should be pre-filled
-        String dateText = execute(() -> dialog.dateField.getText());
+        String dateText = execute(() -> testDialog.dateField.getText());
         assertThat(dateText).isEqualTo(LocalDate.now().toString());
         
         dialogFixture.cleanUp();
@@ -694,7 +694,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         CategoryController categoryController = new CategoryController(categoryService);
         
         // When - create dialog with controllers, expense != null (edit expense)
-        ExpenseDialog dialog = execute(() -> {
+        ExpenseDialog testDialog = execute(() -> {
             ExpenseDialog ed = new ExpenseDialog(mainWindow, expenseController, categoryController, expense);
             // Ensure non-modal
             if (ed.isModal()) {
@@ -703,7 +703,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
             ed.setVisible(true);
             return ed;
         });
-        DialogFixture dialogFixture = new DialogFixture(robot(), dialog);
+        DialogFixture dialogFixture = new DialogFixture(robot(), testDialog);
         
         // Wait for categories and expense data to load
         try {
@@ -718,9 +718,9 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         
         // Then - fields should be populated
         execute(() -> {
-            assertThat(dialog.dateField.getText()).isEqualTo("2024-01-15");
-            assertThat(dialog.amountField.getText()).isEqualTo("50.00");
-            assertThat(dialog.descriptionField.getText()).isEqualTo("Test Expense");
+            assertThat(testDialog.dateField.getText()).isEqualTo("2024-01-15");
+            assertThat(testDialog.amountField.getText()).isEqualTo("50.00");
+            assertThat(testDialog.descriptionField.getText()).isEqualTo("Test Expense");
         });
         
         dialogFixture.cleanUp();
@@ -752,7 +752,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
     @GUITest
     public void testExpenseDialog_LoadExpenseData_WithNullExpense() throws SQLException {
         // Given - dialog with expense == null
-        ExpenseDialog dialog = execute(() -> {
+        ExpenseDialog testDialog = execute(() -> {
             ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, null);
             // Ensure non-modal
             if (ed.isModal()) {
@@ -761,7 +761,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
             ed.setVisible(true);
             return ed;
         });
-        DialogFixture dialogFixture = new DialogFixture(robot(), dialog);
+        DialogFixture dialogFixture = new DialogFixture(robot(), testDialog);
         
         // Wait for categories to load
         try {
@@ -773,12 +773,12 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         
         // When - call loadExpenseData directly (should return early)
         execute(() -> {
-            dialog.loadExpenseData(); // Should return early since expense is null
+            testDialog.loadExpenseData(); // Should return early since expense is null
         });
         
         // Then - no exception should be thrown
         // Fields should remain as initialized (date pre-filled, others empty)
-        String dateText = execute(() -> dialog.dateField.getText());
+        String dateText = execute(() -> testDialog.dateField.getText());
         assertThat(dateText).isEqualTo(LocalDate.now().toString());
         
         dialogFixture.cleanUp();
