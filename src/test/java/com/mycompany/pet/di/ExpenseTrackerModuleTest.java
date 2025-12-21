@@ -32,6 +32,7 @@ import com.mycompany.pet.ui.MainWindow;
 
 import org.bson.Document;
 
+import java.awt.GraphicsEnvironment;
 import java.lang.reflect.Method;
 
 /**
@@ -432,6 +433,10 @@ public class ExpenseTrackerModuleTest {
      */
     @Test
     public void testProvideMainWindow() throws Exception {
+        // Skip test in headless environment (MainWindow requires display)
+        Assume.assumeFalse("Skipping test in headless environment - MainWindow requires display",
+            GraphicsEnvironment.isHeadless());
+        
         // Given
         ExpenseTrackerModule module = new ExpenseTrackerModule();
         ExpenseController mockExpenseController = mock(ExpenseController.class);
@@ -460,6 +465,10 @@ public class ExpenseTrackerModuleTest {
      */
     @Test
     public void testProvideMainWindow_Singleton() {
+        // Skip test in headless environment (MainWindow requires display)
+        Assume.assumeFalse("Skipping test in headless environment - MainWindow requires display",
+            GraphicsEnvironment.isHeadless());
+        
         // Given
         ExpenseTrackerModule module = new ExpenseTrackerModule();
         MongoClient mockClient = mock(MongoClient.class);
