@@ -1445,7 +1445,6 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         robot().waitForIdle();
         
         // In production mode, non-error messages should be cleared
-        String message = execute(() -> categoryDialog.labelMessage.getText());
         // Message should be cleared if it was a non-error message
         // (The exact behavior depends on whether categories loaded successfully)
         
@@ -1481,7 +1480,6 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         robot().waitForIdle();
         
         // Error message should be preserved
-        String message = execute(() -> categoryDialog.labelMessage.getText());
         // Error messages should be preserved
         
         // Restore test mode
@@ -1674,17 +1672,12 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             });
             robot().waitForIdle();
             
-            // Verify cell is being edited
-            boolean isEditing = execute(() -> categoryDialog.categoryTable.isEditing());
-            
             // Call update - should stop cell editing
             execute(() -> {
                 categoryDialog.onUpdateButtonClick();
             });
             robot().waitForIdle();
             
-            // Cell editing should be stopped
-            boolean stillEditing = execute(() -> categoryDialog.categoryTable.isEditing());
             // After update, cell should not be editing anymore
         }
     }

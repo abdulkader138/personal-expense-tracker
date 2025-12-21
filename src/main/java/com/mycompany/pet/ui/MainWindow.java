@@ -24,11 +24,10 @@ public class MainWindow extends JFrame {
     private static final String ERROR_TITLE = "Error";
     
     // Controllers (preferred) - package-private for testing
-    final ExpenseController expenseController;
-    final CategoryController categoryController;
+    final transient ExpenseController expenseController;
+    final transient CategoryController categoryController;
     
     // Services (for backward compatibility and deprecated methods)
-    private transient CategoryService categoryService;
     private transient ExpenseService expenseService;
 
     // UI Components (package-private for testing)
@@ -63,7 +62,6 @@ public class MainWindow extends JFrame {
      */
     @Deprecated
     public MainWindow(CategoryService categoryService, ExpenseService expenseService) {
-        this.categoryService = categoryService;
         this.expenseService = expenseService;
         // Create controllers from services
         this.categoryController = new CategoryController(categoryService);

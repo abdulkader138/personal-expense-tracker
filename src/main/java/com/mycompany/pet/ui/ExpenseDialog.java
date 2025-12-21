@@ -32,9 +32,9 @@ import com.mycompany.pet.model.Expense;
 public class ExpenseDialog extends JDialog {
     private static final long serialVersionUID = 1L;
     
-    private final ExpenseController expenseController;
-    private final CategoryController categoryController;
-    private final Expense expense; // null for new expense, non-null for edit
+    private final transient ExpenseController expenseController;
+    private final transient CategoryController categoryController;
+    private final transient Expense expense; // null for new expense, non-null for edit
     private boolean saved = false;
 
     // UI Components (package-private for testing)

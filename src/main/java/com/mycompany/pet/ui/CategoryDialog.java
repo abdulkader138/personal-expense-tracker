@@ -28,7 +28,7 @@ public class CategoryDialog extends JDialog {
     private static final long serialVersionUID = 1L;
     private static final String TEST_MODE_PROPERTY = "test.mode";
     
-    private final CategoryController controller;
+    private final transient CategoryController controller;
     volatile String lastErrorMessage = null; // Store last error message for test mode (package-private for tests)
     
     /**
@@ -339,6 +339,16 @@ public class CategoryDialog extends JDialog {
             } else {
                 try {
                     javax.swing.SwingUtilities.invokeAndWait(() -> {
+                        if (labelMessage != null) {
+                            labelMessage.setText(msg);
+                            labelMessage.setVisible(true);
+                        }
+                    });
+                } catch (InterruptedException e) {
+                    // Re-interrupt the thread to preserve interrupted status
+                    Thread.currentThread().interrupt();
+                    // Fall back to invokeLater
+                    javax.swing.SwingUtilities.invokeLater(() -> {
                         if (labelMessage != null) {
                             labelMessage.setText(msg);
                             labelMessage.setVisible(true);

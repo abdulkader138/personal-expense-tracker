@@ -117,7 +117,6 @@ public class ExpenseServiceRaceConditionTest {
 	public void testNewExpenseConcurrent() throws SQLException {
 		// Setup
 		List<Expense> expenses = new ArrayList<>();
-		Expense expense = new Expense(EXPENSE_DATE, EXPENSE_AMOUNT, EXPENSE_DESCRIPTION, CATEGORY_ID);
 
 		// Mocks
 		when(categoryDAO.findById(anyInt())).thenAnswer(invocation -> CATEGORY);
