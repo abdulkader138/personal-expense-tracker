@@ -375,7 +375,7 @@ public class CategoryDialog extends JDialog {
             },
             error -> {
                 // Error: set lastErrorMessage and show message
-                lastErrorMessage = error; // Always set for tests
+                lastErrorMessage = error; 
                 showMessage(error);
             }
         );

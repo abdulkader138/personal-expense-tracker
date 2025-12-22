@@ -5,7 +5,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.junit.After;
@@ -275,7 +274,6 @@ public class ExpenseTrackerModuleTest {
 
         // Then
         assertNotNull(dbConnection);
-        // Verify the connection string is correct by calling getDatabase() which triggers MongoClients.create()
         dbConnection.getDatabase();
         mockedMongoClients.verify(() -> MongoClients.create("mongodb://custom-host:9999"));
     }
@@ -395,7 +393,6 @@ public class ExpenseTrackerModuleTest {
 
         // Then
         assertNotNull(initializer);
-        // Note: initialize() is called in provideDatabaseInitializer and should succeed with mocked DB
     }
 
     /**

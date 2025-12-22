@@ -43,7 +43,6 @@ public class ExpenseTrackerApp {
                         .databaseName("expense_tracker")
                 );
 
-                // Get MainWindow instance from Guice (all dependencies are automatically injected)
                 MainWindow mainWindow = injector.getInstance(MainWindow.class);
                 mainWindow.setVisible(true);
             } catch (Exception e) {
