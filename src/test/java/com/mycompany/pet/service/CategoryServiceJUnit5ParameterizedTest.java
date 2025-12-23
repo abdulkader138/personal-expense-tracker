@@ -46,8 +46,8 @@ public class CategoryServiceJUnit5ParameterizedTest {
             Arguments.of("Travel", "Travel"),
             Arguments.of("Bills", "Bills"),
             Arguments.of("Entertainment", "Entertainment"),
-            Arguments.of("  Food  ", "Food"), // Test trimming
-            Arguments.of("Food\n", "Food") // Test newline trimming
+            Arguments.of("  Food  ", "Food"), 
+            Arguments.of("Food\n", "Food") 
         );
     }
 

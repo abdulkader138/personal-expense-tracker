@@ -60,8 +60,8 @@ public class CategoryServiceParameterizedTest {
             { "Travel", true, "Travel" },
             { "Bills", true, "Bills" },
             { "Entertainment", true, "Entertainment" },
-            { "  Food  ", true, "Food" }, // Test trimming
-            { "Food\n", true, "Food" }, // Test newline trimming
+            { "  Food  ", true, "Food" }, 
+            { "Food\n", true, "Food" }, 
         });
     }
 
