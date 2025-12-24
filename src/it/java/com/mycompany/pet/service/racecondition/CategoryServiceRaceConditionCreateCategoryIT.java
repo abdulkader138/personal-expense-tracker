@@ -106,7 +106,6 @@ public class CategoryServiceRaceConditionCreateCategoryIT {
 				return;
 			}
 			
-			// Initialize database
 			try {
 				DatabaseInitializer initializer = new DatabaseInitializer(databaseConnection);
 				initializer.initialize();
@@ -115,11 +114,9 @@ public class CategoryServiceRaceConditionCreateCategoryIT {
 				return;
 			}
 
-			// Initialize DAOs and Services
 			CategoryDAO categoryDAO = new CategoryDAO(databaseConnection);
 			categoryService = new CategoryService(categoryDAO);
 		} catch (Exception e) {
-			// Skip test if database operations fail
 			org.junit.Assume.assumeNoException("Database operation failed. Skipping test.", e);
 			return;
 		}
@@ -157,7 +154,6 @@ public class CategoryServiceRaceConditionCreateCategoryIT {
 		// Verify all categories were created
 		try {
 			List<Category> categories = categoryService.getAllCategories();
-			// Should have 10 categories created by 10 threads
 			assertThat(categories).hasSize(10);
 		} catch (SQLException e) {
 			throw new RuntimeException(e);

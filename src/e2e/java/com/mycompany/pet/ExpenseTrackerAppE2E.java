@@ -216,7 +216,6 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 			org.assertj.swing.fixture.JTableFixture table = mainWindow.table();
 			assertThat(table.rowCount()).isGreaterThanOrEqualTo(2);
 			
-			// Verify expenses are displayed
 			boolean foundExpense1 = false;
 			boolean foundExpense2 = false;
 			for (int i = 0; i < table.rowCount(); i++) {
@@ -253,9 +252,7 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 			// We'll try to find them by looking for text fields in the dialog
 			// Date field is typically first
 			dialog.textBox().enterText(date.toString());
-			// Amount field
 			dialog.textBox().enterText(amount.toString());
-			// Description field
 			dialog.textBox().enterText(description);
 			dialog.comboBox().selectItem(0); // Select first category
 			

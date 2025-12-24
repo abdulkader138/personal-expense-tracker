@@ -119,7 +119,6 @@ public class ExpenseServiceRaceConditionCreateExpenseIT {
 				return;
 			}
 			
-			// Initialize database
 			try {
 				DatabaseInitializer initializer = new DatabaseInitializer(databaseConnection);
 				initializer.initialize();
@@ -128,15 +127,12 @@ public class ExpenseServiceRaceConditionCreateExpenseIT {
 				return;
 			}
 
-			// Initialize DAOs and Services
 			CategoryDAO categoryDAO = new CategoryDAO(databaseConnection);
 			ExpenseDAO expenseDAO = new ExpenseDAO(databaseConnection);
 			expenseService = new ExpenseService(expenseDAO, categoryDAO);
 
-			// Create test category
 			category = categoryDAO.create(new Category("Food"));
 		} catch (Exception e) {
-			// Skip test if database operations fail
 			org.junit.Assume.assumeNoException("Database operation failed. Skipping test.", e);
 			return;
 		}

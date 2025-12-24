@@ -123,15 +123,12 @@ public class ExpenseServiceRaceConditionDeleteExpenseIT {
 				return;
 			}
 
-			// Initialize DAOs and Services
 			CategoryDAO categoryDAO = new CategoryDAO(databaseConnection);
 			ExpenseDAO expenseDAO = new ExpenseDAO(databaseConnection);
 			expenseService = new ExpenseService(expenseDAO, categoryDAO);
 
-			// Create test category
 			category = categoryDAO.create(new Category("Food"));
 			
-			// Create test expense
 			savedExpense = expenseService.createExpense(
 				LocalDate.now(),
 				new BigDecimal("100.50"),
@@ -139,7 +136,6 @@ public class ExpenseServiceRaceConditionDeleteExpenseIT {
 				category.getCategoryId()
 			);
 		} catch (Exception e) {
-			// Skip test if database operations fail
 			org.junit.Assume.assumeNoException("Database operation failed. Skipping test.", e);
 			return;
 		}

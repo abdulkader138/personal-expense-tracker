@@ -106,7 +106,6 @@ public class CategoryServiceRaceConditionDeleteCategoryIT {
 				return;
 			}
 			
-			// Initialize database
 			try {
 				DatabaseInitializer initializer = new DatabaseInitializer(databaseConnection);
 				initializer.initialize();
@@ -115,14 +114,11 @@ public class CategoryServiceRaceConditionDeleteCategoryIT {
 				return;
 			}
 
-			// Initialize DAOs and Services
 			CategoryDAO categoryDAO = new CategoryDAO(databaseConnection);
 			categoryService = new CategoryService(categoryDAO);
 
-			// Create test category
 			savedCategory = categoryService.createCategory("Food");
 		} catch (Exception e) {
-			// Skip test if database operations fail
 			org.junit.Assume.assumeNoException("Database operation failed. Skipping test.", e);
 			return;
 		}
