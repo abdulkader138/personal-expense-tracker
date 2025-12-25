@@ -234,12 +234,10 @@ public class ExpenseDialog extends JDialog {
                 // Create new expense
                 expenseController.createExpense(date, amount, description, selectedCategory.getCategoryId(),
                     createdExpense -> {
-                        // Success: close dialog
                         saved = true;
                         dispose();
                     },
                     error -> 
-                        // Error: show message
                         JOptionPane.showMessageDialog(this,
                             error,
                             "Error",
@@ -250,12 +248,10 @@ public class ExpenseDialog extends JDialog {
                 expenseController.updateExpense(expense.getExpenseId(), date, amount, description, 
                     selectedCategory.getCategoryId(),
                     updatedExpense -> {
-                        // Success: close dialog
                         saved = true;
                         dispose();
                     },
                     error -> 
-                        // Error: show message
                         JOptionPane.showMessageDialog(this,
                             error,
                             "Error",

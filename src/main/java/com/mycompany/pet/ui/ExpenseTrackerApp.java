@@ -21,7 +21,6 @@ public class ExpenseTrackerApp {
     private static final Logger LOGGER = Logger.getLogger(ExpenseTrackerApp.class.getName());
     
     public static void main(String[] args) {
-        // Check if running in headless mode
         if (GraphicsEnvironment.isHeadless()) {
             LOGGER.severe("ERROR: This application requires a graphical display.");
             LOGGER.severe("Please run this application in an environment with X11 display support.");

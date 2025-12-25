@@ -136,7 +136,7 @@ public class CategoryServiceRaceConditionTest {
 	@Test
 	public void testDeleteCategoryConcurrent() throws SQLException {
 		// Setup
-		List<Category> categories = new ArrayList<>();
+		List<Category> categories = Collections.synchronizedList(new ArrayList<>());
 		Category category = new Category(categoryId, categoryName);
 		categories.add(category);
 

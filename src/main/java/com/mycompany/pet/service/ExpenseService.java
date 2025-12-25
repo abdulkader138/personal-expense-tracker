@@ -27,7 +27,7 @@ public class ExpenseService {
 
     public Expense createExpense(LocalDate date, BigDecimal amount, String description, Integer categoryId) throws SQLException {
         validateExpense(date, amount, description, categoryId);
-        synchronized (expenseLock) {     // 🔒 Make creation atomic
+        synchronized (expenseLock) {    
             Expense expense = new Expense(date, amount, description, categoryId);
             return expenseDAO.create(expense);
         }

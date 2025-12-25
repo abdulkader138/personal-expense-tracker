@@ -343,7 +343,6 @@ public class CategoryDialog extends JDialog {
         
         controller.loadCategories(
             categories -> {
-                // Success: populate table
                 categoryTableModel.setRowCount(0);
                 for (Category category : categories) {
                     categoryTableModel.addRow(new Object[]{
@@ -374,7 +373,6 @@ public class CategoryDialog extends JDialog {
                 }
             },
             error -> {
-                // Error: set lastErrorMessage and show message
                 lastErrorMessage = error; 
                 showMessage(error);
             }
