@@ -7,7 +7,6 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.Assume.assumeFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -44,7 +43,6 @@ import com.mycompany.pet.model.Category;
 import com.mycompany.pet.model.Expense;
 import com.mycompany.pet.service.CategoryService;
 import com.mycompany.pet.service.ExpenseService;
-import com.mycompany.pet.ui.ExpenseDialog;
 
 /**
  * UI tests for MainWindow using AssertJ Swing.
@@ -1395,7 +1393,6 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         robot().waitForIdle();
         
         // Then - should return early (no filtering)
-        // This tests the branch: if (selectedMonth == null || selectedYear == null) return;
     }
 
     @Test
@@ -1415,7 +1412,6 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         robot().waitForIdle();
         
         // Then - should return early (no filtering)
-        // This tests the branch: if (selectedMonth == null || selectedYear == null) return;
     }
 
     @Test
@@ -1476,7 +1472,6 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         waitForAsyncOperation();
         
         // When - execute the try block code directly to ensure coverage
-        // This covers: Integer expenseId = ...; Expense expense = ...; ExpenseDialog dialog = ...; dialog.setVisible(true); if (dialog.isSaved()) { loadData(); }
         ExpenseDialog[] dialogRef = new ExpenseDialog[1];
         execute(() -> {
             if (mainWindow.expenseTable.getRowCount() > 0) {
@@ -1524,7 +1519,6 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         // Check if saved and call loadData if needed
         execute(() -> {
             if (dialogRef[0] != null) {
-                // This covers: if (dialog.isSaved()) { loadData(); } - true branch
                 if (dialogRef[0].isSaved()) {
                     mainWindow.loadData();
                 }
@@ -1554,7 +1548,6 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         waitForAsyncOperation();
         
         // When - execute the try block code directly to ensure coverage
-        // This covers: Integer expenseId = ...; Expense expense = ...; ExpenseDialog dialog = ...; dialog.setVisible(true); if (dialog.isSaved()) { loadData(); } - false branch
         execute(() -> {
             if (mainWindow.expenseTable.getRowCount() > 0) {
                 mainWindow.expenseTable.setRowSelectionInterval(0, 0);
@@ -1572,7 +1565,6 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
                     // Close without saving to trigger isSaved() = false branch
                     dialog.dispose();
                     
-                    // This covers: if (dialog.isSaved()) { loadData(); } - false branch (else)
                     if (dialog.isSaved()) {
                         mainWindow.loadData();
                     }
