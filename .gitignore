@@ -11,6 +11,7 @@ target/
 hs_err_pid*
 .DS_Store
 .idea/
+*.sh
 *.iml
 .settings/
 .vscode

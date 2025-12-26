@@ -89,6 +89,54 @@ public class ExpenseTrackerModule extends AbstractModule {
     }
 
     /**
+     * Provides CategoryDAO instance.
+     */
+    @Provides
+    CategoryDAO provideCategoryDAO(DatabaseConnection dbConnection) {
+        return new CategoryDAO(dbConnection);
+    }
+
+    /**
+     * Provides ExpenseDAO instance.
+     */
+    @Provides
+    ExpenseDAO provideExpenseDAO(DatabaseConnection dbConnection) {
+        return new ExpenseDAO(dbConnection);
+    }
+
+    /**
+     * Provides CategoryService instance.
+     */
+    @Provides
+    CategoryService provideCategoryService(CategoryDAO categoryDAO) {
+        return new CategoryService(categoryDAO);
+    }
+
+    /**
+     * Provides ExpenseService instance.
+     */
+    @Provides
+    ExpenseService provideExpenseService(ExpenseDAO expenseDAO, CategoryDAO categoryDAO) {
+        return new ExpenseService(expenseDAO, categoryDAO);
+    }
+
+    /**
+     * Provides CategoryController instance.
+     */
+    @Provides
+    CategoryController provideCategoryController(CategoryService categoryService) {
+        return new CategoryController(categoryService);
+    }
+
+    /**
+     * Provides ExpenseController instance.
+     */
+    @Provides
+    ExpenseController provideExpenseController(ExpenseService expenseService) {
+        return new ExpenseController(expenseService);
+    }
+
+    /**
      * Provides MainWindow instance.
      */
     @Provides

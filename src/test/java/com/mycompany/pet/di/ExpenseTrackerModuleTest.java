@@ -17,8 +17,10 @@ import org.mockito.Mockito;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.google.inject.util.Modules;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
@@ -73,26 +75,18 @@ public class ExpenseTrackerModuleTest {
     /**
      * Creates a test module that installs ExpenseTrackerModule and provides mock controllers.
      * This is needed because provideMainWindow requires controllers, and Guice validates all bindings.
+     * Uses Modules.override() to override the @Provides methods from ExpenseTrackerModule.
      */
-    private AbstractModule createTestModuleWithMocks(ExpenseTrackerModule module) {
-        return new AbstractModule() {
+    private Module createTestModuleWithMocks(ExpenseTrackerModule module) {
+        AbstractModule overrideModule = new AbstractModule() {
             @Override
             protected void configure() {
-                install(module);
-            }
-            
-            @Provides
-            @Singleton
-            ExpenseController provideExpenseController() {
-                return mock(ExpenseController.class);
-            }
-            
-            @Provides
-            @Singleton
-            CategoryController provideCategoryController() {
-                return mock(CategoryController.class);
+                // Override the controller bindings with mocks
+                bind(ExpenseController.class).toInstance(mock(ExpenseController.class));
+                bind(CategoryController.class).toInstance(mock(CategoryController.class));
             }
         };
+        return Modules.override(module).with(overrideModule);
     }
 
     /**
@@ -473,25 +467,16 @@ public class ExpenseTrackerModuleTest {
                 .thenReturn(mockClient);
         
         // Create a test module that uses ExpenseTrackerModule's provideMainWindow logic
-        // We install ExpenseTrackerModule but override controller providers
-        AbstractModule testModule = new AbstractModule() {
+        // We use Modules.override() to override controller providers with mocks
+        AbstractModule overrideModule = new AbstractModule() {
             @Override
             protected void configure() {
-                install(module);
-            }
-            
-            @Provides
-            @Singleton
-            ExpenseController provideExpenseController() {
-                return mock(ExpenseController.class);
-            }
-            
-            @Provides
-            @Singleton
-            CategoryController provideCategoryController() {
-                return mock(CategoryController.class);
+                // Override the controller bindings with mocks
+                bind(ExpenseController.class).toInstance(mock(ExpenseController.class));
+                bind(CategoryController.class).toInstance(mock(CategoryController.class));
             }
         };
+        Module testModule = Modules.override(module).with(overrideModule);
 
         // When
         Injector injector = Guice.createInjector(testModule);
