@@ -7,6 +7,7 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.Assume.assumeFalse;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -2808,6 +2809,23 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         } finally {
             // Restore test mode
             System.setProperty("test.mode", "true");
+        }
+    }
+    
+    // Helper method to find buttons in a dialog
+    private javax.swing.JButton[] findButtons(javax.swing.JDialog dialog) {
+        java.util.List<javax.swing.JButton> buttons = new java.util.ArrayList<>();
+        findButtonsRecursive(dialog.getContentPane(), buttons);
+        return buttons.toArray(new javax.swing.JButton[0]);
+    }
+    
+    private void findButtonsRecursive(java.awt.Container container, java.util.List<javax.swing.JButton> buttons) {
+        for (java.awt.Component comp : container.getComponents()) {
+            if (comp instanceof javax.swing.JButton) {
+                buttons.add((javax.swing.JButton) comp);
+            } else if (comp instanceof java.awt.Container) {
+                findButtonsRecursive((java.awt.Container) comp, buttons);
+            }
         }
     }
 

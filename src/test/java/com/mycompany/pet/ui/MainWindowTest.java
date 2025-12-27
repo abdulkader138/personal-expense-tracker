@@ -1221,7 +1221,6 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         waitForAsyncOperation();
         
         // Then - no error dialog should be shown (window not visible)
-        // This tests the branch: if (isVisible() && isShowing()) in loadCategories error callback
     }
 
     @Test
@@ -1243,7 +1242,6 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         waitForAsyncOperation();
         
         // Then - no error dialog should be shown (window not visible)
-        // This tests the branch: if (isVisible() && isShowing()) in loadExpenses error callback
     }
 
     @Test
@@ -1267,7 +1265,6 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         waitForAsyncOperation();
         
         // Then - no error dialog should be shown (window not visible)
-        // This tests the branch: if (isVisible() && isShowing()) in filterExpenses error callback
     }
 
     @Test
@@ -1289,7 +1286,6 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         // Then - should show N/A (not calculate total)
         String labelText = execute(() -> mainWindow.monthlyTotalLabel.getText());
         assertThat(labelText).isEqualTo("Monthly Total: N/A");
-        // This tests the branch: if ("All".equals(selectedMonth)) in updateSummary
     }
 
     @Test
@@ -1312,7 +1308,6 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             assertThat(dialog.isSaved()).isFalse();
         });
         
-        // This tests the branch: if (dialog.isSaved()) - else branch (not saved)
         // Note: We can't easily test the full flow without mocking, but we can test the branch
     }
 
@@ -1345,7 +1340,6 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             }
         });
         
-        // This tests the branch: if (dialog.isSaved()) - else branch (not saved)
     }
 
     @Test
