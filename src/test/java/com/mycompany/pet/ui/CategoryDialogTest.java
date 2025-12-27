@@ -16,8 +16,10 @@ import java.awt.GraphicsEnvironment;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
 
 import org.assertj.swing.annotation.GUITest;
 import org.assertj.swing.fixture.DialogFixture;
@@ -26,7 +28,6 @@ import org.assertj.swing.fixture.JButtonFixture;
 import org.assertj.swing.fixture.JTableFixture;
 import org.assertj.swing.junit.runner.GUITestRunner;
 import org.assertj.swing.junit.testcase.AssertJSwingJUnitTestCase;
-import org.junit.After;
 import org.junit.Assume;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -35,11 +36,6 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-
-import javax.swing.SwingUtilities;
-
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.Callable;
 
 import com.mycompany.pet.controller.CategoryController;
 import com.mycompany.pet.controller.ExpenseController;
@@ -2837,13 +2833,6 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         }
     }
     
-    // Helper method to find buttons in a dialog
-    private javax.swing.JButton[] findButtons(javax.swing.JDialog dialog) {
-        java.util.List<javax.swing.JButton> buttons = new java.util.ArrayList<>();
-        findButtonsRecursive(dialog.getContentPane(), buttons);
-        return buttons.toArray(new javax.swing.JButton[0]);
-    }
-    
     private void findButtonsRecursive(java.awt.Container container, java.util.List<javax.swing.JButton> buttons) {
         for (java.awt.Component comp : container.getComponents()) {
             if (comp instanceof javax.swing.JButton) {
@@ -3549,7 +3538,6 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             assertThat(rowCount).as("In test mode, categories should not be loaded from constructor")
                 .isEqualTo(0);
             
-            // This tests the branch: if (!isTestMode) { loadCategories(); } - else branch (test mode)
             
             dialogFixture.cleanUp();
         } finally {
@@ -3719,7 +3707,6 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             .isNotNull()
             .contains("cannot be empty");
         
-        // This covers the defensive checks: if (lastErrorMessage == null) { lastErrorMessage = msg; }
     }
 
     @Test
@@ -3729,7 +3716,6 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         ensureDialogCreated();
         
         // When - test the defensive check that verifies lastErrorMessage is not null
-        // This tests: if (lastErrorMessage == null) { lastErrorMessage = msg; }
         execute(() -> {
             categoryDialog.nameField.setText("");
             // Use reflection to set lastErrorMessage to null after it's been set
@@ -3745,7 +3731,6 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             .isNotNull()
             .isEqualTo("Category name cannot be empty.");
         
-        // This covers: if (lastErrorMessage == null) { lastErrorMessage = msg; } in onAddButtonClick
     }
 
     @Test
@@ -3781,7 +3766,6 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             .isNotNull()
             .isEqualTo("Category name cannot be empty.");
         
-        // This covers: if (lastErrorMessage == null) { lastErrorMessage = msg; } in onUpdateButtonClick (null name case)
     }
 
     @Test
@@ -3808,7 +3792,6 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             .isNotNull()
             .isEqualTo("Please select a category to update.");
         
-        // This covers: if (lastErrorMessage == null) { lastErrorMessage = msg; } in onUpdateButtonClick (no selection case)
     }
 
     @Test
@@ -3835,7 +3818,6 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             .isNotNull()
             .isEqualTo("Please select a category to delete.");
         
-        // This covers: if (lastErrorMessage == null) { lastErrorMessage = msg; } in onDeleteButtonClick
     }
 
     @Test
@@ -3856,7 +3838,6 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         assertThat(errorMessage).as("Non-error messages should not set lastErrorMessage")
             .isNull();
         
-        // This covers the branch: if (isError) { lastErrorMessage = msg; } - false branch (non-error message)
     }
 
     @Test
@@ -3866,7 +3847,6 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         ensureDialogCreated();
         
         // When - test the defensive check that verifies lastErrorMessage after showMessage
-        // This tests: if (lastErrorMessage == null || !lastErrorMessage.equals(msg)) { lastErrorMessage = msg; }
         execute(() -> {
             // Set lastErrorMessage to a different value to test the defensive check
             categoryDialog.lastErrorMessage = "Different error";
@@ -3885,7 +3865,6 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             .isNotNull()
             .isEqualTo("Category name cannot be empty.");
         
-        // This covers: if (lastErrorMessage == null || !lastErrorMessage.equals(msg)) { lastErrorMessage = msg; }
     }
 
     @Test
@@ -3920,7 +3899,6 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             .isNotNull()
             .isEqualTo("Category name cannot be empty.");
         
-        // This covers: if (lastErrorMessage == null || !lastErrorMessage.equals(msg)) { lastErrorMessage = msg; }
         // Specifically the !lastErrorMessage.equals(msg) branch
     }
 
@@ -3949,7 +3927,6 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             .isNotNull()
             .isEqualTo("Please select a category to delete.");
         
-        // This covers: if (lastErrorMessage == null || !lastErrorMessage.equals(msg)) { lastErrorMessage = msg; }
         // Specifically the !lastErrorMessage.equals(msg) branch
     }
 
