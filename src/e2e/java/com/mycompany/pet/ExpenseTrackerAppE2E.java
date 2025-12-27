@@ -180,9 +180,13 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 		expense2 = expenseService.createExpense(EXPENSE_FIXTURE_2_DATE, EXPENSE_FIXTURE_2_AMOUNT,
 			EXPENSE_FIXTURE_2_DESCRIPTION, category2.getCategoryId());
 
+		// Create controllers from services
+		com.mycompany.pet.controller.CategoryController categoryController = new com.mycompany.pet.controller.CategoryController(categoryService);
+		com.mycompany.pet.controller.ExpenseController expenseController = new com.mycompany.pet.controller.ExpenseController(expenseService);
+		
 		// Start application
 		execute(() -> {
-			com.mycompany.pet.ui.MainWindow window = new com.mycompany.pet.ui.MainWindow(categoryService, expenseService);
+			com.mycompany.pet.ui.MainWindow window = new com.mycompany.pet.ui.MainWindow(expenseController, categoryController);
 			window.setVisible(true);
 			return window;
 		});

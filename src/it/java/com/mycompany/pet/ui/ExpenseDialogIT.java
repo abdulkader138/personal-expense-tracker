@@ -51,6 +51,8 @@ import com.mycompany.pet.dao.CategoryDAO;
 import com.mycompany.pet.dao.ExpenseDAO;
 import com.mycompany.pet.database.DatabaseConnection;
 import com.mycompany.pet.database.DatabaseInitializer;
+import com.mycompany.pet.controller.CategoryController;
+import com.mycompany.pet.controller.ExpenseController;
 import com.mycompany.pet.model.Category;
 import com.mycompany.pet.model.Expense;
 import com.mycompany.pet.service.CategoryService;
@@ -161,9 +163,13 @@ public class ExpenseDialogIT extends AssertJSwingJUnitTestCase {
 			// Create test category
 			category = categoryService.createCategory("Food");
 
+			// Create controllers from services
+			CategoryController categoryController = new CategoryController(categoryService);
+			ExpenseController expenseController = new ExpenseController(expenseService);
+			
 			// Create parent frame (MainWindow) and make it visible first
 			mainWindow = GuiActionRunner.execute(() -> {
-				MainWindow mw = new MainWindow(categoryService, expenseService);
+				MainWindow mw = new MainWindow(expenseController, categoryController);
 				mw.setVisible(true);
 				return mw;
 			});
@@ -172,7 +178,7 @@ public class ExpenseDialogIT extends AssertJSwingJUnitTestCase {
 
 			// Create dialog on EDT
 			expenseDialog = GuiActionRunner.execute(() -> {
-				ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, null);
+				ExpenseDialog ed = new ExpenseDialog(mainWindow, expenseController, categoryController, null);
 				ed.setModal(false); // Make non-modal for testing
 				ed.setVisible(true);
 				return ed;
@@ -279,9 +285,13 @@ public class ExpenseDialogIT extends AssertJSwingJUnitTestCase {
 			}
 		});
 
+		// Create controllers from services
+		CategoryController categoryController = new CategoryController(categoryService);
+		ExpenseController expenseController = new ExpenseController(expenseService);
+		
 		// Create edit dialog
 		ExpenseDialog editDialog = GuiActionRunner.execute(() -> {
-			ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, expense);
+			ExpenseDialog ed = new ExpenseDialog(mainWindow, expenseController, categoryController, expense);
 			ed.setVisible(true);
 			return ed;
 		});

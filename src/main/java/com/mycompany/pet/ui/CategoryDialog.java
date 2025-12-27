@@ -67,19 +67,6 @@ public class CategoryDialog extends JDialog {
         // In test mode, loadCategories will be called explicitly by tests or after user actions
     }
     
-    /**
-     * Creates a CategoryDialog with CategoryService (for backward compatibility).
-     * This constructor creates a controller internally.
-     * 
-     * @param parent Parent frame
-     * @param categoryService Category service (will be wrapped in controller)
-     * @deprecated Use CategoryDialog(JFrame, CategoryController) instead
-     */
-    @Deprecated
-    public CategoryDialog(JFrame parent, com.mycompany.pet.service.CategoryService categoryService) {
-        this(parent, new CategoryController(categoryService));
-        // Test mode is already cached in the other constructor
-    }
 
     private void initializeUI() {
         setSize(500, 420);

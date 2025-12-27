@@ -114,9 +114,13 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         when(expenseService.getTotalByCategory(any(Integer.class)))
             .thenReturn(EXPENSE_AMOUNT_1);
         
+        // Create controllers from services
+        CategoryController categoryController = new CategoryController(categoryService);
+        ExpenseController expenseController = new ExpenseController(expenseService);
+        
         // Create window on EDT and set it visible (like CategoryDialogTest does with parent frame)
         mainWindow = execute(() -> {
-            MainWindow mw = new MainWindow(categoryService, expenseService);
+            MainWindow mw = new MainWindow(expenseController, categoryController);
             mw.setVisible(true);
             return mw;
         });
@@ -675,16 +679,6 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         window.requireVisible();
     }
 
-    @Test
-    @GUITest
-    public void testMainWindow_GetExpenseService() {
-        // When - get expense service
-        ExpenseService service = execute(() -> mainWindow.getExpenseService());
-        
-        // Then - service should be returned
-        assertThat(service).isNotNull();
-        assertThat(service).isEqualTo(expenseService);
-    }
 
     @Test
     @GUITest
@@ -822,7 +816,6 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             MainWindow mw = new MainWindow(expenseController, categoryController);
             mw.setVisible(true);
             assertThat(mw).isNotNull();
-            assertThat(mw.getExpenseService()).isNull(); // Should be null when using controller constructor
         });
     }
 

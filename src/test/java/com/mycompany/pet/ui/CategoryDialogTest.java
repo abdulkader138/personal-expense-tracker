@@ -41,6 +41,8 @@ import javax.swing.SwingUtilities;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.Callable;
 
+import com.mycompany.pet.controller.CategoryController;
+import com.mycompany.pet.controller.ExpenseController;
 import com.mycompany.pet.model.Category;
 import com.mycompany.pet.service.CategoryService;
 import com.mycompany.pet.service.ExpenseService;
@@ -54,6 +56,8 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
     private FrameFixture parentFrame;
     private CategoryDialog categoryDialog;
     private MainWindow mainWindow;
+    private CategoryController categoryController;
+    private ExpenseController expenseController;
     
     @Mock
     private CategoryService categoryService;
@@ -109,9 +113,13 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         });
         when(categoryService.deleteCategory(anyInt())).thenReturn(true);
         
+        // Create controllers from services
+        this.categoryController = new CategoryController(categoryService);
+        this.expenseController = new ExpenseController(expenseService);
+        
         // Create parent frame
         mainWindow = execute(() -> {
-            MainWindow mw = new MainWindow(categoryService, expenseService);
+            MainWindow mw = new MainWindow(expenseController, categoryController);
             mw.setVisible(true);
             return mw;
         });
@@ -143,8 +151,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             System.setProperty("test.mode", "true");
             
             categoryDialog = execute(() -> {
-                // Use deprecated constructor which creates controller internally
-                CategoryDialog cd = new CategoryDialog(mainWindow, categoryService);
+                CategoryDialog cd = new CategoryDialog(mainWindow, categoryController);
                 // Make non-modal for testing
                 cd.setModal(false);
                 // Verify label is initialized
@@ -2796,16 +2803,62 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_DeleteButtonClick_UserCancelsInProduction() {
+    public void testCategoryDialog_DeleteButtonClick_UserCancelsInProduction() throws SQLException {
         ensureDialogCreated();
-        // Clear test mode to test JOptionPane path
+        // Clear test mode to test JOptionPane path in production
         System.clearProperty("test.mode");
         try {
             setupDialogWithSelectedRow();
             
-            // In production mode, JOptionPane will show, but we can't easily test user clicking NO
-            // So we'll just verify the code path exists by checking the method doesn't throw
-            // The actual NO click would require mocking JOptionPane which is complex
+            // Mock deleteCategory - it should NOT be called when user cancels
+            when(categoryService.deleteCategory(anyInt())).thenReturn(true);
+            
+            // Use a Timer to automatically close the dialog after it appears
+            // Timer runs on EDT and can execute even when modal dialog is shown
+            final boolean[] dialogClosed = new boolean[1];
+            javax.swing.Timer closeTimer = new javax.swing.Timer(300, e -> {
+                java.awt.Window[] windows = java.awt.Window.getWindows();
+                for (java.awt.Window w : windows) {
+                    if (w instanceof javax.swing.JDialog) {
+                        javax.swing.JDialog jDialog = (javax.swing.JDialog) w;
+                        if (jDialog.getTitle() != null && jDialog.getTitle().contains("Confirm")) {
+                            // Close the dialog - returns CLOSED_OPTION (not YES_OPTION)
+                            jDialog.dispose();
+                            dialogClosed[0] = true;
+                            break;
+                        }
+                    }
+                }
+            });
+            closeTimer.setRepeats(false);
+            closeTimer.start();
+            
+            // Call onDeleteButtonClick in a separate thread to avoid blocking test execution
+            // The timer will close the dialog, simulating user cancellation
+            Thread deleteThread = new Thread(() -> {
+                SwingUtilities.invokeLater(() -> {
+                    categoryDialog.onDeleteButtonClick();
+                });
+            });
+            deleteThread.setDaemon(true);
+            deleteThread.start();
+            
+            // Wait a reasonable time for the timer to close the dialog
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            
+            robot().waitForIdle();
+            
+            // Verify deleteCategory was NEVER called (user cancelled by closing dialog)
+            // When dialog is closed, showConfirmDialog returns CLOSED_OPTION (not YES_OPTION)
+            // So the delete operation should not proceed
+            robot().waitForIdle();
+            waitForAsyncOperation();
+            robot().waitForIdle();
+            verify(categoryService, never()).deleteCategory(anyInt());
         } finally {
             // Restore test mode
             System.setProperty("test.mode", "true");
@@ -3509,7 +3562,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         try {
             // When - create dialog
             CategoryDialog testDialog = execute(() -> {
-                CategoryDialog cd = new CategoryDialog(mainWindow, categoryService);
+                CategoryDialog cd = new CategoryDialog(mainWindow, categoryController);
                 cd.setModal(false);
                 cd.setVisible(true);
                 return cd;
@@ -3539,7 +3592,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         System.setProperty("test.mode", "false");
         try {
             CategoryDialog testDialog = execute(() -> {
-                CategoryDialog cd = new CategoryDialog(mainWindow, categoryService);
+                CategoryDialog cd = new CategoryDialog(mainWindow, categoryController);
                 cd.setModal(false);
                 cd.setVisible(true);
                 return cd;
@@ -3593,7 +3646,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         System.setProperty("test.mode", "false");
         try {
             CategoryDialog testDialog = execute(() -> {
-                CategoryDialog cd = new CategoryDialog(mainWindow, categoryService);
+                CategoryDialog cd = new CategoryDialog(mainWindow, categoryController);
                 cd.setModal(false);
                 cd.setVisible(true);
                 cd.lastErrorMessage = "Previous error";
@@ -3632,7 +3685,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         System.setProperty("test.mode", "false");
         try {
             CategoryDialog testDialog = execute(() -> {
-                CategoryDialog cd = new CategoryDialog(mainWindow, categoryService);
+                CategoryDialog cd = new CategoryDialog(mainWindow, categoryController);
                 cd.setModal(false);
                 cd.setVisible(true);
                 cd.lastErrorMessage = "Previous error";
@@ -3935,7 +3988,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         System.setProperty("test.mode", "false");
         try {
             CategoryDialog testDialog = execute(() -> {
-                CategoryDialog cd = new CategoryDialog(mainWindow, categoryService);
+                CategoryDialog cd = new CategoryDialog(mainWindow, categoryController);
                 cd.setModal(false);
                 cd.setVisible(true);
                 return cd;

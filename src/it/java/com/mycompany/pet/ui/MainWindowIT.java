@@ -54,6 +54,8 @@ import com.mycompany.pet.dao.CategoryDAO;
 import com.mycompany.pet.dao.ExpenseDAO;
 import com.mycompany.pet.database.DatabaseConnection;
 import com.mycompany.pet.database.DatabaseInitializer;
+import com.mycompany.pet.controller.CategoryController;
+import com.mycompany.pet.controller.ExpenseController;
 import com.mycompany.pet.model.Category;
 import com.mycompany.pet.model.Expense;
 import com.mycompany.pet.service.CategoryService;
@@ -194,8 +196,12 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 			return;
 		}
 
+		// Create controllers from services
+		CategoryController categoryController = new CategoryController(categoryService);
+		ExpenseController expenseController = new ExpenseController(expenseService);
+		
 		GuiActionRunner.execute(() -> {
-			mainWindow = new MainWindow(categoryService, expenseService);
+			mainWindow = new MainWindow(expenseController, categoryController);
 			mainWindow.pack();
 			mainWindow.setVisible(true);
 			return mainWindow;

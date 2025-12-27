@@ -48,6 +48,8 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
     private FrameFixture parentFrame;
     private ExpenseDialog expenseDialog;
     private MainWindow mainWindow;
+    private CategoryController categoryController;
+    private ExpenseController expenseController;
     
     @Mock
     private CategoryService categoryService;
@@ -99,9 +101,13 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
                 invocation.getArgument(3));
         });
         
+        // Create controllers from services
+        this.categoryController = new CategoryController(categoryService);
+        this.expenseController = new ExpenseController(expenseService);
+        
         // Create parent frame (MainWindow) and make it visible first
         mainWindow = execute(() -> {
-            MainWindow mw = new MainWindow(categoryService, expenseService);
+            MainWindow mw = new MainWindow(expenseController, categoryController);
             mw.setVisible(true);
             return mw;
         });
@@ -113,8 +119,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         
         // Create dialog on EDT (make non-modal for testing)
         expenseDialog = execute(() -> {
-            // Use deprecated constructor which creates controllers internally
-            ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, null);
+            ExpenseDialog ed = new ExpenseDialog(mainWindow, expenseController, categoryController, null);
             // Make non-modal for testing
             ed.setModal(false);
             return ed;
@@ -257,7 +262,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         
         // When - create dialog with expense
         ExpenseDialog editDialog = execute(() -> {
-            ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, expense);
+            ExpenseDialog ed = new ExpenseDialog(mainWindow, expenseController, categoryController, expense);
             // Ensure non-modal
             if (ed.isModal()) {
                 ed.setModal(false);
@@ -281,7 +286,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         
         // When - create dialog (categories loaded in constructor)
         ExpenseDialog errorDialog = execute(() -> {
-            ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, null);
+            ExpenseDialog ed = new ExpenseDialog(mainWindow, expenseController, categoryController, null);
             // Ensure non-modal
             if (ed.isModal()) {
                 ed.setModal(false);
@@ -381,7 +386,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         
         // When - create edit dialog
         ExpenseDialog editDialog = execute(() -> {
-            ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, expense);
+            ExpenseDialog ed = new ExpenseDialog(mainWindow, expenseController, categoryController, expense);
             // Ensure non-modal
             if (ed.isModal()) {
                 ed.setModal(false);
@@ -444,7 +449,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         
         // When - create edit dialog
         ExpenseDialog editDialog = execute(() -> {
-            ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, expense);
+            ExpenseDialog ed = new ExpenseDialog(mainWindow, expenseController, categoryController, expense);
             // Ensure non-modal
             if (ed.isModal()) {
                 ed.setModal(false);
@@ -473,7 +478,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         
         // When - create edit dialog
         ExpenseDialog editDialog = execute(() -> {
-            ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, expense);
+            ExpenseDialog ed = new ExpenseDialog(mainWindow, expenseController, categoryController, expense);
             // Ensure non-modal
             if (ed.isModal()) {
                 ed.setModal(false);
@@ -497,7 +502,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         
         // When - create edit dialog
         ExpenseDialog editDialog = execute(() -> {
-            ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, expense);
+            ExpenseDialog ed = new ExpenseDialog(mainWindow, expenseController, categoryController, expense);
             // Ensure non-modal
             if (ed.isModal()) {
                 ed.setModal(false);
@@ -523,23 +528,6 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         assertThat(saved).isFalse();
     }
 
-    @Test
-    @GUITest
-    public void testExpenseDialog_Constructor_InvalidParent() {
-        // Given - invalid parent (not MainWindow)
-        javax.swing.JFrame invalidParent = execute(() -> new javax.swing.JFrame("Invalid"));
-        
-        // When/Then - should throw exception
-        try {
-            execute(() -> {
-                new ExpenseDialog(invalidParent, categoryService, null);
-            });
-            // If we get here, the test should fail
-            assertThat(false).as("Should have thrown IllegalArgumentException").isTrue();
-        } catch (Exception e) {
-            assertThat(e).isInstanceOf(IllegalArgumentException.class);
-        }
-    }
 
     @Test
     @GUITest
@@ -591,7 +579,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         
         // When - create edit dialog
         ExpenseDialog editDialog = execute(() -> {
-            ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, expense);
+            ExpenseDialog ed = new ExpenseDialog(mainWindow, expenseController, categoryController, expense);
             // Ensure non-modal
             if (ed.isModal()) {
                 ed.setModal(false);
@@ -709,34 +697,13 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         dialogFixture.cleanUp();
     }
 
-    @Test
-    public void testExpenseDialog_Constructor_Deprecated_InvalidParent() {
-        // Given - invalid parent (not MainWindow), created on EDT
-        JFrame invalidParent = execute(() -> {
-            return new JFrame("Invalid Parent");
-        });
-        
-        // When/Then - should throw IllegalArgumentException
-        try {
-            execute(() -> {
-                return new ExpenseDialog(invalidParent, categoryService, null);
-            });
-            // Should not reach here
-            assertThat(false).as("Should have thrown IllegalArgumentException").isTrue();
-        } catch (Exception e) {
-            assertThat(e.getCause() instanceof IllegalArgumentException || 
-                      e instanceof IllegalArgumentException)
-                .as("Should throw IllegalArgumentException when parent is not MainWindow")
-                .isTrue();
-        }
-    }
 
     @Test
     @GUITest
     public void testExpenseDialog_LoadExpenseData_WithNullExpense() throws SQLException {
         // Given - dialog with expense == null
         ExpenseDialog testDialog = execute(() -> {
-            ExpenseDialog ed = new ExpenseDialog(mainWindow, categoryService, null);
+            ExpenseDialog ed = new ExpenseDialog(mainWindow, expenseController, categoryController, null);
             // Ensure non-modal
             if (ed.isModal()) {
                 ed.setModal(false);

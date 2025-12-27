@@ -4,8 +4,6 @@ import com.mycompany.pet.controller.CategoryController;
 import com.mycompany.pet.controller.ExpenseController;
 import com.mycompany.pet.model.Category;
 import com.mycompany.pet.model.Expense;
-import com.mycompany.pet.service.CategoryService;
-import com.mycompany.pet.service.ExpenseService;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -26,9 +24,6 @@ public class MainWindow extends JFrame {
     // Controllers (preferred) - package-private for testing
     final transient ExpenseController expenseController;
     final transient CategoryController categoryController;
-    
-    // Services (for backward compatibility and deprecated methods)
-    private transient ExpenseService expenseService;
 
     // UI Components (package-private for testing)
     JTable expenseTable;
@@ -52,22 +47,6 @@ public class MainWindow extends JFrame {
         initializeUI();
     }
     
-    /**
-     * Creates a MainWindow with services (for backward compatibility).
-     * This constructor creates controllers internally.
-     * 
-     * @param categoryService Category service
-     * @param expenseService Expense service
-     * @deprecated Use MainWindow(ExpenseController, CategoryController) instead
-     */
-    @Deprecated
-    public MainWindow(CategoryService categoryService, ExpenseService expenseService) {
-        this.expenseService = expenseService;
-        // Create controllers from services
-        this.categoryController = new CategoryController(categoryService);
-        this.expenseController = new ExpenseController(expenseService);
-        initializeUI();
-    }
 
     private void initializeUI() {
         setTitle("Personal Expense Tracker");
@@ -424,14 +403,4 @@ public class MainWindow extends JFrame {
         loadData();
     }
 
-    /**
-     * Gets the expense service (for backward compatibility).
-     * 
-     * @return Expense service or null if using controller-only constructor
-     * @deprecated Use ExpenseController instead
-     */
-    @Deprecated
-    public ExpenseService getExpenseService() {
-        return expenseService;
-    }
 }

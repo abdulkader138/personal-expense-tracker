@@ -27,6 +27,8 @@ import com.mycompany.pet.dao.CategoryDAO;
 import com.mycompany.pet.dao.ExpenseDAO;
 import com.mycompany.pet.database.DatabaseConnection;
 import com.mycompany.pet.database.DatabaseInitializer;
+import com.mycompany.pet.controller.CategoryController;
+import com.mycompany.pet.controller.ExpenseController;
 import com.mycompany.pet.service.CategoryService;
 import com.mycompany.pet.service.ExpenseService;
 import com.mycompany.pet.ui.MainWindow;
@@ -76,8 +78,12 @@ public class ExpenseTrackerAppSteps extends ConfigSteps {
 		categoryService = new CategoryService(categoryDAO);
 		expenseService = new ExpenseService(expenseDAO, categoryDAO);
 
+		// Create controllers from services
+		CategoryController categoryController = new CategoryController(categoryService);
+		ExpenseController expenseController = new ExpenseController(expenseService);
+		
 		// Create and show main window
-		MainWindow window = new MainWindow(categoryService, expenseService);
+		MainWindow window = new MainWindow(expenseController, categoryController);
 		window.setVisible(true);
 
 		mainWindow = WindowFinder.findFrame(new GenericTypeMatcher<JFrame>(JFrame.class) {

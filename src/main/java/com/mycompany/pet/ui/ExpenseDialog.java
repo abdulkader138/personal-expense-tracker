@@ -64,35 +64,6 @@ public class ExpenseDialog extends JDialog {
         }
     }
     
-    /**
-     * Creates an ExpenseDialog with services (for backward compatibility).
-     * This constructor creates controllers internally.
-     * 
-     * @param parent Parent frame (must be MainWindow)
-     * @param categoryService Category service (will be wrapped in controller)
-     * @param expense Expense to edit (null for new expense)
-     * @deprecated Use ExpenseDialog(JFrame, ExpenseController, CategoryController, Expense) instead
-     */
-    @Deprecated
-    public ExpenseDialog(JFrame parent, com.mycompany.pet.service.CategoryService categoryService, Expense expense) {
-        super(parent, expense == null ? "Add Expense" : "Edit Expense", true);
-        this.expense = expense;
-        
-        // Get expense service from parent (backward compatibility)
-        if (parent instanceof MainWindow) {
-            com.mycompany.pet.service.ExpenseService expenseService = ((MainWindow) parent).getExpenseService();
-            this.expenseController = new ExpenseController(expenseService);
-        } else {
-            throw new IllegalArgumentException("Parent must be MainWindow when using deprecated constructor");
-        }
-        this.categoryController = new CategoryController(categoryService);
-        
-        initializeUI();
-        loadCategories();
-        if (expense != null) {
-            loadExpenseData();
-        }
-    }
 
     private void initializeUI() {
         setSize(450, 300);

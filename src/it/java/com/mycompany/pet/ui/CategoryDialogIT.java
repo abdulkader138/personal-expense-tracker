@@ -48,6 +48,8 @@ import com.mycompany.pet.configurations.DBConfig;
 import com.mycompany.pet.dao.CategoryDAO;
 import com.mycompany.pet.database.DatabaseConnection;
 import com.mycompany.pet.database.DatabaseInitializer;
+import com.mycompany.pet.controller.CategoryController;
+import com.mycompany.pet.controller.ExpenseController;
 import com.mycompany.pet.model.Category;
 import com.mycompany.pet.service.CategoryService;
 import com.mycompany.pet.service.ExpenseService;
@@ -144,9 +146,13 @@ public class CategoryDialogIT extends AssertJSwingJUnitTestCase {
 			categoryService = new CategoryService(categoryDAO);
 			expenseService = null; // Not needed for category dialog
 
+			// Create controllers from services
+			CategoryController categoryController = new CategoryController(categoryService);
+			ExpenseController expenseController = new ExpenseController(expenseService);
+			
 			// Create parent frame (MainWindow) and make it visible first
 			mainWindow = GuiActionRunner.execute(() -> {
-				MainWindow mw = new MainWindow(categoryService, expenseService);
+				MainWindow mw = new MainWindow(expenseController, categoryController);
 				mw.setVisible(true);
 				return mw;
 			});
@@ -155,7 +161,7 @@ public class CategoryDialogIT extends AssertJSwingJUnitTestCase {
 
 			// Create dialog on EDT
 			categoryDialog = GuiActionRunner.execute(() -> {
-				CategoryDialog cd = new CategoryDialog(mainWindow, categoryService);
+				CategoryDialog cd = new CategoryDialog(mainWindow, categoryController);
 				cd.setModal(false); // Make non-modal for testing
 				cd.setVisible(true);
 				return cd;
