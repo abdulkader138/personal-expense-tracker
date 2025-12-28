@@ -27,8 +27,12 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mycompany.pet.controller.CategoryController;
 import com.mycompany.pet.controller.ExpenseController;
+import com.mycompany.pet.dao.CategoryDAO;
+import com.mycompany.pet.dao.ExpenseDAO;
 import com.mycompany.pet.database.DatabaseConnection;
 import com.mycompany.pet.database.DatabaseInitializer;
+import com.mycompany.pet.service.CategoryService;
+import com.mycompany.pet.service.ExpenseService;
 import com.mycompany.pet.ui.MainWindow;
 
 import org.bson.Document;
@@ -490,6 +494,220 @@ public class ExpenseTrackerModuleTest {
         // Note: Due to JFrame internal state, assertSame might fail even if Guice caches correctly
         // The important thing is that provideMainWindow() is called and works correctly
         // We verify the method works by checking both instances are not null
+    }
+
+    /**
+     * Test provideCategoryDAO() through Guice injection.
+     */
+    @Test
+    public void testProvideCategoryDAO() {
+        // Given
+        ExpenseTrackerModule module = new ExpenseTrackerModule();
+        MongoClient mockClient = mock(MongoClient.class);
+        MongoDatabase mockDatabase = mock(MongoDatabase.class);
+        MongoCollection<Document> mockCategoriesCollection = mock(MongoCollection.class);
+        MongoCollection<Document> mockExpensesCollection = mock(MongoCollection.class);
+        
+        mockedMongoClients.when(() -> MongoClients.create(anyString()))
+                .thenReturn(mockClient);
+        when(mockClient.getDatabase(anyString())).thenReturn(mockDatabase);
+        when(mockDatabase.getCollection("categories")).thenReturn(mockCategoriesCollection);
+        when(mockDatabase.getCollection("expenses")).thenReturn(mockExpensesCollection);
+
+        // When - Request CategoryDAO through Guice, which will call provideCategoryDAO
+        // Only override MainWindow to avoid headless issues, don't override controllers
+        AbstractModule overrideModule = new AbstractModule() {
+            @Override
+            protected void configure() {
+                // Override MainWindow binding with a mock to avoid headless issues
+                bind(MainWindow.class).toInstance(mock(MainWindow.class));
+            }
+        };
+        Module testModule = Modules.override(module).with(overrideModule);
+        Injector injector = Guice.createInjector(testModule);
+        CategoryDAO categoryDAO = injector.getInstance(CategoryDAO.class);
+
+        // Then
+        assertNotNull(categoryDAO);
+    }
+
+    /**
+     * Test provideExpenseDAO() through Guice injection.
+     */
+    @Test
+    public void testProvideExpenseDAO() {
+        // Given
+        ExpenseTrackerModule module = new ExpenseTrackerModule();
+        MongoClient mockClient = mock(MongoClient.class);
+        MongoDatabase mockDatabase = mock(MongoDatabase.class);
+        MongoCollection<Document> mockCategoriesCollection = mock(MongoCollection.class);
+        MongoCollection<Document> mockExpensesCollection = mock(MongoCollection.class);
+        
+        mockedMongoClients.when(() -> MongoClients.create(anyString()))
+                .thenReturn(mockClient);
+        when(mockClient.getDatabase(anyString())).thenReturn(mockDatabase);
+        when(mockDatabase.getCollection("categories")).thenReturn(mockCategoriesCollection);
+        when(mockDatabase.getCollection("expenses")).thenReturn(mockExpensesCollection);
+
+        // When - Request ExpenseDAO through Guice, which will call provideExpenseDAO
+        // Only override MainWindow to avoid headless issues, don't override controllers
+        AbstractModule overrideModule = new AbstractModule() {
+            @Override
+            protected void configure() {
+                // Override MainWindow binding with a mock to avoid headless issues
+                bind(MainWindow.class).toInstance(mock(MainWindow.class));
+            }
+        };
+        Module testModule = Modules.override(module).with(overrideModule);
+        Injector injector = Guice.createInjector(testModule);
+        ExpenseDAO expenseDAO = injector.getInstance(ExpenseDAO.class);
+
+        // Then
+        assertNotNull(expenseDAO);
+    }
+
+    /**
+     * Test provideCategoryService() through Guice injection.
+     */
+    @Test
+    public void testProvideCategoryService() {
+        // Given
+        ExpenseTrackerModule module = new ExpenseTrackerModule();
+        MongoClient mockClient = mock(MongoClient.class);
+        MongoDatabase mockDatabase = mock(MongoDatabase.class);
+        MongoCollection<Document> mockCategoriesCollection = mock(MongoCollection.class);
+        MongoCollection<Document> mockExpensesCollection = mock(MongoCollection.class);
+        
+        mockedMongoClients.when(() -> MongoClients.create(anyString()))
+                .thenReturn(mockClient);
+        when(mockClient.getDatabase(anyString())).thenReturn(mockDatabase);
+        when(mockDatabase.getCollection("categories")).thenReturn(mockCategoriesCollection);
+        when(mockDatabase.getCollection("expenses")).thenReturn(mockExpensesCollection);
+
+        // When - Request CategoryService through Guice, which will call provideCategoryService
+        // This requires CategoryDAO, which will be provided by provideCategoryDAO
+        // Only override MainWindow to avoid headless issues, don't override controllers
+        AbstractModule overrideModule = new AbstractModule() {
+            @Override
+            protected void configure() {
+                // Override MainWindow binding with a mock to avoid headless issues
+                bind(MainWindow.class).toInstance(mock(MainWindow.class));
+            }
+        };
+        Module testModule = Modules.override(module).with(overrideModule);
+        Injector injector = Guice.createInjector(testModule);
+        CategoryService categoryService = injector.getInstance(CategoryService.class);
+
+        // Then
+        assertNotNull(categoryService);
+    }
+
+    /**
+     * Test provideExpenseService() through Guice injection.
+     */
+    @Test
+    public void testProvideExpenseService() {
+        // Given
+        ExpenseTrackerModule module = new ExpenseTrackerModule();
+        MongoClient mockClient = mock(MongoClient.class);
+        MongoDatabase mockDatabase = mock(MongoDatabase.class);
+        MongoCollection<Document> mockCategoriesCollection = mock(MongoCollection.class);
+        MongoCollection<Document> mockExpensesCollection = mock(MongoCollection.class);
+        
+        mockedMongoClients.when(() -> MongoClients.create(anyString()))
+                .thenReturn(mockClient);
+        when(mockClient.getDatabase(anyString())).thenReturn(mockDatabase);
+        when(mockDatabase.getCollection("categories")).thenReturn(mockCategoriesCollection);
+        when(mockDatabase.getCollection("expenses")).thenReturn(mockExpensesCollection);
+
+        // When - Request ExpenseService through Guice, which will call provideExpenseService
+        // This requires ExpenseDAO and CategoryDAO, which will be provided by their respective methods
+        // Only override MainWindow to avoid headless issues, don't override controllers
+        AbstractModule overrideModule = new AbstractModule() {
+            @Override
+            protected void configure() {
+                // Override MainWindow binding with a mock to avoid headless issues
+                bind(MainWindow.class).toInstance(mock(MainWindow.class));
+            }
+        };
+        Module testModule = Modules.override(module).with(overrideModule);
+        Injector injector = Guice.createInjector(testModule);
+        ExpenseService expenseService = injector.getInstance(ExpenseService.class);
+
+        // Then
+        assertNotNull(expenseService);
+    }
+
+    /**
+     * Test provideCategoryController() through Guice injection.
+     */
+    @Test
+    public void testProvideCategoryController() {
+        // Given
+        ExpenseTrackerModule module = new ExpenseTrackerModule();
+        MongoClient mockClient = mock(MongoClient.class);
+        MongoDatabase mockDatabase = mock(MongoDatabase.class);
+        MongoCollection<Document> mockCategoriesCollection = mock(MongoCollection.class);
+        MongoCollection<Document> mockExpensesCollection = mock(MongoCollection.class);
+        
+        mockedMongoClients.when(() -> MongoClients.create(anyString()))
+                .thenReturn(mockClient);
+        when(mockClient.getDatabase(anyString())).thenReturn(mockDatabase);
+        when(mockDatabase.getCollection("categories")).thenReturn(mockCategoriesCollection);
+        when(mockDatabase.getCollection("expenses")).thenReturn(mockExpensesCollection);
+
+        // When - Request CategoryController through Guice, which will call provideCategoryController
+        // This requires CategoryService, which will be provided by provideCategoryService
+        // Only override MainWindow to avoid headless issues, don't override controllers
+        AbstractModule overrideModule = new AbstractModule() {
+            @Override
+            protected void configure() {
+                // Override MainWindow binding with a mock to avoid headless issues
+                bind(MainWindow.class).toInstance(mock(MainWindow.class));
+            }
+        };
+        Module testModule = Modules.override(module).with(overrideModule);
+        Injector injector = Guice.createInjector(testModule);
+        CategoryController categoryController = injector.getInstance(CategoryController.class);
+
+        // Then
+        assertNotNull(categoryController);
+    }
+
+    /**
+     * Test provideExpenseController() through Guice injection.
+     */
+    @Test
+    public void testProvideExpenseController() {
+        // Given
+        ExpenseTrackerModule module = new ExpenseTrackerModule();
+        MongoClient mockClient = mock(MongoClient.class);
+        MongoDatabase mockDatabase = mock(MongoDatabase.class);
+        MongoCollection<Document> mockCategoriesCollection = mock(MongoCollection.class);
+        MongoCollection<Document> mockExpensesCollection = mock(MongoCollection.class);
+        
+        mockedMongoClients.when(() -> MongoClients.create(anyString()))
+                .thenReturn(mockClient);
+        when(mockClient.getDatabase(anyString())).thenReturn(mockDatabase);
+        when(mockDatabase.getCollection("categories")).thenReturn(mockCategoriesCollection);
+        when(mockDatabase.getCollection("expenses")).thenReturn(mockExpensesCollection);
+
+        // When - Request ExpenseController through Guice, which will call provideExpenseController
+        // This requires ExpenseService, which will be provided by provideExpenseService
+        // Only override MainWindow to avoid headless issues, don't override controllers
+        AbstractModule overrideModule = new AbstractModule() {
+            @Override
+            protected void configure() {
+                // Override MainWindow binding with a mock to avoid headless issues
+                bind(MainWindow.class).toInstance(mock(MainWindow.class));
+            }
+        };
+        Module testModule = Modules.override(module).with(overrideModule);
+        Injector injector = Guice.createInjector(testModule);
+        ExpenseController expenseController = injector.getInstance(ExpenseController.class);
+
+        // Then
+        assertNotNull(expenseController);
     }
 }
 
