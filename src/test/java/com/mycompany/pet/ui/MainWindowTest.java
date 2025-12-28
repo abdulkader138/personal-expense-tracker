@@ -250,7 +250,17 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         expenses.add(new Expense(EXPENSE_ID_1, LocalDate.now(), EXPENSE_AMOUNT_1, 
             EXPENSE_DESCRIPTION_1, CATEGORY_ID_1));
         execute(() -> mainWindow.populateExpenseTable(expenses));
-        // No waiting - just execute and verify
+        window.requireVisible();
+    }
+
+    @Test
+    @GUITest
+    public void testMainWindow_PopulateExpenseTable_UnknownCategory() {
+        // Test when category is not in cache (null category)
+        List<Expense> expenses = new ArrayList<>();
+        expenses.add(new Expense(EXPENSE_ID_1, LocalDate.now(), EXPENSE_AMOUNT_1, 
+            EXPENSE_DESCRIPTION_1, 999)); // Category ID not in cache
+        execute(() -> mainWindow.populateExpenseTable(expenses));
         window.requireVisible();
     }
 
@@ -462,16 +472,25 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     @Test
     @GUITest
     public void testMainWindow_UpdateCategoryTotal_ErrorCallback() throws SQLException {
-        execute(() -> mainWindow.loadCategories());
+        // Directly add a category to the combo box for testing (bypass async load)
+        Category testCategory = new Category(CATEGORY_ID_1, CATEGORY_NAME_1);
         execute(() -> {
-            if (mainWindow.categoryComboBox.getItemCount() > 1) {
-                mainWindow.categoryComboBox.setSelectedIndex(1);
-            }
+            mainWindow.categoryComboBox.addItem(testCategory);
+            mainWindow.categoryComboBox.setSelectedItem(testCategory);
         });
-        when(expenseService.getTotalByCategory(anyInt())).thenThrow(new SQLException("Database error"));
+        // Mock the error
+        when(expenseService.getTotalByCategory(CATEGORY_ID_1)).thenThrow(new SQLException("Database error"));
+        // Call updateCategoryTotal
         execute(() -> mainWindow.updateCategoryTotal());
-        // Method was called - async operation will update label in background
-        // For coverage, we just need to execute the code path, not wait for result
+        // Wait for async error callback to execute
+        try {
+            Thread.sleep(200); // NOSONAR - wait for async error callback
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        // Verify error label was set
+        String labelText = execute(() -> mainWindow.categoryTotalLabel.getText());
+        assertThat(labelText).isEqualTo("Category Total: Error");
         window.requireVisible();
     }
 
@@ -521,6 +540,58 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
+    public void testMainWindow_ShowEditExpenseDialog_ProductionMode() throws SQLException {
+        // Test production mode (when test.mode is false)
+        System.setProperty("test.mode", "false");
+        try {
+            javax.swing.SwingUtilities.invokeLater(() -> mainWindow.loadData());
+            // Wait for data to load
+            try {
+                Thread.sleep(200); // NOSONAR - wait for async load
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            javax.swing.SwingUtilities.invokeLater(() -> {
+                if (mainWindow.expenseTableModel.getRowCount() > 0) {
+                    mainWindow.expenseTable.setRowSelectionInterval(0, 0);
+                }
+            });
+            Expense expense = new Expense(EXPENSE_ID_1, LocalDate.now(), EXPENSE_AMOUNT_1, 
+                EXPENSE_DESCRIPTION_1, CATEGORY_ID_1);
+            when(expenseService.getExpense(EXPENSE_ID_1)).thenReturn(expense);
+            // Start thread to dispose dialog immediately
+            Thread disposeDialog = new Thread(() -> {
+                try {
+                    Thread.sleep(100); // NOSONAR - wait for dialog to appear
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    java.awt.Window[] windows = java.awt.Window.getWindows();
+                    for (java.awt.Window w : windows) {
+                        if (w instanceof javax.swing.JDialog && !(w instanceof CategoryDialog)) {
+                            ((javax.swing.JDialog) w).dispose();
+                        }
+                    }
+                });
+            });
+            disposeDialog.setDaemon(true);
+            disposeDialog.start();
+            javax.swing.SwingUtilities.invokeLater(() -> mainWindow.showEditExpenseDialog());
+            // Wait for dialog operations
+            try {
+                Thread.sleep(200); // NOSONAR - wait for dialog
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        } finally {
+            System.setProperty("test.mode", "true");
+        }
+        window.requireVisible();
+    }
+
+    @Test
+    @GUITest
     public void testMainWindow_ShowEditExpenseDialog_SQLException() throws SQLException {
         javax.swing.SwingUtilities.invokeLater(() -> mainWindow.loadData());
         javax.swing.SwingUtilities.invokeLater(() -> {
@@ -532,8 +603,8 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         javax.swing.SwingUtilities.invokeLater(() -> {
             mainWindow.showEditExpenseDialog();
             // Dispose JOptionPane immediately
-            java.awt.Window[] windows = java.awt.Window.getWindows();
-            for (java.awt.Window w : windows) {
+                java.awt.Window[] windows = java.awt.Window.getWindows();
+                for (java.awt.Window w : windows) {
                 if (w instanceof javax.swing.JDialog) {
                     ((javax.swing.JDialog) w).dispose();
                 }
@@ -585,7 +656,90 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             }
         });
         when(expenseService.deleteExpense(anyInt())).thenThrow(new SQLException("Database error"));
-        javax.swing.SwingUtilities.invokeLater(() -> mainWindow.deleteSelectedExpense());
+        // Wait for data to load
+        try {
+            Thread.sleep(200); // NOSONAR - wait for async load
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            mainWindow.deleteSelectedExpense();
+            // Wait for error callback and dispose error dialog
+            try {
+                Thread.sleep(200); // NOSONAR - wait for async error callback
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            java.awt.Window[] windows = java.awt.Window.getWindows();
+            for (java.awt.Window w : windows) {
+                if (w instanceof javax.swing.JDialog) {
+                    ((javax.swing.JDialog) w).dispose();
+                }
+            }
+        });
+        window.requireVisible();
+    }
+
+    @Test
+    @GUITest
+    public void testMainWindow_DeleteSelectedExpense_ProductionMode_Yes() throws SQLException {
+        // Test production mode with YES confirmation
+        System.setProperty("test.mode", "false");
+        try {
+            javax.swing.SwingUtilities.invokeLater(() -> mainWindow.loadData());
+            // Wait for data to load
+            try {
+                Thread.sleep(200); // NOSONAR - wait for async load
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            javax.swing.SwingUtilities.invokeLater(() -> {
+                if (mainWindow.expenseTableModel.getRowCount() > 0) {
+                    mainWindow.expenseTable.setRowSelectionInterval(0, 0);
+                }
+            });
+            when(expenseService.deleteExpense(anyInt())).thenReturn(true);
+            // Start a thread to automatically click YES on confirmation dialog
+            Thread autoClickYes = new Thread(() -> {
+                try {
+                    Thread.sleep(100); // NOSONAR - wait for dialog to appear
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    java.awt.Window[] windows = java.awt.Window.getWindows();
+                    for (java.awt.Window w : windows) {
+                        if (w instanceof javax.swing.JDialog) {
+                            javax.swing.JDialog dialog = (javax.swing.JDialog) w;
+                            // Find confirmation dialog and simulate YES
+                            if (dialog.getTitle() != null && dialog.getTitle().contains("Confirm")) {
+                                // Get the YES button and click it programmatically
+                                java.awt.Component[] components = dialog.getContentPane().getComponents();
+                                for (java.awt.Component comp : components) {
+                                    if (comp instanceof javax.swing.JOptionPane) {
+                                        javax.swing.JOptionPane pane = (javax.swing.JOptionPane) comp;
+                                        pane.setValue(javax.swing.JOptionPane.YES_OPTION);
+                                        dialog.dispose();
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+            autoClickYes.setDaemon(true);
+            autoClickYes.start();
+            javax.swing.SwingUtilities.invokeLater(() -> mainWindow.deleteSelectedExpense());
+            // Wait for deletion to complete
+            try {
+                Thread.sleep(300); // NOSONAR - wait for async operations
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        } finally {
+            System.setProperty("test.mode", "true");
+        }
         window.requireVisible();
     }
 
@@ -639,17 +793,14 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     @GUITest
     public void testMainWindow_DeleteButton_ActionListener() throws SQLException {
         System.setProperty("test.mode", "true");
-        execute(() -> mainWindow.loadData());
-        // No waiting - just execute and verify
-        execute(() -> {
+        javax.swing.SwingUtilities.invokeLater(() -> mainWindow.loadData());
+        javax.swing.SwingUtilities.invokeLater(() -> {
             if (mainWindow.expenseTableModel.getRowCount() > 0) {
                 mainWindow.expenseTable.setRowSelectionInterval(0, 0);
             }
         });
-        // No waiting - just execute and verify
         when(expenseService.deleteExpense(anyInt())).thenReturn(true);
         window.button(withText("Delete Expense")).click();
-        // No waiting - just execute and verify
         window.requireVisible();
     }
 
