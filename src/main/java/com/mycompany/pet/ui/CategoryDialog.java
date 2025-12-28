@@ -248,8 +248,9 @@ public class CategoryDialog extends JDialog {
      */
     boolean isErrorMessage(String msg) {
         return msg.contains("Error") || msg.contains("select") ||
-               msg.contains("cannot be empty") || msg.contains("Please") ||
-               msg.contains("Category name") || msg.contains("select a category");
+               msg.contains("cannot be empty") || msg.contains("Please") 
+               || msg.contains("Category name");
+               //|| msg.contains("select a category");
     }
 
     /**

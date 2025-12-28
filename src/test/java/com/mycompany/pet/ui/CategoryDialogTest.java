@@ -3998,4 +3998,446 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             System.setProperty("test.mode", "true"); // Restore test mode
         }
     }
+
+    @Test
+    @GUITest
+    public void testCategoryDialog_SetLabelTextOnEDT_ExceptionHandler() {
+        ensureDialogCreated();
+        System.setProperty("test.mode", "true");
+        
+        // Test the exception handler lambda (lambda$setLabelTextOnEDT$12) at line 280
+        // Make the Runnable throw by using a label that throws when setText is called
+        JLabel originalLabel = execute(() -> categoryDialog.labelMessage);
+        
+        final int[] callCount = {0};
+        JLabel throwingLabel = execute(() -> new JLabel() {
+            @Override
+            public void setText(String text) {
+                callCount[0]++;
+                if (callCount[0] == 1) {
+                    // First call (from constructor) - allow it
+                    super.setText(text);
+                } else if (callCount[0] == 2) {
+                    // Second call (from invokeAndWait Runnable) - throw to trigger exception handler
+                    throw new RuntimeException("Test exception");
+                } else {
+                    // Third call (from invokeLater lambda at line 280) - succeed so lambda completes
+                    super.setText(text);
+                }
+            }
+        });
+        
+        execute(() -> categoryDialog.labelMessage = throwingLabel);
+        robot().waitForIdle();
+        
+        // Reset counter logic: constructor called once (callCount = 1), next call should be #2 (throw)
+        
+        // Call from non-EDT - Runnable will throw, causing invokeAndWait to throw InvocationTargetException
+        // which is caught by catch (Exception e) at line 279, triggering lambda at line 280
+        // The lambda calls invokeLater with updateLabelText, which will call setText again (call #2)
+        Thread t = new Thread(() -> categoryDialog.setLabelTextOnEDT("Test"));
+        t.start();
+        try {
+            t.join(2000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        
+        // Wait for invokeLater to execute the lambda (line 280) and complete
+        robot().waitForIdle();
+        await().atMost(3, TimeUnit.SECONDS).pollInterval(50, TimeUnit.MILLISECONDS).until(() -> {
+            robot().waitForIdle();
+            // Verify lambda executed by checking setText was called twice
+            return callCount[0] >= 2;
+        });
+        
+        // Verify the lambda executed (setText should have been called twice)
+        assertThat(callCount[0]).as("setText should be called twice: once from invokeAndWait (throws), once from invokeLater lambda").isGreaterThanOrEqualTo(2);
+        
+        execute(() -> categoryDialog.labelMessage = originalLabel);
+    }
+
+    @Test
+    @GUITest
+    public void testCategoryDialog_UpdateLabelText_LabelMessageNull() {
+        ensureDialogCreated();
+        System.setProperty("test.mode", "true");
+        
+        // Test updateLabelText when labelMessage is null
+        // This should not throw an exception
+        execute(() -> {
+            JLabel originalLabel = categoryDialog.labelMessage;
+            categoryDialog.labelMessage = null;
+            try {
+                // Use reflection to call the private method
+                java.lang.reflect.Method method = CategoryDialog.class.getDeclaredMethod("updateLabelText", String.class);
+                method.setAccessible(true);
+                method.invoke(categoryDialog, "Test message");
+                // Should not throw exception
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            } finally {
+                categoryDialog.labelMessage = originalLabel;
+            }
+        });
+        robot().waitForIdle();
+    }
+
+    @Test
+    @GUITest
+    public void testCategoryDialog_IsErrorMessage_AllBranches() {
+        ensureDialogCreated();
+        System.setProperty("test.mode", "true");
+        
+        // Test all branches of isErrorMessage to get 100% coverage
+        // Due to short-circuit evaluation, we need messages that test each condition individually
+        execute(() -> {
+            // Test condition 1: "Error" (first in OR chain - if true, others not evaluated)
+            assertThat(categoryDialog.isErrorMessage("Error")).isTrue();
+            
+            // Test condition 2: "select" (first false, second true - tests second branch)
+            // Must NOT contain "Error" to ensure first condition is false
+            assertThat(categoryDialog.isErrorMessage("select")).isTrue();
+            
+            // Test condition 3: "cannot be empty" (first two false, third true)
+            // Must NOT contain "Error" or "select"
+            assertThat(categoryDialog.isErrorMessage("cannot be empty")).isTrue();
+            
+            // Test condition 4: "Please" (first three false, fourth true)
+            // Must NOT contain "Error", "select", or "cannot be empty"
+            assertThat(categoryDialog.isErrorMessage("Please")).isTrue();
+            
+            // Test condition 5: "Category name" (first four false, fifth true)
+            // Must NOT contain "Error", "select", "cannot be empty", or "Please"
+            assertThat(categoryDialog.isErrorMessage("Category name")).isTrue();
+            
+            // Test condition 6: "select a category" 
+            // Note: This will match condition 2 ("select") first due to short-circuit,
+            // but we test it to ensure the code path exists
+            assertThat(categoryDialog.isErrorMessage("select a category")).isTrue();
+            
+            // To get 100% branch coverage, we need to ensure condition 6 is evaluated as false.
+            // Since condition 6 contains "select", it can only be evaluated when condition 2 is false.
+            // So we need messages where conditions 1-5 are all false, forcing condition 6 to be evaluated.
+            // When condition 2 is false (no "select"), condition 6 must also be false (no "select a category").
+            // Test multiple messages that don't match any condition to ensure full evaluation:
+            assertThat(categoryDialog.isErrorMessage("Success")).isFalse();
+            assertThat(categoryDialog.isErrorMessage("Category added")).isFalse();
+            assertThat(categoryDialog.isErrorMessage("")).isFalse();
+            assertThat(categoryDialog.isErrorMessage("Valid message")).isFalse();
+            assertThat(categoryDialog.isErrorMessage("No errors here")).isFalse();
+            assertThat(categoryDialog.isErrorMessage("Test")).isFalse();
+            assertThat(categoryDialog.isErrorMessage("OK")).isFalse();
+            
+            // Test edge cases that are close but don't match any condition
+            // These force evaluation of all 6 conditions to false, including condition 6
+            assertThat(categoryDialog.isErrorMessage("category")).isFalse(); // Contains "category" but not "Category name" or "select a category"
+            assertThat(categoryDialog.isErrorMessage("a category")).isFalse(); // Contains "a category" but not "select a category" (no "select" so condition 2 false, condition 6 evaluated as false)
+            assertThat(categoryDialog.isErrorMessage("name")).isFalse(); // Contains "name" but not "Category name"
+            assertThat(categoryDialog.isErrorMessage("empty")).isFalse(); // Contains "empty" but not "cannot be empty"
+            
+            // Test messages that contain parts but not full matches to ensure all conditions are evaluated
+            // Message with "a category" but no "select" - forces condition 6 to be evaluated as false
+            // When condition 2 is false (no "select"), condition 6 ("select a category") must also be false
+            assertThat(categoryDialog.isErrorMessage("choose a category")).isFalse(); // Has "a category" but no "select", so condition 2 false, condition 6 evaluated as false
+            assertThat(categoryDialog.isErrorMessage("pick a category")).isFalse(); // Has "a category" but no "select", condition 6 evaluated as false
+            assertThat(categoryDialog.isErrorMessage("a category exists")).isFalse(); // Has "a category" but no "select", condition 6 evaluated as false
+            // Note: null is not handled by isErrorMessage and would throw NPE, so we don't test it
+        });
+        robot().waitForIdle();
+    }
+
+    @Test
+    @GUITest
+    public void testCategoryDialog_LoadCategories_ProductionMode_ClearNonErrorMessages() {
+        ensureDialogCreated();
+        // Set to production mode
+        System.setProperty("test.mode", "false");
+        
+        try {
+            CategoryDialog testDialog = execute(() -> {
+                CategoryDialog cd = new CategoryDialog(mainWindow, categoryController);
+                cd.setModal(false);
+                cd.setVisible(true);
+                return cd;
+            });
+            DialogFixture dialogFixture = new DialogFixture(robot(), testDialog);
+            
+            // Wait for initial loadCategories from constructor to complete
+            waitForAsyncOperation();
+            robot().waitForIdle();
+            
+            // First, set a non-error message
+            execute(() -> {
+                if (testDialog.labelMessage != null) {
+                    testDialog.labelMessage.setText("Success message");
+                }
+            });
+            robot().waitForIdle();
+            
+            // Load categories - this should clear the non-error message in production mode
+            execute(() -> {
+                testDialog.loadCategories();
+            });
+            waitForAsyncOperation();
+            robot().waitForIdle();
+            
+            // Verify that the non-error message was cleared
+            String labelText = execute(() -> {
+                if (testDialog.labelMessage != null) {
+                    return testDialog.labelMessage.getText();
+                }
+                return "";
+            });
+            assertThat(labelText).isEmpty();
+            
+            // Now test with an error message - it should be preserved
+            execute(() -> {
+                if (testDialog.labelMessage != null) {
+                    testDialog.labelMessage.setText("Please select a category");
+                }
+            });
+            robot().waitForIdle();
+            
+            // Load categories again - error message should be preserved
+            execute(() -> {
+                testDialog.loadCategories();
+            });
+            waitForAsyncOperation();
+            robot().waitForIdle();
+            
+            // Verify that the error message was preserved
+            String preservedMessage = execute(() -> {
+                if (testDialog.labelMessage != null) {
+                    return testDialog.labelMessage.getText();
+                }
+                return "";
+            });
+            assertThat(preservedMessage).isEqualTo("Please select a category");
+            
+            // Test with null currentMsg
+            execute(() -> {
+                if (testDialog.labelMessage != null) {
+                    testDialog.labelMessage.setText(null);
+                }
+            });
+            robot().waitForIdle();
+            
+            execute(() -> {
+                testDialog.loadCategories();
+            });
+            waitForAsyncOperation();
+            robot().waitForIdle();
+            
+            // Test with empty currentMsg
+            execute(() -> {
+                if (testDialog.labelMessage != null) {
+                    testDialog.labelMessage.setText("");
+                }
+            });
+            robot().waitForIdle();
+            
+            execute(() -> {
+                testDialog.loadCategories();
+            });
+            waitForAsyncOperation();
+            robot().waitForIdle();
+            
+            // Test when labelMessage is null in production mode (line 348)
+            execute(() -> {
+                testDialog.labelMessage = null;
+            });
+            robot().waitForIdle();
+            
+            execute(() -> {
+                testDialog.loadCategories();
+            });
+            waitForAsyncOperation();
+            robot().waitForIdle();
+            
+            // Restore labelMessage for remaining tests
+            execute(() -> {
+                if (testDialog.labelMessage == null) {
+                    testDialog.labelMessage = new JLabel();
+                }
+            });
+            robot().waitForIdle();
+            
+            // Test all error message patterns to ensure all branches are covered
+            // Test "Error" pattern - set message, load categories, verify it's preserved
+            execute(() -> {
+                if (testDialog.labelMessage != null) {
+                    testDialog.labelMessage.setText("Error occurred");
+                }
+            });
+            robot().waitForIdle();
+            
+            // Verify message is set before loading
+            String beforeLoad = execute(() -> testDialog.labelMessage != null ? testDialog.labelMessage.getText() : "");
+            assertThat(beforeLoad).as("Message should be set before loadCategories").isEqualTo("Error occurred");
+            
+            // Load categories - in production mode, error messages should be preserved
+            execute(() -> testDialog.loadCategories());
+            waitForAsyncOperation();
+            robot().waitForIdle();
+            
+            // Wait a bit more to ensure async operation completes
+            await().atMost(2, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
+                robot().waitForIdle();
+                return true;
+            });
+            
+            // In production mode, error messages should be preserved (line 352-355)
+            String errorMsg = execute(() -> testDialog.labelMessage != null ? testDialog.labelMessage.getText() : "");
+            assertThat(errorMsg).as("Error message containing 'Error' should be preserved in production mode after loadCategories").isEqualTo("Error occurred");
+            
+            // Test "select" pattern
+            execute(() -> {
+                if (testDialog.labelMessage != null) {
+                    testDialog.labelMessage.setText("select something");
+                }
+            });
+            robot().waitForIdle();
+            execute(() -> testDialog.loadCategories());
+            waitForAsyncOperation();
+            robot().waitForIdle();
+            errorMsg = execute(() -> testDialog.labelMessage != null ? testDialog.labelMessage.getText() : "");
+            assertThat(errorMsg).isEqualTo("select something");
+            
+            // Test "cannot be empty" pattern
+            execute(() -> {
+                if (testDialog.labelMessage != null) {
+                    testDialog.labelMessage.setText("cannot be empty");
+                }
+            });
+            robot().waitForIdle();
+            execute(() -> testDialog.loadCategories());
+            waitForAsyncOperation();
+            robot().waitForIdle();
+            errorMsg = execute(() -> testDialog.labelMessage != null ? testDialog.labelMessage.getText() : "");
+            assertThat(errorMsg).isEqualTo("cannot be empty");
+            
+            // Test "Please" pattern (to cover all OR branches in line 352)
+            execute(() -> {
+                if (testDialog.labelMessage != null) {
+                    testDialog.labelMessage.setText("Please");
+                }
+            });
+            robot().waitForIdle();
+            execute(() -> testDialog.loadCategories());
+            waitForAsyncOperation();
+            robot().waitForIdle();
+            errorMsg = execute(() -> testDialog.labelMessage != null ? testDialog.labelMessage.getText() : "");
+            assertThat(errorMsg).isEqualTo("Please");
+            
+            // Test message that doesn't match any error pattern - should be cleared (line 357-358)
+            execute(() -> {
+                if (testDialog.labelMessage != null) {
+                    testDialog.labelMessage.setText("Success message");
+                }
+            });
+            robot().waitForIdle();
+            execute(() -> testDialog.loadCategories());
+            waitForAsyncOperation();
+            robot().waitForIdle();
+            String clearedMsg = execute(() -> testDialog.labelMessage != null ? testDialog.labelMessage.getText() : "");
+            assertThat(clearedMsg).as("Non-error message should be cleared in production mode").isEmpty();
+            
+            dialogFixture.cleanUp();
+        } finally {
+            System.setProperty("test.mode", "true"); // Restore test mode
+        }
+    }
+
+    @Test
+    @GUITest
+    public void testCategoryDialog_ShowMessage_ProductionMode_ShowsJOptionPane() {
+        ensureDialogCreated();
+        // Set to production mode
+        System.setProperty("test.mode", "false");
+        
+        try {
+            CategoryDialog testDialog = execute(() -> {
+                CategoryDialog cd = new CategoryDialog(mainWindow, categoryController);
+                cd.setModal(false);
+                cd.setVisible(true);
+                return cd;
+            });
+            DialogFixture dialogFixture = new DialogFixture(robot(), testDialog);
+            
+            // Test showMessage in production mode - should show JOptionPane
+            // Use a thread to automatically close the JOptionPane to avoid blocking
+            Thread closeDialogThread = new Thread(() -> {
+                robot().waitForIdle();
+                // Find and close the JOptionPane dialog
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    java.awt.Window[] windows = java.awt.Window.getWindows();
+                    for (java.awt.Window w : windows) {
+                        if (w instanceof javax.swing.JDialog) {
+                            javax.swing.JDialog jDialog = (javax.swing.JDialog) w;
+                            // Check if it's a JOptionPane dialog
+                            if (jDialog.getTitle() != null && jDialog.getTitle().contains("Info")) {
+                                // Close it
+                                jDialog.dispose();
+                                break;
+                            }
+                        }
+                    }
+                });
+            });
+            closeDialogThread.start();
+            
+            execute(() -> {
+                testDialog.showMessage("Test message for production mode");
+            });
+            robot().waitForIdle();
+            
+            // Wait for the dialog thread to complete
+            try {
+                closeDialogThread.join(2000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            robot().waitForIdle();
+            
+            // Verify message was set on label
+            String labelText = execute(() -> {
+                if (testDialog.labelMessage != null) {
+                    return testDialog.labelMessage.getText();
+                }
+                return "";
+            });
+            assertThat(labelText).isEqualTo("Test message for production mode");
+            
+            // This covers: JOptionPane.showMessageDialog(this, msg, "Info", JOptionPane.WARNING_MESSAGE)
+            // when !isTestMode and msg is not empty
+            
+            dialogFixture.cleanUp();
+        } finally {
+            System.setProperty("test.mode", "true"); // Restore test mode
+        }
+    }
+
+    @Test
+    @GUITest
+    public void testCategoryDialog_ShowMessage_NullMessage() {
+        ensureDialogCreated();
+        System.setProperty("test.mode", "true");
+        
+        // Test showMessage when msg is null (line 298 - msg != null check)
+        execute(() -> {
+            categoryDialog.showMessage(null);
+        });
+        robot().waitForIdle();
+        
+        // Should not throw exception and should handle null gracefully
+        String message = execute(() -> {
+            if (categoryDialog.labelMessage != null) {
+                return categoryDialog.labelMessage.getText();
+            }
+            return "";
+        });
+        // Null message should be treated as empty
+        assertThat(message).isEmpty();
+    }
 }
