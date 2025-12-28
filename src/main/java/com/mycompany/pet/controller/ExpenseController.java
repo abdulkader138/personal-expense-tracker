@@ -32,7 +32,7 @@ public class ExpenseController {
      * @param onError Callback with error message
      */
     public void loadExpenses(Consumer<List<Expense>> onSuccess, Consumer<String> onError) {
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 List<Expense> expenses = expenseService.getAllExpenses();
                 javax.swing.SwingUtilities.invokeLater(() -> onSuccess.accept(expenses));
@@ -40,7 +40,9 @@ public class ExpenseController {
                 String errorMsg = "Error loading expenses: " + e.getMessage();
                 javax.swing.SwingUtilities.invokeLater(() -> onError.accept(errorMsg));
             }
-        }).start();
+        });
+        thread.setDaemon(true);
+        thread.start();
     }
     
     /**
@@ -53,7 +55,7 @@ public class ExpenseController {
      */
     public void loadExpensesByMonth(int year, int month, 
                                     Consumer<List<Expense>> onSuccess, Consumer<String> onError) {
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 List<Expense> expenses = expenseService.getExpensesByMonth(year, month);
                 javax.swing.SwingUtilities.invokeLater(() -> onSuccess.accept(expenses));
@@ -61,7 +63,9 @@ public class ExpenseController {
                 String errorMsg = "Error loading expenses: " + e.getMessage();
                 javax.swing.SwingUtilities.invokeLater(() -> onError.accept(errorMsg));
             }
-        }).start();
+        });
+        thread.setDaemon(true);
+        thread.start();
     }
     
     /**
@@ -76,7 +80,7 @@ public class ExpenseController {
      */
     public void createExpense(LocalDate date, BigDecimal amount, String description, Integer categoryId,
                               Consumer<Expense> onSuccess, Consumer<String> onError) {
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 Expense expense = expenseService.createExpense(date, amount, description, categoryId);
                 javax.swing.SwingUtilities.invokeLater(() -> onSuccess.accept(expense));
@@ -86,7 +90,9 @@ public class ExpenseController {
             } catch (IllegalArgumentException e) {
                 javax.swing.SwingUtilities.invokeLater(() -> onError.accept(e.getMessage()));
             }
-        }).start();
+        });
+        thread.setDaemon(true);
+        thread.start();
     }
     
     /**
@@ -103,7 +109,7 @@ public class ExpenseController {
     public void updateExpense(Integer expenseId, LocalDate date, BigDecimal amount, 
                               String description, Integer categoryId,
                               Consumer<Expense> onSuccess, Consumer<String> onError) {
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 Expense expense = expenseService.updateExpense(expenseId, date, amount, description, categoryId);
                 javax.swing.SwingUtilities.invokeLater(() -> onSuccess.accept(expense));
@@ -113,7 +119,9 @@ public class ExpenseController {
             } catch (IllegalArgumentException e) {
                 javax.swing.SwingUtilities.invokeLater(() -> onError.accept(e.getMessage()));
             }
-        }).start();
+        });
+        thread.setDaemon(true);
+        thread.start();
     }
     
     /**
@@ -124,7 +132,7 @@ public class ExpenseController {
      * @param onError Callback with error message
      */
     public void deleteExpense(Integer expenseId, Runnable onSuccess, Consumer<String> onError) {
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 expenseService.deleteExpense(expenseId);
                 javax.swing.SwingUtilities.invokeLater(onSuccess);
@@ -134,7 +142,9 @@ public class ExpenseController {
             } catch (IllegalArgumentException e) {
                 javax.swing.SwingUtilities.invokeLater(() -> onError.accept(e.getMessage()));
             }
-        }).start();
+        });
+        thread.setDaemon(true);
+        thread.start();
     }
     
     /**
@@ -158,7 +168,7 @@ public class ExpenseController {
      */
     public void getMonthlyTotal(int year, int month, 
                                 Consumer<BigDecimal> onSuccess, Consumer<String> onError) {
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 BigDecimal total = expenseService.getMonthlyTotal(year, month);
                 javax.swing.SwingUtilities.invokeLater(() -> onSuccess.accept(total));
@@ -166,7 +176,9 @@ public class ExpenseController {
                 String errorMsg = "Error calculating monthly total: " + e.getMessage();
                 javax.swing.SwingUtilities.invokeLater(() -> onError.accept(errorMsg));
             }
-        }).start();
+        });
+        thread.setDaemon(true);
+        thread.start();
     }
     
     /**
@@ -178,7 +190,7 @@ public class ExpenseController {
      */
     public void getTotalByCategory(Integer categoryId, 
                                    Consumer<BigDecimal> onSuccess, Consumer<String> onError) {
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 BigDecimal total = expenseService.getTotalByCategory(categoryId);
                 javax.swing.SwingUtilities.invokeLater(() -> onSuccess.accept(total));
@@ -186,7 +198,9 @@ public class ExpenseController {
                 String errorMsg = "Error calculating category total: " + e.getMessage();
                 javax.swing.SwingUtilities.invokeLater(() -> onError.accept(errorMsg));
             }
-        }).start();
+        });
+        thread.setDaemon(true);
+        thread.start();
     }
 }
 

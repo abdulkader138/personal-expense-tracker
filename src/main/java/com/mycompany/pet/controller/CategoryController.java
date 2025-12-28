@@ -30,7 +30,7 @@ public class CategoryController {
      * @param onError Callback with error message
      */
     public void loadCategories(Consumer<List<Category>> onSuccess, Consumer<String> onError) {
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 List<Category> categories = categoryService.getAllCategories();
                 javax.swing.SwingUtilities.invokeLater(() -> onSuccess.accept(categories));
@@ -38,7 +38,9 @@ public class CategoryController {
                 String errorMsg = "Error loading categories: " + e.getMessage();
                 javax.swing.SwingUtilities.invokeLater(() -> onError.accept(errorMsg));
             }
-        }).start();
+        });
+        thread.setDaemon(true); // Make daemon thread to avoid blocking JVM shutdown
+        thread.start();
     }
     
     /**
@@ -55,7 +57,7 @@ public class CategoryController {
             return;
         }
         
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 Category category = categoryService.createCategory(name.trim());
                 javax.swing.SwingUtilities.invokeLater(() -> onSuccess.accept(category));
@@ -63,7 +65,9 @@ public class CategoryController {
                 String errorMsg = "Error adding category: " + e.getMessage();
                 javax.swing.SwingUtilities.invokeLater(() -> onError.accept(errorMsg));
             }
-        }).start();
+        });
+        thread.setDaemon(true);
+        thread.start();
     }
     
     /**
@@ -82,7 +86,7 @@ public class CategoryController {
             return;
         }
         
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 Category category = categoryService.updateCategory(categoryId, name.trim());
                 javax.swing.SwingUtilities.invokeLater(() -> onSuccess.accept(category));
@@ -92,7 +96,9 @@ public class CategoryController {
             } catch (IllegalArgumentException e) {
                 javax.swing.SwingUtilities.invokeLater(() -> onError.accept(e.getMessage()));
             }
-        }).start();
+        });
+        thread.setDaemon(true);
+        thread.start();
     }
     
     /**
@@ -103,7 +109,7 @@ public class CategoryController {
      * @param onError Callback with error message
      */
     public void deleteCategory(Integer categoryId, Runnable onSuccess, Consumer<String> onError) {
-        new Thread(() -> {
+        Thread thread = new Thread(() -> {
             try {
                 categoryService.deleteCategory(categoryId);
                 javax.swing.SwingUtilities.invokeLater(onSuccess);
@@ -113,7 +119,9 @@ public class CategoryController {
             } catch (IllegalArgumentException e) {
                 javax.swing.SwingUtilities.invokeLater(() -> onError.accept(e.getMessage()));
             }
-        }).start();
+        });
+        thread.setDaemon(true);
+        thread.start();
     }
     
     /**
