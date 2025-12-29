@@ -61,8 +61,26 @@ public class DatabaseConnectionTest {
 
         // Then
         assertNotNull(dbConnection);
-        // Verify default values are set (we can't directly access private fields,
-        // but we can test behavior)
+        // Verify default values are set by calling getDatabase() which uses them
+        // The default constructor calls this(DEFAULT_CONNECTION_STRING, DEFAULT_DATABASE_NAME)
+        // So we verify by checking that getDatabase() uses the defaults
+        MongoClient mockClient = mock(MongoClient.class);
+        MongoDatabase mockDatabase = mock(MongoDatabase.class);
+        
+        // Use the actual default values
+        String defaultConnectionString = "mongodb://localhost:27017";
+        String defaultDatabaseName = "expense_tracker";
+        
+        mockedMongoClients.when(() -> MongoClients.create(defaultConnectionString))
+                .thenReturn(mockClient);
+        when(mockClient.getDatabase(defaultDatabaseName)).thenReturn(mockDatabase);
+        
+        MongoDatabase result = dbConnection.getDatabase();
+        assertNotNull(result);
+        assertEquals(mockDatabase, result);
+        // Verify the default connection string and database name were used
+        mockedMongoClients.verify(() -> MongoClients.create(defaultConnectionString), times(1));
+        verify(mockClient, times(1)).getDatabase(defaultDatabaseName);
     }
 
     @Test
@@ -153,8 +171,18 @@ public class DatabaseConnectionTest {
         // When
         dbConnection.close();
 
-        // Then
+        // Then - verify close() was called and mongoClient was set to null
         verify(mockClient, times(1)).close();
+        // Verify that after close(), mongoClient is null by calling getDatabase() again
+        // which should create a new client (proves mongoClient was set to null)
+        MongoClient mockClient2 = mock(MongoClient.class);
+        mockedMongoClients.when(() -> MongoClients.create(connectionString))
+                .thenReturn(mockClient2);
+        when(mockClient2.getDatabase(databaseName)).thenReturn(mockDatabase);
+        
+        dbConnection.getDatabase();
+        // Verify a new client was created (proves mongoClient was set to null in close())
+        mockedMongoClients.verify(() -> MongoClients.create(connectionString), times(2));
     }
 
     @Test
