@@ -1590,6 +1590,60 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
+    public void testMainWindow_ShowErrorIfVisible_WindowNotVisible() {
+        // Test showErrorIfVisible when isVisible() is false
+        execute(() -> {
+            mainWindow.setVisible(false);
+            mainWindow.showErrorIfVisible("Test error");
+            // Restore visibility for cleanup
+            mainWindow.setVisible(true);
+        });
+        // No dialog should be shown
+        window.requireVisible();
+    }
+
+
+    @Test
+    @GUITest
+    public void testMainWindow_ShowErrorIfVisible_WindowVisibleAndShowing() {
+        // Test showErrorIfVisible when both isVisible() and isShowing() are true
+        Thread disposeDialogThread = new Thread(() -> {
+            try {
+                Thread.sleep(200); // NOSONAR - wait for dialog
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            execute(() -> {
+                java.awt.Window[] windows = java.awt.Window.getWindows();
+                for (java.awt.Window w : windows) {
+                    if (w instanceof javax.swing.JDialog) {
+                        javax.swing.JDialog dialog = (javax.swing.JDialog) w;
+                        if (dialog.getTitle() != null && dialog.getTitle().equals("Error")) {
+                            dialog.dispose();
+                        }
+                    }
+                }
+            });
+        });
+        disposeDialogThread.setDaemon(true);
+        disposeDialogThread.start();
+        
+        execute(() -> {
+            mainWindow.setVisible(true);
+            mainWindow.showErrorIfVisible("Test error");
+        });
+        
+        try {
+            Thread.sleep(300); // NOSONAR - wait for dialog and disposal
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        
+        window.requireVisible();
+    }
+
+    @Test
+    @GUITest
     public void testMainWindow_MonthComboBox_ActionListener_ExpenseTableModelNull() throws Exception {
         // Test monthComboBox action listener when expenseTableModel is null
         execute(() -> {

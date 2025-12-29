@@ -171,6 +171,21 @@ public class MainWindow extends JFrame {
     }
 
     /**
+     * Shows error message dialog if window is visible and showing.
+     * Package-private for testing.
+     * 
+     * @param error Error message to display
+     */
+    void showErrorIfVisible(String error) {
+        if (isVisible() && isShowing()) {
+            JOptionPane.showMessageDialog(this,
+                error,
+                ERROR_TITLE,
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
      * Loads categories into the combo box.
      * Uses controller for async operation.
      */
@@ -184,15 +199,7 @@ public class MainWindow extends JFrame {
                     categoryComboBox.addItem(category);
                 }
             },
-            error -> {
-                // Error: show message only if window is visible
-                if (isVisible() && isShowing()) {
-                    JOptionPane.showMessageDialog(this,
-                        error,
-                        ERROR_TITLE,
-                        JOptionPane.ERROR_MESSAGE);
-                }
-            }
+            this::showErrorIfVisible
         );
     }
 
@@ -203,14 +210,7 @@ public class MainWindow extends JFrame {
     void loadExpenses() {
         expenseController.loadExpenses(
             this::populateExpenseTable,
-            error -> {
-                if (isVisible() && isShowing()) {
-                    JOptionPane.showMessageDialog(this,
-                        error,
-                        ERROR_TITLE,
-                        JOptionPane.ERROR_MESSAGE);
-                }
-            }
+            this::showErrorIfVisible
         );
     }
 
@@ -271,14 +271,7 @@ public class MainWindow extends JFrame {
                         populateExpenseTable(expenses);
                         updateSummary();
                     },
-                    error -> {
-                        if (isVisible() && isShowing()) {
-                            JOptionPane.showMessageDialog(this,
-                                error,
-                                ERROR_TITLE,
-                                JOptionPane.ERROR_MESSAGE);
-                        }
-                    }
+                    this::showErrorIfVisible
                 );
             } catch (NumberFormatException e) {
                 // Invalid month/year - ignore
