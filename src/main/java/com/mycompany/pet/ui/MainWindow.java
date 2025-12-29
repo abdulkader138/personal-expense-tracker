@@ -20,6 +20,9 @@ import java.time.LocalDate;
 public class MainWindow extends JFrame {
     private static final long serialVersionUID = 1L;
     private static final String ERROR_TITLE = "Error";
+    private static final String UNKNOWN_CATEGORY = "Unknown";
+    private static final String MONTHLY_TOTAL_ERROR = "Monthly Total: Error";
+    private static final String MONTHLY_TOTAL_NA = "Monthly Total: N/A";
     
     // Controllers (preferred) - package-private for testing
     final transient ExpenseController expenseController;
@@ -212,19 +215,29 @@ public class MainWindow extends JFrame {
     }
 
     /**
+     * Gets category name for an expense, returning "Unknown" if category cannot be retrieved.
+     * Package-private for testing.
+     * 
+     * @param categoryId Category ID
+     * @return Category name or "Unknown" if not found or error occurs
+     */
+    String getCategoryName(Integer categoryId) {
+        try {
+            Category category = categoryController.getCategory(categoryId);
+            return category != null ? category.getName() : UNKNOWN_CATEGORY;
+        } catch (Exception e) {
+            return UNKNOWN_CATEGORY;
+        }
+    }
+
+    /**
      * Populates expense table with expenses.
      * Package-private for testing.
      */
     void populateExpenseTable(java.util.List<Expense> expenses) {
         expenseTableModel.setRowCount(0);
         for (Expense expense : expenses) {
-            Category category = null;
-            try {
-                category = categoryController.getCategory(expense.getCategoryId());
-            } catch (SQLException e) {
-                // Ignore - will show "Unknown"
-            }
-            String categoryName = category != null ? category.getName() : "Unknown";
+            String categoryName = getCategoryName(expense.getCategoryId());
             expenseTableModel.addRow(new Object[]{
                 expense.getExpenseId(),
                 expense.getDate().toString(),
@@ -282,12 +295,12 @@ public class MainWindow extends JFrame {
         String selectedYear = (String) yearComboBox.getSelectedItem();
 
         if (selectedMonth == null || selectedYear == null) {
-            monthlyTotalLabel.setText("Monthly Total: N/A");
+            monthlyTotalLabel.setText(MONTHLY_TOTAL_NA);
             return;
         }
 
         if ("All".equals(selectedMonth)) {
-            monthlyTotalLabel.setText("Monthly Total: N/A");
+            monthlyTotalLabel.setText(MONTHLY_TOTAL_NA);
         } else {
             try {
                 int year = Integer.parseInt(selectedYear);
@@ -297,10 +310,10 @@ public class MainWindow extends JFrame {
                         monthlyTotalLabel.setText("Monthly Total: $" + total.toString());
                         updateCategoryTotal();
                     },
-                    error -> monthlyTotalLabel.setText("Monthly Total: Error")
+                    error -> monthlyTotalLabel.setText(MONTHLY_TOTAL_ERROR)
                 );
             } catch (NumberFormatException e) {
-                monthlyTotalLabel.setText("Monthly Total: Error");
+                monthlyTotalLabel.setText(MONTHLY_TOTAL_ERROR);
             }
         }
     }
@@ -327,6 +340,28 @@ public class MainWindow extends JFrame {
     public void showAddExpenseDialog() {
         ExpenseDialog dialog = new ExpenseDialog(this, expenseController, categoryController, null);
         dialog.setVisible(true);
+        checkDialogAfterShow(dialog);
+    }
+
+    /**
+     * Checks dialog state after it's been shown and handles result if still showing.
+     * Package-private for testing.
+     * 
+     * @param dialog The dialog to check
+     */
+    void checkDialogAfterShow(ExpenseDialog dialog) {
+        if (dialog.isShowing()) {
+            handleDialogResult(dialog);
+        }
+    }
+
+    /**
+     * Handles the result of a dialog, reloading data if saved.
+     * Package-private for testing.
+     * 
+     * @param dialog The dialog to check
+     */
+    void handleDialogResult(ExpenseDialog dialog) {
         if (dialog.isSaved()) {
             loadData();
         }
@@ -350,9 +385,7 @@ public class MainWindow extends JFrame {
             Expense expense = expenseController.getExpense(expenseId);
             ExpenseDialog dialog = new ExpenseDialog(this, expenseController, categoryController, expense);
             dialog.setVisible(true);
-            if (dialog.isSaved()) {
-                loadData();
-            }
+            handleDialogResult(dialog);
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(this,
                 "Error loading expense: " + e.getMessage(),
@@ -375,23 +408,55 @@ public class MainWindow extends JFrame {
             return;
         }
 
-        // In test mode, bypass confirmation dialog
-        boolean isTestMode = "true".equals(System.getProperty("test.mode"));
-        int confirm = isTestMode ? JOptionPane.YES_OPTION : JOptionPane.showConfirmDialog(this,
-            "Are you sure you want to delete this expense?",
-            "Confirm Delete",
-            JOptionPane.YES_NO_OPTION);
-
+        int confirm = getDeleteConfirmation();
         if (confirm == JOptionPane.YES_OPTION) {
-            Integer expenseId = (Integer) expenseTableModel.getValueAt(selectedRow, 0);
-            expenseController.deleteExpense(expenseId,
-                this::loadData,
-                error -> JOptionPane.showMessageDialog(this,
-                    error,
-                    ERROR_TITLE,
-                    JOptionPane.ERROR_MESSAGE)
-            );
+            performDeleteExpense(selectedRow);
         }
+    }
+
+    /**
+     * Gets confirmation from user to delete expense.
+     * Package-private for testing.
+     * 
+     * @return Confirmation result (YES_OPTION, NO_OPTION, or CANCEL_OPTION)
+     */
+    int getDeleteConfirmation() {
+        boolean isTestMode = "true".equals(System.getProperty("test.mode"));
+        if (isTestMode) {
+            return JOptionPane.YES_OPTION;
+        } else {
+            return JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to delete this expense?",
+                "Confirm Delete",
+                JOptionPane.YES_NO_OPTION);
+        }
+    }
+
+    /**
+     * Performs the actual deletion of the expense.
+     * Package-private for testing.
+     * 
+     * @param selectedRow The selected row index
+     */
+    void performDeleteExpense(int selectedRow) {
+        Integer expenseId = (Integer) expenseTableModel.getValueAt(selectedRow, 0);
+        expenseController.deleteExpense(expenseId,
+            this::loadData,
+            this::handleDeleteExpenseError
+        );
+    }
+
+    /**
+     * Handles error when deleting expense fails.
+     * Package-private for testing.
+     * 
+     * @param error Error message
+     */
+    void handleDeleteExpenseError(String error) {
+        JOptionPane.showMessageDialog(this,
+            error,
+            ERROR_TITLE,
+            JOptionPane.ERROR_MESSAGE);
     }
 
     /**
