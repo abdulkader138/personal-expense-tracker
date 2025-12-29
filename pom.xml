@@ -343,20 +343,14 @@
                                             <minimum>0.70</minimum>
                                         </limit>
                                     </limits>
-                                    <excludes>
-                                        <exclude>**/model/**</exclude>
-                                        <exclude>**/ExpenseTrackerApp.*</exclude>
-                                    </excludes>
+                                    <!-- Removed exclusions to include all classes in coverage -->
                                 </rule>
                             </rules>
                         </configuration>
                     </execution>
                 </executions>
                 <configuration>
-                    <excludes>
-                        <exclude>**/model/**</exclude>
-                        <exclude>**/ExpenseTrackerApp.*</exclude>
-                    </excludes>
+                    <!-- Removed exclusions to include all classes in coverage -->
                     <!-- Rules for check goal when called directly (e.g., mvn jacoco:check) -->
                     <rules>
                         <rule>
@@ -378,10 +372,7 @@
                                     <minimum>0.70</minimum>
                                 </limit>
                             </limits>
-                            <excludes>
-                                <exclude>**/model/**</exclude>
-                                <exclude>**/ExpenseTrackerApp.*</exclude>
-                            </excludes>
+                            <!-- Removed exclusions to include all classes in coverage -->
                         </rule>
                     </rules>
                 </configuration>
@@ -508,10 +499,7 @@
                             </execution>
                         </executions>
                         <configuration>
-                            <excludes>
-                                <exclude>**/model/**</exclude>
-                                <exclude>**/ExpenseTrackerApp.*</exclude>
-                            </excludes>
+                            <!-- Removed exclusions to include all classes in coverage -->
                         </configuration>
                     </plugin>
                 </plugins>
@@ -580,10 +568,7 @@
                             </execution>
                         </executions>
                         <configuration>
-                            <excludes>
-                                <exclude>**/model/**</exclude>
-                                <exclude>**/ExpenseTrackerApp.*</exclude>
-                            </excludes>
+                            <!-- Removed exclusions to include all classes in coverage -->
                         </configuration>
                     </plugin>
                     <plugin>
