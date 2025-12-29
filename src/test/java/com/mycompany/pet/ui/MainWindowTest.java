@@ -219,6 +219,24 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
+    public void testMainWindow_LoadCategories_ErrorCallback_WindowVisibleButNotShowing() throws SQLException {
+        // Test branch where isVisible() is true but isShowing() is false
+        // Set window to iconified state where isVisible() might be true but isShowing() false
+        execute(() -> {
+            mainWindow.setExtendedState(mainWindow.getExtendedState() | java.awt.Frame.ICONIFIED);
+        });
+        when(categoryService.getAllCategories()).thenThrow(new SQLException("Database error"));
+        execute(() -> mainWindow.loadCategories());
+        // Restore window state
+        execute(() -> {
+            mainWindow.setExtendedState(java.awt.Frame.NORMAL);
+            mainWindow.setVisible(true);
+        });
+        window.requireVisible();
+    }
+
+    @Test
+    @GUITest
     public void testMainWindow_LoadExpenses() {
         execute(() -> mainWindow.loadExpenses());
         // No waiting - just execute and verify
@@ -244,6 +262,24 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         // No waiting - just execute and verify
         execute(() -> mainWindow.setVisible(true));
         // No waiting - just execute and verify
+    }
+
+    @Test
+    @GUITest
+    public void testMainWindow_LoadExpenses_ErrorCallback_WindowVisibleButNotShowing() throws SQLException {
+        // Test branch where isVisible() is true but isShowing() is false
+        // Set window to iconified state where isVisible() might be true but isShowing() false
+        execute(() -> {
+            mainWindow.setExtendedState(mainWindow.getExtendedState() | java.awt.Frame.ICONIFIED);
+        });
+        when(expenseService.getAllExpenses()).thenThrow(new SQLException("Database error"));
+        execute(() -> mainWindow.loadExpenses());
+        // Restore window state
+        execute(() -> {
+            mainWindow.setExtendedState(java.awt.Frame.NORMAL);
+            mainWindow.setVisible(true);
+        });
+        window.requireVisible();
     }
 
     @Test
@@ -391,6 +427,29 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         // No waiting - just execute and verify
         execute(() -> mainWindow.setVisible(true));
         // No waiting - just execute and verify
+    }
+
+    @Test
+    @GUITest
+    public void testMainWindow_FilterExpenses_ErrorCallback_WindowVisibleButNotShowing() throws SQLException {
+        // Test branch where isVisible() is true but isShowing() is false
+        // Note: For JFrame, this is hard to achieve, but we test the callback path
+        execute(() -> {
+            mainWindow.monthComboBox.setSelectedItem("01");
+            mainWindow.yearComboBox.setSelectedItem("2024");
+        });
+        when(expenseService.getExpensesByMonth(anyInt(), anyInt())).thenThrow(new SQLException("Database error"));
+        // Set window to iconified state where isVisible() might be true but isShowing() false
+        execute(() -> {
+            mainWindow.setExtendedState(mainWindow.getExtendedState() | java.awt.Frame.ICONIFIED);
+        });
+        execute(() -> mainWindow.filterExpenses());
+        // Restore window state
+        execute(() -> {
+            mainWindow.setExtendedState(java.awt.Frame.NORMAL);
+            mainWindow.setVisible(true);
+        });
+        window.requireVisible();
     }
 
     @Test
@@ -601,10 +660,11 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         // This covers the if (dialog.isShowing()) branch and calls handleDialogResult
         System.setProperty("test.mode", "true");
         try {
-            javax.swing.SwingUtilities.invokeLater(() -> {
+            execute(() -> {
                 ExpenseDialog dialog = new ExpenseDialog(mainWindow, mainWindow.expenseController, 
                     mainWindow.categoryController, null);
-                // Make dialog visible - isShowing() will be true while it's visible
+                // Make dialog non-modal so setVisible(true) doesn't block
+                dialog.setModal(false);
                 dialog.pack();
                 dialog.setVisible(true);
                 // Set saved flag to false to ensure handleDialogResult is called but doesn't reload data
@@ -615,17 +675,13 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
                 } catch (Exception e) {
                     // Ignore reflection errors
                 }
+                // Verify dialog is showing before calling checkDialogAfterShow
+                assertThat(dialog.isShowing()).isTrue();
                 // Test checkDialogAfterShow with a showing dialog (covers if branch)
                 mainWindow.checkDialogAfterShow(dialog);
                 // Dispose dialog after testing
                 dialog.dispose();
             });
-            // Wait for dialog operations
-            try {
-                Thread.sleep(200); // NOSONAR - wait for dialog operations
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
         } finally {
             System.setProperty("test.mode", "true");
         }
@@ -1325,6 +1381,45 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
                 mainWindow.categoryComboBox.setSelectedIndex(1);
             } else {
                 // If no items, add one to trigger the listener
+                mainWindow.categoryComboBox.addItem(new Category(CATEGORY_ID_1, CATEGORY_NAME_1));
+                mainWindow.categoryComboBox.setSelectedIndex(1);
+            }
+        });
+        window.requireVisible();
+    }
+
+    @Test
+    @GUITest
+    public void testMainWindow_MonthComboBox_ActionListener_ConditionsFalse() {
+        // Test monthComboBox action listener when isInitializing is true (covers false branch)
+        execute(() -> {
+            mainWindow.isInitializing = true;
+            mainWindow.monthComboBox.setSelectedItem("01");
+        });
+        window.requireVisible();
+    }
+
+    @Test
+    @GUITest
+    public void testMainWindow_YearComboBox_ActionListener_ConditionsFalse() {
+        // Test yearComboBox action listener when isInitializing is true (covers false branch)
+        execute(() -> {
+            mainWindow.isInitializing = true;
+            int currentYear = LocalDate.now().getYear();
+            mainWindow.yearComboBox.setSelectedItem(String.valueOf(currentYear - 1));
+        });
+        window.requireVisible();
+    }
+
+    @Test
+    @GUITest
+    public void testMainWindow_CategoryComboBox_ActionListener_ConditionsFalse() {
+        // Test categoryComboBox action listener when isInitializing is true (covers false branch)
+        execute(() -> {
+            mainWindow.isInitializing = true;
+            if (mainWindow.categoryComboBox.getItemCount() > 1) {
+                mainWindow.categoryComboBox.setSelectedIndex(1);
+            } else {
                 mainWindow.categoryComboBox.addItem(new Category(CATEGORY_ID_1, CATEGORY_NAME_1));
                 mainWindow.categoryComboBox.setSelectedIndex(1);
             }
