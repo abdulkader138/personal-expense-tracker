@@ -242,29 +242,24 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     @Test
     @GUITest
     public void testMainWindow_LoadCategories_ErrorCallback_WindowVisibleButNotShowing() throws SQLException {
-        // Test error callback - wait for async execution and dispose any dialogs
+        // Test error callback when isVisible() is true but isShowing() is false (iconified)
+        // This covers the isShowing() false branch when isVisible() is true
         when(categoryService.getAllCategories()).thenThrow(new SQLException("Database error"));
         execute(() -> {
             mainWindow.setVisible(true);
+            // Iconify the window - makes isVisible() true but isShowing() false
+            mainWindow.setExtendedState(java.awt.Frame.ICONIFIED);
             mainWindow.loadCategories();
         });
         // Wait for async error callback to execute
         try {
-            Thread.sleep(200); // NOSONAR - wait for async error callback
+            Thread.sleep(300); // NOSONAR - wait for async error callback
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        // Dispose any error dialogs that were created
+        // Restore window state
         execute(() -> {
-            java.awt.Window[] windows = java.awt.Window.getWindows();
-            for (java.awt.Window w : windows) {
-                if (w instanceof javax.swing.JDialog) {
-                    javax.swing.JDialog dialog = (javax.swing.JDialog) w;
-                    if (dialog.getTitle() != null && dialog.getTitle().equals("Error")) {
-                        dialog.dispose();
-                    }
-                }
-            }
+            mainWindow.setExtendedState(java.awt.Frame.NORMAL);
         });
         window.requireVisible();
     }
@@ -322,29 +317,24 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     @Test
     @GUITest
     public void testMainWindow_LoadExpenses_ErrorCallback_WindowVisibleButNotShowing() throws SQLException {
-        // Test error callback - wait for async execution and dispose any dialogs
+        // Test error callback when isVisible() is true but isShowing() is false (iconified)
+        // This covers the isShowing() false branch when isVisible() is true
         when(expenseService.getAllExpenses()).thenThrow(new SQLException("Database error"));
         execute(() -> {
             mainWindow.setVisible(true);
+            // Iconify the window - makes isVisible() true but isShowing() false
+            mainWindow.setExtendedState(java.awt.Frame.ICONIFIED);
             mainWindow.loadExpenses();
         });
         // Wait for async error callback to execute
         try {
-            Thread.sleep(200); // NOSONAR - wait for async error callback
+            Thread.sleep(300); // NOSONAR - wait for async error callback
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        // Dispose any error dialogs that were created
+        // Restore window state
         execute(() -> {
-            java.awt.Window[] windows = java.awt.Window.getWindows();
-            for (java.awt.Window w : windows) {
-                if (w instanceof javax.swing.JDialog) {
-                    javax.swing.JDialog dialog = (javax.swing.JDialog) w;
-                    if (dialog.getTitle() != null && dialog.getTitle().equals("Error")) {
-                        dialog.dispose();
-                    }
-                }
-            }
+            mainWindow.setExtendedState(java.awt.Frame.NORMAL);
         });
         window.requireVisible();
     }
@@ -519,34 +509,28 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     @Test
     @GUITest
     public void testMainWindow_FilterExpenses_ErrorCallback_WindowVisibleButNotShowing() throws SQLException {
-        // Test branch where isVisible() is true but isShowing() is false
+        // Test error callback when isVisible() is true but isShowing() is false (iconified)
+        // This covers the isShowing() false branch when isVisible() is true
         execute(() -> {
             mainWindow.monthComboBox.setSelectedItem("01");
             mainWindow.yearComboBox.setSelectedItem("2024");
         });
         when(expenseService.getExpensesByMonth(anyInt(), anyInt())).thenThrow(new SQLException("Database error"));
-        // Set window visible but make it not showing by hiding it temporarily during callback
         execute(() -> {
             mainWindow.setVisible(true);
+            // Iconify the window - makes isVisible() true but isShowing() false
+            mainWindow.setExtendedState(java.awt.Frame.ICONIFIED);
+            mainWindow.filterExpenses();
         });
-        execute(() -> mainWindow.filterExpenses());
         // Wait for async error callback
         try {
-            Thread.sleep(200); // NOSONAR - wait for async error callback
+            Thread.sleep(300); // NOSONAR - wait for async error callback
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        // Dispose any error dialogs that were created
+        // Restore window state
         execute(() -> {
-            java.awt.Window[] windows = java.awt.Window.getWindows();
-            for (java.awt.Window w : windows) {
-                if (w instanceof javax.swing.JDialog) {
-                    javax.swing.JDialog dialog = (javax.swing.JDialog) w;
-                    if (dialog.getTitle() != null && dialog.getTitle().equals("Error")) {
-                        dialog.dispose();
-                    }
-                }
-            }
+            mainWindow.setExtendedState(java.awt.Frame.NORMAL);
         });
         window.requireVisible();
     }
@@ -582,9 +566,9 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             mainWindow.yearComboBox.setSelectedItem(String.valueOf(currentYear));
         });
         
-        // Mock the monthly total to return a value
-        // Use doReturn().when() to override the anyInt() matcher from setup
-        doReturn(EXPENSE_AMOUNT_1).when(expenseService).getMonthlyTotal(currentYear, currentMonth);
+        // The setup method already stubs getMonthlyTotal(anyInt(), anyInt()) to return EXPENSE_AMOUNT_1
+        // So we don't need to override it here - the existing stub will work
+        // If we need to override, we should reset first or use more specific matchers
         
         execute(() -> {
             mainWindow.updateSummary();
@@ -1598,4 +1582,68 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         });
         window.requireVisible();
     }
+
+    // Note: expenseController is a final field set in constructor,
+    // so it can never be null in practice. The branch for null check is unreachable
+    // but JaCoCo still counts it. We cannot test this branch in Java 17+ because
+    // the reflection approach to modify final fields no longer works.
+
+    @Test
+    @GUITest
+    public void testMainWindow_MonthComboBox_ActionListener_ExpenseTableModelNull() throws Exception {
+        // Test monthComboBox action listener when expenseTableModel is null
+        execute(() -> {
+            DefaultTableModel originalModel = mainWindow.expenseTableModel;
+            mainWindow.expenseTableModel = null;
+            
+            try {
+                // Fire action listener directly
+                java.awt.event.ActionEvent event = new java.awt.event.ActionEvent(
+                    mainWindow.monthComboBox, 
+                    java.awt.event.ActionEvent.ACTION_PERFORMED, "");
+                for (java.awt.event.ActionListener listener : mainWindow.monthComboBox.getActionListeners()) {
+                    listener.actionPerformed(event);
+                }
+            } finally {
+                // Restore original value
+                mainWindow.expenseTableModel = originalModel;
+            }
+        });
+        window.requireVisible();
+    }
+
+    // Note: expenseController is a final field set in constructor,
+    // so it can never be null in practice. The branch for null check is unreachable
+    // but JaCoCo still counts it. We cannot test this branch in Java 17+ because
+    // the reflection approach to modify final fields no longer works.
+
+    @Test
+    @GUITest
+    public void testMainWindow_YearComboBox_ActionListener_ExpenseTableModelNull() throws Exception {
+        // Test yearComboBox action listener when expenseTableModel is null
+        execute(() -> {
+            DefaultTableModel originalModel = mainWindow.expenseTableModel;
+            mainWindow.expenseTableModel = null;
+            
+            try {
+                // Fire action listener directly
+                java.awt.event.ActionEvent event = new java.awt.event.ActionEvent(
+                    mainWindow.yearComboBox, 
+                    java.awt.event.ActionEvent.ACTION_PERFORMED, "");
+                for (java.awt.event.ActionListener listener : mainWindow.yearComboBox.getActionListeners()) {
+                    listener.actionPerformed(event);
+                }
+            } finally {
+                // Restore original value
+                mainWindow.expenseTableModel = originalModel;
+            }
+        });
+        window.requireVisible();
+    }
+
+    // Note: expenseController is a final field set in constructor,
+    // so it can never be null in practice. The branch for null check is unreachable
+    // but JaCoCo still counts it. We cannot test this branch in Java 17+ because
+    // the reflection approach to modify final fields no longer works.
+
 }
