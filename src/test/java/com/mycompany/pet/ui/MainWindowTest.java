@@ -6,9 +6,11 @@ import static org.assertj.swing.edt.GuiActionRunner.execute;
 import static org.junit.Assume.assumeFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.awt.GraphicsEnvironment;
@@ -1526,67 +1528,127 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     @Test
     @GUITest
     @SuppressWarnings("removal")
-    public void testMainWindow_ExitMenuItem_ActionListener() {
-        // Test the exit menu item action listener
-        // We can't actually call System.exit(0) in a test, so we test that the listener exists
-        // and can be triggered (but we'll use a custom security manager to prevent actual exit)
-        execute(() -> {
-            javax.swing.JMenuBar menuBar = mainWindow.getJMenuBar();
-            assertThat(menuBar).isNotNull();
-            javax.swing.JMenu fileMenu = (javax.swing.JMenu) menuBar.getMenu(0);
-            assertThat(fileMenu.getText()).isEqualTo("File");
-            javax.swing.JMenuItem exitItem = fileMenu.getItem(0);
-            assertThat(exitItem.getText()).isEqualTo("Exit");
-            assertThat(exitItem.getActionListeners().length).isGreaterThan(0);
-            
-            // Install a security manager to prevent System.exit from actually exiting
-            // Using @SuppressWarnings("removal") for deprecated SecurityManager
-            // The SecurityManager only blocks checkExit, allowing all other permissions
-            // needed by AssertJ Swing for reflection operations
-            java.lang.SecurityManager originalSecurityManager = System.getSecurityManager();
-            try {
-                System.setSecurityManager(new java.lang.SecurityManager() {
-                    @Override
-                    public void checkExit(int status) {
+    public void testMainWindow_HandleExit() {
+        // Test handleExit() method by calling it directly
+        // We can't actually call System.exit(0) in a test, so we use a custom security manager to prevent actual exit
+        
+        // Install a security manager to prevent System.exit from actually exiting
+        // Using @SuppressWarnings("removal") for deprecated SecurityManager
+        java.lang.SecurityManager originalSecurityManager = System.getSecurityManager();
+        try {
+            System.setSecurityManager(new java.lang.SecurityManager() {
+                @Override
+                public void checkExit(int status) {
+                    // Only block exit with status 0 (the one used by exit menu item)
+                    if (status == 0) {
                         throw new SecurityException("Prevent System.exit in test");
                     }
-                    // Override checkPermission to allow all permissions except exit
-                    // This allows AssertJ Swing to use reflection without restrictions
-                    @Override
-                    public void checkPermission(java.security.Permission perm) {
-                        // Allow all permissions - we only care about blocking System.exit
-                        // This is safe in a test environment
-                    }
-                });
-                
-                // Trigger the action listener to cover the lambda
-                // Create the event and invoke the listener directly
-                ActionEvent event = new ActionEvent(exitItem, 
-                    ActionEvent.ACTION_PERFORMED, "");
-                java.awt.event.ActionListener listener = exitItem.getActionListeners()[0];
-                
-                try {
-                    // Invoke the listener - this will execute the lambda and call System.exit(0)
-                    // The SecurityManager will throw SecurityException, but the lambda executes first
-                    listener.actionPerformed(event);
-                    // Should not reach here
-                    org.junit.Assert.fail("Expected SecurityException from System.exit");
-                } catch (SecurityException e) {
-                    // Expected - System.exit was prevented, but lambda was executed
-                    assertThat(e.getMessage()).isEqualTo("Prevent System.exit in test");
-                } catch (RuntimeException e) {
-                    // Also handle if SecurityException is wrapped
-                    if (e.getCause() instanceof SecurityException) {
-                        SecurityException se = (SecurityException) e.getCause();
-                        assertThat(se.getMessage()).isEqualTo("Prevent System.exit in test");
-                    } else {
-                        throw e;
+                }
+                // Override checkPermission to allow all permissions except exit
+                @Override
+                public void checkPermission(java.security.Permission perm) {
+                    // Allow all permissions - we only care about blocking System.exit
+                }
+            });
+            
+            try {
+                // Call handleExit() directly (not in execute block) - this will execute System.exit(0)
+                // The SecurityManager's checkExit will be called from within System.exit(0),
+                // which throws SecurityException, but the call to System.exit(0) still executes
+                mainWindow.handleExit();
+                // Should not reach here
+                org.junit.Assert.fail("Expected SecurityException from System.exit(0)");
+            } catch (SecurityException e) {
+                // Expected - System.exit(0) was prevented, but handleExit() method body was executed
+                // The line "System.exit(0);" was executed (coverage should be recorded)
+                assertThat(e.getMessage()).isEqualTo("Prevent System.exit in test");
+            } catch (RuntimeException e) {
+                // SecurityException might be wrapped
+                Throwable cause = e.getCause();
+                if (cause instanceof SecurityException) {
+                    SecurityException se = (SecurityException) cause;
+                    assertThat(se.getMessage()).isEqualTo("Prevent System.exit in test");
+                } else {
+                    throw e;
+                }
+            }
+        } finally {
+            System.setSecurityManager(originalSecurityManager);
+        }
+        window.requireVisible();
+    }
+    
+    @Test
+    @GUITest
+    @SuppressWarnings("removal")
+    public void testMainWindow_ExitMenuItem_ActionListener() {
+        // Test that the exit menu item action listener lambda calls handleExit()
+        // Install a security manager to prevent System.exit from actually exiting
+        java.lang.SecurityManager originalSecurityManager = System.getSecurityManager();
+        try {
+            System.setSecurityManager(new java.lang.SecurityManager() {
+                @Override
+                public void checkExit(int status) {
+                    if (status == 0) {
+                        throw new SecurityException("Prevent System.exit in test");
                     }
                 }
-            } finally {
-                System.setSecurityManager(originalSecurityManager);
+                @Override
+                public void checkPermission(java.security.Permission perm) {
+                    // Allow all permissions
+                }
+            });
+            
+            // Get the action listener from the menu item
+            java.awt.event.ActionListener[] listenerRef = new java.awt.event.ActionListener[1];
+            javax.swing.JMenuItem[] exitItemRef = new javax.swing.JMenuItem[1];
+            execute(() -> {
+                javax.swing.JMenuBar menuBar = mainWindow.getJMenuBar();
+                assertThat(menuBar).isNotNull();
+                javax.swing.JMenu fileMenu = (javax.swing.JMenu) menuBar.getMenu(0);
+                assertThat(fileMenu.getText()).isEqualTo("File");
+                exitItemRef[0] = fileMenu.getItem(0);
+                assertThat(exitItemRef[0].getText()).isEqualTo("Exit");
+                assertThat(exitItemRef[0].getActionListeners().length).isGreaterThan(0);
+                listenerRef[0] = exitItemRef[0].getActionListeners()[0];
+            });
+            
+            // Trigger the action listener to execute the lambda
+            // We need to call it on the EDT to ensure proper execution
+            final ActionEvent event = new ActionEvent(exitItemRef[0], ActionEvent.ACTION_PERFORMED, "");
+            final java.awt.event.ActionListener listener = listenerRef[0];
+            
+            try {
+                // Call actionPerformed on EDT to execute the lambda body (e -> handleExit())
+                // This ensures the lambda is executed in the proper context
+                javax.swing.SwingUtilities.invokeAndWait(() -> {
+                    listener.actionPerformed(event);
+                });
+                org.junit.Assert.fail("Expected SecurityException from System.exit(0)");
+            } catch (SecurityException e) {
+                // Expected - System.exit(0) was prevented, but lambda was executed
+                // The lambda body "handleExit()" was called, which executed "System.exit(0)"
+                assertThat(e.getMessage()).isEqualTo("Prevent System.exit in test");
+            } catch (RuntimeException e) {
+                if (e.getCause() != null && e.getCause() instanceof SecurityException) {
+                    SecurityException se = (SecurityException) e.getCause();
+                    assertThat(se.getMessage()).isEqualTo("Prevent System.exit in test");
+                } else {
+                    throw e;
+                }
+            } catch (InterruptedException | java.lang.reflect.InvocationTargetException e) {
+                // invokeAndWait can throw these, unwrap if needed
+                Throwable cause = e.getCause();
+                if (cause instanceof SecurityException) {
+                    SecurityException se = (SecurityException) cause;
+                    assertThat(se.getMessage()).isEqualTo("Prevent System.exit in test");
+                } else {
+                    throw new RuntimeException(e);
+                }
             }
-        });
+        } finally {
+            System.setSecurityManager(originalSecurityManager);
+        }
         window.requireVisible();
     }
 

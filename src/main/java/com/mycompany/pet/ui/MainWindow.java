@@ -60,7 +60,7 @@ public class MainWindow extends JFrame {
         JMenuBar menuBar = new JMenuBar();
         JMenu fileMenu = new JMenu("File");
         JMenuItem exitItem = new JMenuItem("Exit");
-        exitItem.addActionListener(e -> System.exit(0));
+        exitItem.addActionListener(e -> handleExit());
         fileMenu.add(exitItem);
         menuBar.add(fileMenu);
 
@@ -168,6 +168,16 @@ public class MainWindow extends JFrame {
         loadCategories();
         loadExpenses();
         updateSummary();
+    }
+
+    /**
+     * Handles the exit menu item action.
+     * Package-private for testing.
+     */
+    void handleExit() {
+        // Call System.exit(0) to exit the application
+        // In tests, this is prevented by SecurityManager
+        System.exit(0);
     }
 
     /**

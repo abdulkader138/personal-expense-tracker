@@ -4033,8 +4033,6 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         // Reset counter logic: constructor called once (callCount = 1), next call should be #2 (throw)
         
         // Call from non-EDT - Runnable will throw, causing invokeAndWait to throw InvocationTargetException
-        // which is caught by catch (Exception e) at line 279, triggering lambda at line 280
-        // The lambda calls invokeLater with updateLabelText, which will call setText again (call #2)
         Thread t = new Thread(() -> categoryDialog.setLabelTextOnEDT("Test"));
         t.start();
         try {
