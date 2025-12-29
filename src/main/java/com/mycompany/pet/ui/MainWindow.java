@@ -95,7 +95,7 @@ public class MainWindow extends JFrame {
         monthComboBox = new JComboBox<>(new String[]{"All", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"});
         monthComboBox.setSelectedItem("All");
         monthComboBox.addActionListener(e -> {
-            if (!isInitializing && expenseController != null && expenseTableModel != null) {
+            if (shouldFilterExpenses()) {
                 filterExpenses();
             }
         });
@@ -106,7 +106,7 @@ public class MainWindow extends JFrame {
         yearComboBox = new JComboBox<>(yearOptions);
         yearComboBox.setSelectedItem(yearOptions[2]); // Current year
         yearComboBox.addActionListener(e -> {
-            if (!isInitializing && expenseController != null && expenseTableModel != null) {
+            if (shouldFilterExpenses()) {
                 filterExpenses();
             }
         });
@@ -138,7 +138,7 @@ public class MainWindow extends JFrame {
         categoryComboBox = new JComboBox<>();
         categoryComboBox.addItem(null); // "All categories" option
         categoryComboBox.addActionListener(e -> {
-            if (!isInitializing && expenseController != null) {
+            if (shouldUpdateCategoryTotal()) {
                 updateCategoryTotal();
             }
         });
@@ -168,6 +168,26 @@ public class MainWindow extends JFrame {
         loadCategories();
         loadExpenses();
         updateSummary();
+    }
+
+    /**
+     * Checks if expense filtering should be triggered.
+     * Package-private for testing.
+     * 
+     * @return true if filtering should occur
+     */
+    boolean shouldFilterExpenses() {
+        return !isInitializing && expenseController != null && expenseTableModel != null;
+    }
+
+    /**
+     * Checks if category total update should be triggered.
+     * Package-private for testing.
+     * 
+     * @return true if category total should be updated
+     */
+    boolean shouldUpdateCategoryTotal() {
+        return !isInitializing && expenseController != null;
     }
 
     /**

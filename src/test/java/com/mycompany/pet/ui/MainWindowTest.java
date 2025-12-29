@@ -1720,4 +1720,74 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     // but JaCoCo still counts it. We cannot test this branch in Java 17+ because
     // the reflection approach to modify final fields no longer works.
 
+    @Test
+    @GUITest
+    public void testMainWindow_ShouldFilterExpenses_AllConditionsTrue() {
+        // Test shouldFilterExpenses when all conditions are true
+        execute(() -> {
+            mainWindow.isInitializing = false;
+            boolean result = mainWindow.shouldFilterExpenses();
+            assertThat(result).isTrue();
+        });
+        window.requireVisible();
+    }
+
+    @Test
+    @GUITest
+    public void testMainWindow_ShouldFilterExpenses_IsInitializingTrue() {
+        // Test shouldFilterExpenses when isInitializing is true
+        execute(() -> {
+            mainWindow.isInitializing = true;
+            boolean result = mainWindow.shouldFilterExpenses();
+            assertThat(result).isFalse();
+            mainWindow.isInitializing = false; // Restore
+        });
+        window.requireVisible();
+    }
+
+    @Test
+    @GUITest
+    public void testMainWindow_ShouldFilterExpenses_ExpenseTableModelNull() {
+        // Test shouldFilterExpenses when expenseTableModel is null
+        execute(() -> {
+            DefaultTableModel originalModel = mainWindow.expenseTableModel;
+            mainWindow.expenseTableModel = null;
+            boolean result = mainWindow.shouldFilterExpenses();
+            assertThat(result).isFalse();
+            mainWindow.expenseTableModel = originalModel; // Restore
+        });
+        window.requireVisible();
+    }
+
+    // Note: The expenseController != null false branch cannot be tested because
+    // expenseController is a final field set in the constructor and can never be null.
+
+    @Test
+    @GUITest
+    public void testMainWindow_ShouldUpdateCategoryTotal_AllConditionsTrue() {
+        // Test shouldUpdateCategoryTotal when all conditions are true
+        execute(() -> {
+            mainWindow.isInitializing = false;
+            boolean result = mainWindow.shouldUpdateCategoryTotal();
+            assertThat(result).isTrue();
+        });
+        window.requireVisible();
+    }
+
+    @Test
+    @GUITest
+    public void testMainWindow_ShouldUpdateCategoryTotal_IsInitializingTrue() {
+        // Test shouldUpdateCategoryTotal when isInitializing is true
+        execute(() -> {
+            mainWindow.isInitializing = true;
+            boolean result = mainWindow.shouldUpdateCategoryTotal();
+            assertThat(result).isFalse();
+            mainWindow.isInitializing = false; // Restore
+        });
+        window.requireVisible();
+    }
+
+    // Note: The expenseController != null false branch cannot be tested because
+    // expenseController is a final field set in the constructor and can never be null.
+
 }
