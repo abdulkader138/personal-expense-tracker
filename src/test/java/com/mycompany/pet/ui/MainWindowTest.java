@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import java.awt.GraphicsEnvironment;
@@ -1602,6 +1603,25 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         window.requireVisible();
     }
 
+
+    @Test
+    @GUITest
+    public void testMainWindow_ShowErrorIfVisible_WindowVisibleButNotShowing() {
+        // Test showErrorIfVisible when isVisible() is true but isShowing() is false
+        // Use Mockito spy to stub isShowing() to return false while isVisible() returns true
+        execute(() -> {
+            mainWindow.setVisible(true);
+            // Create a spy of the window to stub isShowing()
+            MainWindow spyWindow = spy(mainWindow);
+            // Stub isShowing() to return false while isVisible() remains true
+            doReturn(true).when(spyWindow).isVisible();
+            doReturn(false).when(spyWindow).isShowing();
+            // Call showErrorIfVisible on the spy
+            spyWindow.showErrorIfVisible("Test error");
+        });
+        
+        window.requireVisible();
+    }
 
     @Test
     @GUITest
