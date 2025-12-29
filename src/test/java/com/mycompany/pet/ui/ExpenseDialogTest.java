@@ -729,4 +729,5 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         dialogFixture.cleanUp();
     }
 
+
 }
