@@ -1759,8 +1759,37 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         window.requireVisible();
     }
 
-    // Note: The expenseController != null false branch cannot be tested because
-    // expenseController is a final field set in the constructor and can never be null.
+    @Test
+    @GUITest
+    @SuppressWarnings("restriction") // Using sun.misc.Unsafe to test unreachable branch
+    public void testMainWindow_ShouldFilterExpenses_ExpenseControllerNull() {
+        // Test shouldFilterExpenses when expenseController is null
+        // Since expenseController is final, we need to use Unsafe to modify it
+        execute(() -> {
+            try {
+                java.lang.reflect.Field field = MainWindow.class.getDeclaredField("expenseController");
+                field.setAccessible(true);
+                Object originalController = field.get(mainWindow);
+                
+                // Use Unsafe to modify the final field
+                java.lang.reflect.Field unsafeField = sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
+                unsafeField.setAccessible(true);
+                sun.misc.Unsafe unsafe = (sun.misc.Unsafe) unsafeField.get(null);
+                long instanceOffset = unsafe.objectFieldOffset(field);
+                unsafe.putObject(mainWindow, instanceOffset, null);
+                
+                boolean result = mainWindow.shouldFilterExpenses();
+                assertThat(result).isFalse();
+                
+                // Restore original value
+                unsafe.putObject(mainWindow, instanceOffset, originalController);
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                // If Unsafe approach fails, skip test
+                org.junit.Assume.assumeNoException("Cannot modify final field, skipping test", e);
+            }
+        });
+        window.requireVisible();
+    }
 
     @Test
     @GUITest
@@ -1787,7 +1816,36 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         window.requireVisible();
     }
 
-    // Note: The expenseController != null false branch cannot be tested because
-    // expenseController is a final field set in the constructor and can never be null.
+    @Test
+    @GUITest
+    @SuppressWarnings("restriction") // Using sun.misc.Unsafe to test unreachable branch
+    public void testMainWindow_ShouldUpdateCategoryTotal_ExpenseControllerNull() {
+        // Test shouldUpdateCategoryTotal when expenseController is null
+        // Since expenseController is final, we need to use Unsafe to modify it
+        execute(() -> {
+            try {
+                java.lang.reflect.Field field = MainWindow.class.getDeclaredField("expenseController");
+                field.setAccessible(true);
+                Object originalController = field.get(mainWindow);
+                
+                // Use Unsafe to modify the final field
+                java.lang.reflect.Field unsafeField = sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
+                unsafeField.setAccessible(true);
+                sun.misc.Unsafe unsafe = (sun.misc.Unsafe) unsafeField.get(null);
+                long instanceOffset = unsafe.objectFieldOffset(field);
+                unsafe.putObject(mainWindow, instanceOffset, null);
+                
+                boolean result = mainWindow.shouldUpdateCategoryTotal();
+                assertThat(result).isFalse();
+                
+                // Restore original value
+                unsafe.putObject(mainWindow, instanceOffset, originalController);
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                // If Unsafe approach fails, skip test
+                org.junit.Assume.assumeNoException("Cannot modify final field, skipping test", e);
+            }
+        });
+        window.requireVisible();
+    }
 
 }
