@@ -1538,9 +1538,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             javax.swing.JMenuItem exitItem = fileMenu.getItem(0);
             assertThat(exitItem.getText()).isEqualTo("Exit");
             assertThat(exitItem.getActionListeners().length).isGreaterThan(0);
-            // Trigger the action listener to cover the lambda
-            ActionEvent event = new ActionEvent(exitItem, 
-                ActionEvent.ACTION_PERFORMED, "");
+            
             // Install a security manager to prevent System.exit from actually exiting
             // Using @SuppressWarnings("removal") for deprecated SecurityManager
             // The SecurityManager only blocks checkExit, allowing all other permissions
@@ -1560,11 +1558,19 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
                         // This is safe in a test environment
                     }
                 });
+                
+                // Trigger the action listener to cover the lambda
+                // Create the event and invoke the listener directly
+                ActionEvent event = new ActionEvent(exitItem, 
+                    ActionEvent.ACTION_PERFORMED, "");
+                java.awt.event.ActionListener listener = exitItem.getActionListeners()[0];
+                
                 try {
-                    // Get the action listener and invoke it directly to ensure lambda is executed
-                    java.awt.event.ActionListener listener = exitItem.getActionListeners()[0];
+                    // Invoke the listener - this will execute the lambda and call System.exit(0)
+                    // The SecurityManager will throw SecurityException, but the lambda executes first
                     listener.actionPerformed(event);
-                    // If we get here, System.exit was called but blocked by SecurityManager
+                    // Should not reach here
+                    org.junit.Assert.fail("Expected SecurityException from System.exit");
                 } catch (SecurityException e) {
                     // Expected - System.exit was prevented, but lambda was executed
                     assertThat(e.getMessage()).isEqualTo("Prevent System.exit in test");
