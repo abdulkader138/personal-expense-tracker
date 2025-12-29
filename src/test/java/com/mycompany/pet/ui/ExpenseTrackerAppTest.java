@@ -79,6 +79,7 @@ public class ExpenseTrackerAppTest {
     @SuppressWarnings("removal")
     public void testMain_HeadlessEnvironment_ExitsWithError() {
         // Given - headless environment
+        // Mock isHeadless to return true multiple times (may be called during class loading)
         mockedGraphicsEnvironment.when(GraphicsEnvironment::isHeadless).thenReturn(true);
         
         // Mock System.exit to prevent actual exit
@@ -99,7 +100,8 @@ public class ExpenseTrackerAppTest {
         });
         
         try {
-            // When
+            // When - execute main method
+            // This will execute all LOGGER.severe() calls in lines 25-30
             try {
                 ExpenseTrackerApp.main(new String[]{});
                 // Should not reach here
@@ -114,6 +116,7 @@ public class ExpenseTrackerAppTest {
             mockedGraphicsEnvironment.verify(GraphicsEnvironment::isHeadless, atLeastOnce());
             // SwingUtilities.invokeLater should NOT be called in headless mode
             mockedSwingUtilities.verifyNoInteractions();
+            // All lines 24-31 should now be covered including all LOGGER.severe() calls
         } finally {
             System.setSecurityManager(originalSecurityManager);
         }

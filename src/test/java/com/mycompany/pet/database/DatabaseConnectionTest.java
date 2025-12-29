@@ -187,18 +187,34 @@ public class DatabaseConnectionTest {
 
     @Test
     public void testClose_NoOpWhenClientNotCreated() {
-        // Given
+        // Given - mongoClient is null (hasn't been created yet)
         dbConnection = new DatabaseConnection();
         
-        MongoClient mockClient = mock(MongoClient.class);
-        mockedMongoClients.when(() -> MongoClients.create(anyString()))
-                .thenReturn(mockClient);
-
+        // No mock setup needed - mongoClient should be null
         // When - close without getting database first
+        // This tests the false branch of "if (mongoClient != null)" on line 47
         dbConnection.close();
 
-        // Then - should not throw exception and should not call close on client
-        verify(mockClient, never()).close();
+        // Then - should not throw exception
+        // Verify that close() completed without error
+        // The if block should be skipped because mongoClient == null
+        // Since we can't directly verify the null check, we verify by ensuring
+        // that calling getDatabase() after close() still works (proves mongoClient was null)
+        MongoClient mockClient = mock(MongoClient.class);
+        MongoDatabase mockDatabase = mock(MongoDatabase.class);
+        String defaultConnectionString = "mongodb://localhost:27017";
+        String defaultDatabaseName = "expense_tracker";
+        
+        mockedMongoClients.when(() -> MongoClients.create(defaultConnectionString))
+                .thenReturn(mockClient);
+        when(mockClient.getDatabase(defaultDatabaseName)).thenReturn(mockDatabase);
+        
+        // After close() with null client, getDatabase() should still work (creates new client)
+        MongoDatabase result = dbConnection.getDatabase();
+        assertNotNull(result);
+        // Verify that getDatabase() created a new client (proves mongoClient was null during close())
+        mockedMongoClients.verify(() -> MongoClients.create(defaultConnectionString), times(1));
+        verify(mockClient, never()).close(); // close() should never have been called
     }
 
     @Test
