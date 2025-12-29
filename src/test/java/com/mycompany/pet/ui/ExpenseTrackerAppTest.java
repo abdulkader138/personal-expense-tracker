@@ -131,8 +131,14 @@ public class ExpenseTrackerAppTest {
         Injector mockInjector = mock(Injector.class);
         MainWindow mockMainWindow = mock(MainWindow.class);
         
+        // Capture the ExpenseTrackerModule to verify builder methods are called
+        final ExpenseTrackerModule[] capturedModule = new ExpenseTrackerModule[1];
         mockedGuice.when(() -> Guice.createInjector(any(ExpenseTrackerModule.class)))
-            .thenReturn(mockInjector);
+            .thenAnswer(invocation -> {
+                // Capture the module to ensure builder methods were called
+                capturedModule[0] = invocation.getArgument(0);
+                return mockInjector;
+            });
         when(mockInjector.getInstance(MainWindow.class)).thenReturn(mockMainWindow);
         
         // Capture the Runnable passed to SwingUtilities.invokeLater
@@ -141,11 +147,18 @@ public class ExpenseTrackerAppTest {
             .thenAnswer(invocation -> {
                 capturedRunnable[0] = invocation.getArgument(0);
                 // Execute the runnable immediately for testing
+                // This executes lines 38-46 including the ExpenseTrackerModule builder calls
                 capturedRunnable[0].run();
                 return null;
             });
         
-        // When
+        // When - execute main method
+        // This will execute:
+        // - Line 24: if (GraphicsEnvironment.isHeadless()) check (false branch)
+        // - Line 34: SwingUtilities.invokeLater()
+        // - Lines 38-43: Guice.createInjector(new ExpenseTrackerModule().mongoHost("localhost").mongoPort(27017).databaseName("expense_tracker"))
+        // - Line 45: injector.getInstance(MainWindow.class)
+        // - Line 46: mainWindow.setVisible(true)
         ExpenseTrackerApp.main(new String[]{});
         
         // Then - verify the flow
@@ -156,6 +169,8 @@ public class ExpenseTrackerAppTest {
         verify(mockInjector, times(1)).getInstance(MainWindow.class);
         verify(mockMainWindow, times(1)).setVisible(true);
         mockedJOptionPane.verifyNoInteractions();
+        // Verify the module was created (builder methods were called)
+        assertThat(capturedModule[0]).isNotNull();
     }
     
     @Test

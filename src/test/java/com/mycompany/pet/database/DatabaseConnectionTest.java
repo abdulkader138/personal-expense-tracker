@@ -166,9 +166,13 @@ public class DatabaseConnectionTest {
         when(mockClient.getDatabase(databaseName)).thenReturn(mockDatabase);
         
         // Initialize the connection
+        // This executes line 37 (if mongoClient == null) - true branch, line 38 (create client)
         dbConnection.getDatabase();
 
-        // When
+        // When - close() executes:
+        // - Line 47: if (mongoClient != null) - true branch
+        // - Line 48: mongoClient.close()
+        // - Line 49: mongoClient = null
         dbConnection.close();
 
         // Then - verify close() was called and mongoClient was set to null
@@ -180,9 +184,11 @@ public class DatabaseConnectionTest {
                 .thenReturn(mockClient2);
         when(mockClient2.getDatabase(databaseName)).thenReturn(mockDatabase);
         
+        // This call executes line 37 again (if mongoClient == null) - true branch since we set it to null
         dbConnection.getDatabase();
-        // Verify a new client was created (proves mongoClient was set to null in close())
+        // Verify a new client was created (proves mongoClient was set to null in close() on line 49)
         mockedMongoClients.verify(() -> MongoClients.create(connectionString), times(2));
+        // This test covers: line 47 (condition true), line 48, line 49
     }
 
     @Test
