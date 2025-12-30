@@ -159,11 +159,6 @@ public class ExpenseTrackerAppTest {
         
         // When - execute main method
         // This will execute:
-        // - Line 24: if (GraphicsEnvironment.isHeadless()) check (false branch)
-        // - Line 34: SwingUtilities.invokeLater()
-        // - Lines 38-43: Guice.createInjector(new ExpenseTrackerModule().mongoHost("localhost").mongoPort(27017).databaseName("expense_tracker"))
-        // - Line 45: injector.getInstance(MainWindow.class)
-        // - Line 46: mainWindow.setVisible(true)
         ExpenseTrackerApp.main(new String[]{});
         
         // Then - verify the flow

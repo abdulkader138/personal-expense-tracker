@@ -555,7 +555,6 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     @GUITest
     public void testMainWindow_UpdateSummary_SpecificMonth() throws SQLException {
         // Test the success callback in updateSummary() that calls updateCategoryTotal()
-        // This covers: total -> { monthlyTotalLabel.setText(...); updateCategoryTotal(); }
         int currentYear = LocalDate.now().getYear();
         int currentMonth = LocalDate.now().getMonthValue();
         String monthStr = String.format("%02d", currentMonth);
@@ -743,8 +742,6 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     @GUITest
     public void testMainWindow_CheckDialogAfterShow_IsShowing_True() throws Exception {
         // Test the branch where dialog.isShowing() returns true in checkDialogAfterShow()
-        // This covers the if (dialog.isShowing()) branch and calls handleDialogResult
-        System.setProperty("test.mode", "true");
         try {
             execute(() -> {
                 ExpenseDialog dialog = new ExpenseDialog(mainWindow, mainWindow.expenseController, 
@@ -1265,8 +1262,6 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     @Test
     @GUITest
     public void testMainWindow_GetDeleteConfirmation_TestMode() {
-        // Test getDeleteConfirmation in test mode (covers if (isTestMode) branch)
-        System.setProperty("test.mode", "true");
         try {
             int result = execute(() -> mainWindow.getDeleteConfirmation());
             assertThat(result).isEqualTo(javax.swing.JOptionPane.YES_OPTION);
@@ -1411,7 +1406,6 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         }
         // Trigger the action listener - this covers the if branch
         execute(() -> {
-            // Ensure conditions are met: !isInitializing && expenseController != null && expenseTableModel != null
             assertThat(mainWindow.isInitializing).isFalse();
             assertThat(mainWindow.expenseController).isNotNull();
             assertThat(mainWindow.expenseTableModel).isNotNull();
@@ -1435,7 +1429,6 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             Thread.currentThread().interrupt();
         }
         execute(() -> {
-            // Ensure conditions are met: !isInitializing && expenseController != null && expenseTableModel != null
             assertThat(mainWindow.isInitializing).isFalse();
             assertThat(mainWindow.expenseController).isNotNull();
             assertThat(mainWindow.expenseTableModel).isNotNull();
@@ -1552,10 +1545,12 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             });
             
             try {
-                // Call handleExit() directly (not in execute block) - this will execute System.exit(0)
+                // Call handleExit() on EDT using execute() to ensure proper coverage tracking
                 // The SecurityManager's checkExit will be called from within System.exit(0),
                 // which throws SecurityException, but the call to System.exit(0) still executes
-                mainWindow.handleExit();
+                execute(() -> {
+                    mainWindow.handleExit();
+                });
                 // Should not reach here
                 org.junit.Assert.fail("Expected SecurityException from System.exit(0)");
             } catch (SecurityException e) {
@@ -1614,14 +1609,14 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             });
             
             // Trigger the action listener to execute the lambda
-            // We need to call it on the EDT to ensure proper execution
+            // Use execute() to ensure proper EDT execution and coverage tracking
             final ActionEvent event = new ActionEvent(exitItemRef[0], ActionEvent.ACTION_PERFORMED, "");
             final java.awt.event.ActionListener listener = listenerRef[0];
             
             try {
-                // Call actionPerformed on EDT to execute the lambda body (e -> handleExit())
-                // This ensures the lambda is executed in the proper context
-                javax.swing.SwingUtilities.invokeAndWait(() -> {
+                // Call actionPerformed on EDT using execute() to execute the lambda body (e -> handleExit())
+                // This ensures the lambda is executed in the proper context and coverage is recorded
+                execute(() -> {
                     listener.actionPerformed(event);
                 });
                 org.junit.Assert.fail("Expected SecurityException from System.exit(0)");
@@ -1630,20 +1625,13 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
                 // The lambda body "handleExit()" was called, which executed "System.exit(0)"
                 assertThat(e.getMessage()).isEqualTo("Prevent System.exit in test");
             } catch (RuntimeException e) {
-                if (e.getCause() != null && e.getCause() instanceof SecurityException) {
-                    SecurityException se = (SecurityException) e.getCause();
-                    assertThat(se.getMessage()).isEqualTo("Prevent System.exit in test");
-                } else {
-                    throw e;
-                }
-            } catch (InterruptedException | java.lang.reflect.InvocationTargetException e) {
-                // invokeAndWait can throw these, unwrap if needed
+                // execute() wraps exceptions in RuntimeException, unwrap if needed
                 Throwable cause = e.getCause();
                 if (cause instanceof SecurityException) {
                     SecurityException se = (SecurityException) cause;
                     assertThat(se.getMessage()).isEqualTo("Prevent System.exit in test");
                 } else {
-                    throw new RuntimeException(e);
+                    throw e;
                 }
             }
         } finally {
