@@ -77,7 +77,7 @@ jobs:
             -Dmaven.compiler.source=${{ matrix.java-version }} \
             -Dmaven.compiler.target=${{ matrix.java-version }} \
             -Pui-tests \
-            -Dsurefire.excludes="**/*IT.java,**/DatabaseConnectionTest.java"
+            -Dsurefire.excludes="**/*IT.java"
         continue-on-error: ${{ matrix.java-version != 17 }}
       
       - name: Generate JaCoCo report
@@ -205,7 +205,7 @@ jobs:
             -Dmaven.compiler.source=17 \
             -Dmaven.compiler.target=17 \
             -Pui-tests \
-            -Dsurefire.excludes="**/*IT.java,**/DatabaseConnectionTest.java"
+            -Dsurefire.excludes="**/*IT.java"
         continue-on-error: true
       
       - name: Upload JaCoCo report for SonarCloud
@@ -265,7 +265,7 @@ jobs:
             -Dmaven.compiler.source=17 \
             -Dmaven.compiler.target=17 \
             -Pui-tests \
-            -Dsurefire.excludes="**/*IT.java,**/DatabaseConnectionTest.java"
+            -Dsurefire.excludes="**/*IT.java"
         continue-on-error: true
       
       - name: Compile code for SonarCloud analysis

@@ -113,5 +113,49 @@ public class DatabaseConnectionIT {
         assertNotNull(database);
         assertEquals(customDbName, database.getName());
     }
+
+    @Test
+    public void testDefaultConstructor() {
+        // Given & When - test default constructor (line 21-22)
+        DatabaseConnection defaultConnection = new DatabaseConnection();
+        
+        // Then - verify it works by calling getDatabase
+        MongoDatabase database = defaultConnection.getDatabase();
+        assertNotNull(database);
+        // Default database name should be "expense_tracker"
+        assertEquals("expense_tracker", database.getName());
+        
+        // Cleanup
+        defaultConnection.close();
+    }
+
+    @Test
+    public void testSetConnectionString() {
+        // Given
+        String newConnectionString = mongoDBContainer.getReplicaSetUrl();
+        
+        // When - set a new connection string (line 53-54)
+        dbConnection.setConnectionString(newConnectionString);
+        
+        // Then - verify it's used by calling getDatabase
+        MongoDatabase database = dbConnection.getDatabase();
+        assertNotNull(database);
+    }
+
+    @Test
+    public void testClose_NoOpWhenClientNotCreated() {
+        // Given - create a new connection but don't call getDatabase()
+        DatabaseConnection newConnection = new DatabaseConnection(mongoDBContainer.getReplicaSetUrl(), "test_db");
+        
+        // When - close without initializing (tests line 47 false branch - mongoClient == null)
+        newConnection.close();
+        
+        // Then - should not throw exception and should still be able to connect
+        MongoDatabase database = newConnection.getDatabase();
+        assertNotNull(database);
+        
+        // Cleanup
+        newConnection.close();
+    }
 }
 

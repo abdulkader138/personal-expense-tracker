@@ -136,6 +136,11 @@ public class ExpenseTrackerAppTest {
         mockedGuice.when(() -> Guice.createInjector(any(ExpenseTrackerModule.class)))
             .thenAnswer(invocation -> {
                 // Capture the module to ensure builder methods were called
+                // The module should have been configured with:
+                // - mongoHost("localhost") 
+                // - mongoPort(27017)
+                // - databaseName("expense_tracker")
+                // These builder methods execute BEFORE Guice.createInjector is called
                 capturedModule[0] = invocation.getArgument(0);
                 return mockInjector;
             });

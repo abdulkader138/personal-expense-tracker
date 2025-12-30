@@ -277,6 +277,7 @@
                         <include>**/*IT.java</include>
                     </includes>
                     <skipTests>${skipITs}</skipTests>
+                    <!-- Include JaCoCo agent for integration tests to contribute to coverage -->
                     <argLine>${argLine} ${surefire.jvm.args}</argLine>
                 </configuration>
                 <executions>
