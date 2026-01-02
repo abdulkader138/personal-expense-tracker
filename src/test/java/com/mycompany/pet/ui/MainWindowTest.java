@@ -555,6 +555,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     @GUITest
     public void testMainWindow_UpdateSummary_SpecificMonth() throws SQLException {
         // Test the success callback in updateSummary() that calls updateCategoryTotal()
+        // This covers: total -> { monthlyTotalLabel.setText(...); updateCategoryTotal(); }
         int currentYear = LocalDate.now().getYear();
         int currentMonth = LocalDate.now().getMonthValue();
         String monthStr = String.format("%02d", currentMonth);
@@ -742,6 +743,8 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     @GUITest
     public void testMainWindow_CheckDialogAfterShow_IsShowing_True() throws Exception {
         // Test the branch where dialog.isShowing() returns true in checkDialogAfterShow()
+        // This covers the if (dialog.isShowing()) branch and calls handleDialogResult
+        System.setProperty("test.mode", "true");
         try {
             execute(() -> {
                 ExpenseDialog dialog = new ExpenseDialog(mainWindow, mainWindow.expenseController, 
@@ -1262,6 +1265,8 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     @Test
     @GUITest
     public void testMainWindow_GetDeleteConfirmation_TestMode() {
+        // Test getDeleteConfirmation in test mode (covers if (isTestMode) branch)
+        System.setProperty("test.mode", "true");
         try {
             int result = execute(() -> mainWindow.getDeleteConfirmation());
             assertThat(result).isEqualTo(javax.swing.JOptionPane.YES_OPTION);
@@ -1406,6 +1411,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         }
         // Trigger the action listener - this covers the if branch
         execute(() -> {
+            // Ensure conditions are met: !isInitializing && expenseController != null && expenseTableModel != null
             assertThat(mainWindow.isInitializing).isFalse();
             assertThat(mainWindow.expenseController).isNotNull();
             assertThat(mainWindow.expenseTableModel).isNotNull();
@@ -1429,6 +1435,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             Thread.currentThread().interrupt();
         }
         execute(() -> {
+            // Ensure conditions are met: !isInitializing && expenseController != null && expenseTableModel != null
             assertThat(mainWindow.isInitializing).isFalse();
             assertThat(mainWindow.expenseController).isNotNull();
             assertThat(mainWindow.expenseTableModel).isNotNull();
@@ -1544,28 +1551,18 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
                 }
             });
             
+            // Call handleExit() directly - @GUITest ensures proper execution context
+            // The SecurityManager's checkExit will be called from within System.exit(0),
+            // which throws SecurityException, but the call to System.exit(0) still executes
+            // and JaCoCo should record coverage for the method
             try {
-                // Call handleExit() on EDT using execute() to ensure proper coverage tracking
-                // The SecurityManager's checkExit will be called from within System.exit(0),
-                // which throws SecurityException, but the call to System.exit(0) still executes
-                execute(() -> {
-                    mainWindow.handleExit();
-                });
+                mainWindow.handleExit();
                 // Should not reach here
                 org.junit.Assert.fail("Expected SecurityException from System.exit(0)");
             } catch (SecurityException e) {
                 // Expected - System.exit(0) was prevented, but handleExit() method body was executed
                 // The line "System.exit(0);" was executed (coverage should be recorded)
                 assertThat(e.getMessage()).isEqualTo("Prevent System.exit in test");
-            } catch (RuntimeException e) {
-                // SecurityException might be wrapped
-                Throwable cause = e.getCause();
-                if (cause instanceof SecurityException) {
-                    SecurityException se = (SecurityException) cause;
-                    assertThat(se.getMessage()).isEqualTo("Prevent System.exit in test");
-                } else {
-                    throw e;
-                }
             }
         } finally {
             System.setSecurityManager(originalSecurityManager);
@@ -1576,8 +1573,8 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     @Test
     @GUITest
     @SuppressWarnings("removal")
-    public void testMainWindow_ExitMenuItem_ActionListener() {
-        // Test that the exit menu item action listener lambda calls handleExit()
+    public void testMainWindow_OnExitMenuItemClicked() {
+        // Test onExitMenuItemClicked() method directly
         // Install a security manager to prevent System.exit from actually exiting
         java.lang.SecurityManager originalSecurityManager = System.getSecurityManager();
         try {
@@ -1594,38 +1591,67 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
                 }
             });
             
-            // Get the action listener from the menu item
-            java.awt.event.ActionListener[] listenerRef = new java.awt.event.ActionListener[1];
-            javax.swing.JMenuItem[] exitItemRef = new javax.swing.JMenuItem[1];
-            execute(() -> {
-                javax.swing.JMenuBar menuBar = mainWindow.getJMenuBar();
-                assertThat(menuBar).isNotNull();
-                javax.swing.JMenu fileMenu = (javax.swing.JMenu) menuBar.getMenu(0);
-                assertThat(fileMenu.getText()).isEqualTo("File");
-                exitItemRef[0] = fileMenu.getItem(0);
-                assertThat(exitItemRef[0].getText()).isEqualTo("Exit");
-                assertThat(exitItemRef[0].getActionListeners().length).isGreaterThan(0);
-                listenerRef[0] = exitItemRef[0].getActionListeners()[0];
+            // Call onExitMenuItemClicked directly - @GUITest ensures proper execution context
+            try {
+                java.awt.event.ActionEvent event = new java.awt.event.ActionEvent(
+                    mainWindow, java.awt.event.ActionEvent.ACTION_PERFORMED, "");
+                mainWindow.onExitMenuItemClicked(event);
+                org.junit.Assert.fail("Expected SecurityException from System.exit(0)");
+            } catch (SecurityException e) {
+                // Expected - System.exit(0) was prevented, but onExitMenuItemClicked was executed
+                assertThat(e.getMessage()).isEqualTo("Prevent System.exit in test");
+            }
+        } finally {
+            System.setSecurityManager(originalSecurityManager);
+        }
+        window.requireVisible();
+    }
+    
+    @Test
+    @GUITest
+    @SuppressWarnings("removal")
+    public void testMainWindow_ExitMenuItem_ActionListener() {
+        // Test that the exit menu item action listener (method reference) calls handleExit()
+        // Install a security manager to prevent System.exit from actually exiting
+        java.lang.SecurityManager originalSecurityManager = System.getSecurityManager();
+        try {
+            System.setSecurityManager(new java.lang.SecurityManager() {
+                @Override
+                public void checkExit(int status) {
+                    if (status == 0) {
+                        throw new SecurityException("Prevent System.exit in test");
+                    }
+                }
+                @Override
+                public void checkPermission(java.security.Permission perm) {
+                    // Allow all permissions
+                }
             });
             
-            // Trigger the action listener to execute the lambda
-            // Use execute() to ensure proper EDT execution and coverage tracking
-            final ActionEvent event = new ActionEvent(exitItemRef[0], ActionEvent.ACTION_PERFORMED, "");
-            final java.awt.event.ActionListener listener = listenerRef[0];
-            
+            // Trigger the lambda by calling actionPerformed directly on the EDT
+            // This ensures the lambda is executed and JaCoCo can track it
             try {
-                // Call actionPerformed on EDT using execute() to execute the lambda body (e -> handleExit())
-                // This ensures the lambda is executed in the proper context and coverage is recorded
                 execute(() -> {
-                    listener.actionPerformed(event);
+                    // Get the exit menu item and trigger its action listener
+                    javax.swing.JMenuBar menuBar = mainWindow.getJMenuBar();
+                    assertThat(menuBar).isNotNull();
+                    javax.swing.JMenu fileMenu = (javax.swing.JMenu) menuBar.getMenu(0);
+                    assertThat(fileMenu.getText()).isEqualTo("File");
+                    javax.swing.JMenuItem exitItem = fileMenu.getItem(0);
+                    assertThat(exitItem.getText()).isEqualTo("Exit");
+                    assertThat(exitItem.getActionListeners().length).isGreaterThan(0);
+                    // Fire the action event to trigger the action listener (onExitMenuItemClicked)
+                    java.awt.event.ActionEvent event = new java.awt.event.ActionEvent(
+                        exitItem, java.awt.event.ActionEvent.ACTION_PERFORMED, "");
+                    exitItem.getActionListeners()[0].actionPerformed(event);
                 });
                 org.junit.Assert.fail("Expected SecurityException from System.exit(0)");
             } catch (SecurityException e) {
-                // Expected - System.exit(0) was prevented, but lambda was executed
-                // The lambda body "handleExit()" was called, which executed "System.exit(0)"
+                // Expected - System.exit(0) was prevented, but action listener was executed
+                // onExitMenuItemClicked was called, which called handleExit(), which executed "System.exit(0)"
                 assertThat(e.getMessage()).isEqualTo("Prevent System.exit in test");
             } catch (RuntimeException e) {
-                // execute() wraps exceptions in RuntimeException, unwrap if needed
+                // execute() may wrap SecurityException in RuntimeException
                 Throwable cause = e.getCause();
                 if (cause instanceof SecurityException) {
                     SecurityException se = (SecurityException) cause;

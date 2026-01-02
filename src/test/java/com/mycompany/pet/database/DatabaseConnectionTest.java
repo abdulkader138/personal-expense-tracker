@@ -166,13 +166,9 @@ public class DatabaseConnectionTest {
         when(mockClient.getDatabase(databaseName)).thenReturn(mockDatabase);
         
         // Initialize the connection
-        // This executes line 37 (if mongoClient == null) - true branch, line 38 (create client)
         dbConnection.getDatabase();
 
         // When - close() executes:
-        // - Line 47: if (mongoClient != null) - true branch
-        // - Line 48: mongoClient.close()
-        // - Line 49: mongoClient = null
         dbConnection.close();
 
         // Then - verify close() was called and mongoClient was set to null
@@ -198,7 +194,6 @@ public class DatabaseConnectionTest {
         
         // No mock setup needed - mongoClient should be null
         // When - close without getting database first
-        // This tests the false branch of "if (mongoClient != null)" on line 47
         dbConnection.close();
 
         // Then - should not throw exception
