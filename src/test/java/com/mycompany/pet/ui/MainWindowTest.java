@@ -1572,6 +1572,24 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     
     @Test
     @GUITest
+    public void testMainWindow_HandleExit_FalseBranch() {
+        // Test handleExit() with shouldExit set to false to cover the false branch
+        // Set shouldExit to false to test the branch where System.exit is not called
+        mainWindow.shouldExit = false;
+        
+        // Call handleExit() - should not throw SecurityException since System.exit won't be called
+        mainWindow.handleExit();
+        
+        // Verify that shouldExit was false (coverage for the false branch)
+        assertThat(mainWindow.shouldExit).isFalse();
+        
+        // Restore shouldExit to true for other tests
+        mainWindow.shouldExit = true;
+        window.requireVisible();
+    }
+    
+    @Test
+    @GUITest
     @SuppressWarnings("removal")
     public void testMainWindow_OnExitMenuItemClicked() {
         // Test onExitMenuItemClicked() method directly
@@ -1599,6 +1617,44 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
                 org.junit.Assert.fail("Expected SecurityException from System.exit(0)");
             } catch (SecurityException e) {
                 // Expected - System.exit(0) was prevented, but onExitMenuItemClicked was executed
+                assertThat(e.getMessage()).isEqualTo("Prevent System.exit in test");
+            }
+        } finally {
+            System.setSecurityManager(originalSecurityManager);
+        }
+        window.requireVisible();
+    }
+    
+    @Test
+    @GUITest
+    @SuppressWarnings("removal")
+    public void testMainWindow_OnExitMenuItemClicked_WithNullCommand() {
+        // Test onExitMenuItemClicked() with null action command to cover the false branch of "command != null"
+        // Install a security manager to prevent System.exit from actually exiting
+        java.lang.SecurityManager originalSecurityManager = System.getSecurityManager();
+        try {
+            System.setSecurityManager(new java.lang.SecurityManager() {
+                @Override
+                public void checkExit(int status) {
+                    if (status == 0) {
+                        throw new SecurityException("Prevent System.exit in test");
+                    }
+                }
+                @Override
+                public void checkPermission(java.security.Permission perm) {
+                    // Allow all permissions
+                }
+            });
+            
+            // Call onExitMenuItemClicked with null action command to cover the false branch
+            try {
+                java.awt.event.ActionEvent event = new java.awt.event.ActionEvent(
+                    mainWindow, java.awt.event.ActionEvent.ACTION_PERFORMED, null);
+                mainWindow.onExitMenuItemClicked(event);
+                org.junit.Assert.fail("Expected SecurityException from System.exit(0)");
+            } catch (SecurityException e) {
+                // Expected - System.exit(0) was prevented, but onExitMenuItemClicked was executed
+                // This covers the branch where command != null is false
                 assertThat(e.getMessage()).isEqualTo("Prevent System.exit in test");
             }
         } finally {

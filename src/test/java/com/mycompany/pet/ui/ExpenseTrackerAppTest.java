@@ -298,5 +298,13 @@ public class ExpenseTrackerAppTest {
             System.setSecurityManager(originalSecurityManager);
         }
     }
+    
+    @Test
+    public void testExpenseTrackerApp_Constructor() {
+        // Test default constructor to ensure it's covered
+        // The default constructor is implicitly created by Java
+        ExpenseTrackerApp app = new ExpenseTrackerApp();
+        assertThat(app).isNotNull();
+    }
 }
 
