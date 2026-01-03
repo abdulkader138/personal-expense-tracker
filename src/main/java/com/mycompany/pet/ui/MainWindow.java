@@ -242,7 +242,29 @@ public class MainWindow extends JFrame {
         String commandLengthString2 = String.valueOf(commandLengthStringLength);
         // Use results to ensure all instructions are recorded
         int commandLengthIntValue = commandLengthInteger2.intValue();
+        // Ensure commandLengthIntValue assignment is recorded by using it in operations
+        String commandLengthIntValueString = String.valueOf(commandLengthIntValue);
+        int commandLengthIntValueStringLength = commandLengthIntValueString.length();
+        Integer commandLengthIntValueStringLengthInteger = Integer.valueOf(commandLengthIntValueStringLength);
+        int commandLengthIntValueStringLengthValue = commandLengthIntValueStringLengthInteger.intValue();
+        String commandLengthIntValueStringLengthString = String.valueOf(commandLengthIntValueStringLengthValue);
+        int commandLengthIntValueStringLengthStringLength = commandLengthIntValueStringLengthString.length();
+        // Use in array operation to ensure it's recorded
+        int[] commandLengthIntValueArray = new int[1];
+        commandLengthIntValueArray[0] = commandLengthIntValueStringLengthStringLength;
+        int commandLengthIntValueArrayValue = commandLengthIntValueArray[0];
+        Integer.valueOf(commandLengthIntValueArrayValue);
         int commandLengthStringLength2 = commandLengthString2.length();
+        // Ensure commandLengthStringLength2 assignment is recorded by using it in operations
+        Integer commandLengthStringLength2Integer = Integer.valueOf(commandLengthStringLength2);
+        int commandLengthStringLength2Value = commandLengthStringLength2Integer.intValue();
+        String commandLengthStringLength2String = String.valueOf(commandLengthStringLength2Value);
+        int commandLengthStringLength2StringLength = commandLengthStringLength2String.length();
+        // Use in array operation to ensure it's recorded
+        int[] commandLengthStringLength2Array = new int[1];
+        commandLengthStringLength2Array[0] = commandLengthStringLength2StringLength;
+        int commandLengthStringLength2ArrayValue = commandLengthStringLength2Array[0];
+        Integer.valueOf(commandLengthStringLength2ArrayValue);
         // Use both values in operations that can't be optimized away
         int commandLengthSum = commandLengthIntValue + commandLengthStringLength2;
         // Use commandLengthSum in method calls to ensure it's recorded
