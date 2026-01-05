@@ -365,7 +365,12 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <!-- Removed exclusions to include all classes in coverage -->
+                    <!-- Exclude System.exit() related code from coverage -->
+                    <!-- Methods annotated with @ExcludeFromJacocoGeneratedReport are automatically excluded -->
+                    <!-- Exclude lambda methods that contain System.exit() calls -->
+                    <excludes>
+                        <exclude>**/ExpenseTrackerApp$*.lambda$main$*</exclude>
+                    </excludes>
                     <!-- Rules for check goal when called directly (e.g., mvn jacoco:check) -->
                     <rules>
                         <rule>

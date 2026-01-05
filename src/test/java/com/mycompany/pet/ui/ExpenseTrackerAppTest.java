@@ -99,17 +99,29 @@ public class ExpenseTrackerAppTest {
             }
         });
         
-        try {
-            // When - execute main method
-            // This will execute all LOGGER.severe() calls in lines 25-30
             try {
-                ExpenseTrackerApp.main(new String[]{});
-                // Should not reach here
-                assertThat(false).as("Expected SecurityException from System.exit(1)").isTrue();
-            } catch (SecurityException e) {
-                // Expected - System.exit(1) was called
-                assertThat(e.getMessage()).isEqualTo("Exit with code 1");
-            }
+                // When - execute main method
+                // This will execute all LOGGER.severe() calls and System.exit(exitCode) at line 94
+                try {
+                    ExpenseTrackerApp.main(new String[]{});
+                    // Should not reach here
+                    assertThat(false).as("Expected SecurityException from System.exit(1)").isTrue();
+                } catch (SecurityException e) {
+                    // Expected - System.exit(exitCode) at line 94 was called
+                    assertThat(e.getMessage()).isEqualTo("Exit with code 1");
+                    // Verify that the exception was thrown from System.exit by checking the stack trace
+                    // This ensures line 94 was actually executed
+                    StackTraceElement[] stackTrace = e.getStackTrace();
+                    boolean foundSystemExit = false;
+                    for (StackTraceElement element : stackTrace) {
+                        if (element.getMethodName().equals("exit") && 
+                            element.getClassName().equals("java.lang.System")) {
+                            foundSystemExit = true;
+                            break;
+                        }
+                    }
+                    assertThat(foundSystemExit).as("System.exit should be in stack trace").isTrue();
+                }
             
             // Then - verify GraphicsEnvironment.isHeadless was called
             // Note: isHeadless may be called multiple times during AWT class loading, so use atLeastOnce
@@ -210,18 +222,31 @@ public class ExpenseTrackerAppTest {
             }
         });
         
-        try {
-            // When
             try {
-                ExpenseTrackerApp.main(new String[]{});
-                // Should not reach here
-                assertThat(false).as("Expected SecurityException from System.exit(1)").isTrue();
-            } catch (SecurityException e) {
-                // Expected - System.exit(1) was called
-                assertThat(e.getMessage()).isEqualTo("Exit with code 1");
-            }
-            
-            // Then - verify error dialog was shown
+                // When - execute main method which will trigger exception handler
+                // This will execute System.exit(exitCode) at line 336 in the catch block
+                try {
+                    ExpenseTrackerApp.main(new String[]{});
+                    // Should not reach here
+                    assertThat(false).as("Expected SecurityException from System.exit(1)").isTrue();
+                } catch (SecurityException e) {
+                    // Expected - System.exit(exitCode) at line 336 was called
+                    assertThat(e.getMessage()).isEqualTo("Exit with code 1");
+                    // Verify that the exception was thrown from System.exit by checking the stack trace
+                    // This ensures line 336 was actually executed
+                    StackTraceElement[] stackTrace = e.getStackTrace();
+                    boolean foundSystemExit = false;
+                    for (StackTraceElement element : stackTrace) {
+                        if (element.getMethodName().equals("exit") && 
+                            element.getClassName().equals("java.lang.System")) {
+                            foundSystemExit = true;
+                            break;
+                        }
+                    }
+                    assertThat(foundSystemExit).as("System.exit should be in stack trace").isTrue();
+                }
+                
+                // Then - verify error dialog was shown
             // Note: isHeadless may be called multiple times during AWT class loading, so use atLeastOnce
             mockedGraphicsEnvironment.verify(GraphicsEnvironment::isHeadless, atLeastOnce());
             mockedJOptionPane.verify(() -> JOptionPane.showMessageDialog(
@@ -274,18 +299,31 @@ public class ExpenseTrackerAppTest {
             }
         });
         
-        try {
-            // When
             try {
-                ExpenseTrackerApp.main(new String[]{});
-                // Should not reach here
-                assertThat(false).as("Expected SecurityException from System.exit(1)").isTrue();
-            } catch (SecurityException e) {
-                // Expected - System.exit(1) was called
-                assertThat(e.getMessage()).isEqualTo("Exit with code 1");
-            }
-            
-            // Then - verify error dialog was NOT shown (because headless after exception)
+                // When - execute main method which will trigger exception handler
+                // This will execute System.exit(exitCode) at line 336 in the catch block
+                try {
+                    ExpenseTrackerApp.main(new String[]{});
+                    // Should not reach here
+                    assertThat(false).as("Expected SecurityException from System.exit(1)").isTrue();
+                } catch (SecurityException e) {
+                    // Expected - System.exit(exitCode) at line 336 was called
+                    assertThat(e.getMessage()).isEqualTo("Exit with code 1");
+                    // Verify that the exception was thrown from System.exit by checking the stack trace
+                    // This ensures line 336 was actually executed
+                    StackTraceElement[] stackTrace = e.getStackTrace();
+                    boolean foundSystemExit = false;
+                    for (StackTraceElement element : stackTrace) {
+                        if (element.getMethodName().equals("exit") && 
+                            element.getClassName().equals("java.lang.System")) {
+                            foundSystemExit = true;
+                            break;
+                        }
+                    }
+                    assertThat(foundSystemExit).as("System.exit should be in stack trace").isTrue();
+                }
+                
+                // Then - verify error dialog was NOT shown (because headless after exception)
             // Note: isHeadless may be called multiple times during AWT class loading, so use atLeastOnce
             mockedGraphicsEnvironment.verify(GraphicsEnvironment::isHeadless, atLeastOnce());
             mockedJOptionPane.verify(() -> JOptionPane.showMessageDialog(

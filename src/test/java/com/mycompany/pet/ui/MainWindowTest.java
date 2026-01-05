@@ -1555,17 +1555,31 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             });
             
             // Call handleExit() directly - @GUITest ensures proper execution context
-            // The SecurityManager's checkExit will be called from within System.exit(0),
-            // which throws SecurityException, but the call to System.exit(0) still executes
+            // The SecurityManager's checkExit will be called from within System.exit(exitCode),
+            // which throws SecurityException, but the call to System.exit(exitCode) still executes
             // and JaCoCo should record coverage for the method
+            // We need to ensure the line System.exit(exitCode) is executed and recorded
             try {
                 mainWindow.handleExit();
                 // Should not reach here
                 org.junit.Assert.fail("Expected SecurityException from System.exit(0)");
             } catch (SecurityException e) {
-                // Expected - System.exit(0) was prevented, but handleExit() method body was executed
-                // The line "System.exit(exitCode);" was executed (coverage should be recorded)
+                // Expected - System.exit(exitCode) was prevented, but handleExit() method body was executed
+                // The line "System.exit(exitCode);" (line 790) was executed (coverage should be recorded)
+                // Even though it throws an exception, the line itself is executed
                 assertThat(e.getMessage()).isEqualTo("Prevent System.exit in test");
+                // Verify that the exception was thrown from System.exit by checking the stack trace
+                // This ensures the line was actually executed
+                StackTraceElement[] stackTrace = e.getStackTrace();
+                boolean foundSystemExit = false;
+                for (StackTraceElement element : stackTrace) {
+                    if (element.getMethodName().equals("exit") && 
+                        element.getClassName().equals("java.lang.System")) {
+                        foundSystemExit = true;
+                        break;
+                    }
+                }
+                assertThat(foundSystemExit).as("System.exit should be in stack trace").isTrue();
             }
         } finally {
             System.setSecurityManager(originalSecurityManager);
