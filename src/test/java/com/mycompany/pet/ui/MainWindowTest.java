@@ -1532,6 +1532,9 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         // Test handleExit() method by calling it directly
         // We can't actually call System.exit(0) in a test, so we use a custom security manager to prevent actual exit
         
+        // Ensure shouldExit is true to test the true branch
+        mainWindow.shouldExit = true;
+        
         // Install a security manager to prevent System.exit from actually exiting
         // Using @SuppressWarnings("removal") for deprecated SecurityManager
         java.lang.SecurityManager originalSecurityManager = System.getSecurityManager();
@@ -1561,7 +1564,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
                 org.junit.Assert.fail("Expected SecurityException from System.exit(0)");
             } catch (SecurityException e) {
                 // Expected - System.exit(0) was prevented, but handleExit() method body was executed
-                // The line "System.exit(0);" was executed (coverage should be recorded)
+                // The line "System.exit(exitCode);" was executed (coverage should be recorded)
                 assertThat(e.getMessage()).isEqualTo("Prevent System.exit in test");
             }
         } finally {
@@ -1593,6 +1596,9 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     @SuppressWarnings("removal")
     public void testMainWindow_OnExitMenuItemClicked() {
         // Test onExitMenuItemClicked() method directly
+        // Ensure shouldExit is true to test the true branch in handleExit
+        mainWindow.shouldExit = true;
+        
         // Install a security manager to prevent System.exit from actually exiting
         java.lang.SecurityManager originalSecurityManager = System.getSecurityManager();
         try {
@@ -1610,9 +1616,10 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             });
             
             // Call onExitMenuItemClicked directly - @GUITest ensures proper execution context
+            // Use a non-null command to test the true branch of "command != null"
             try {
                 java.awt.event.ActionEvent event = new java.awt.event.ActionEvent(
-                    mainWindow, java.awt.event.ActionEvent.ACTION_PERFORMED, "");
+                    mainWindow, java.awt.event.ActionEvent.ACTION_PERFORMED, "Exit");
                 mainWindow.onExitMenuItemClicked(event);
                 org.junit.Assert.fail("Expected SecurityException from System.exit(0)");
             } catch (SecurityException e) {
@@ -1630,6 +1637,9 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     @SuppressWarnings("removal")
     public void testMainWindow_OnExitMenuItemClicked_WithNullCommand() {
         // Test onExitMenuItemClicked() with null action command to cover the false branch of "command != null"
+        // Ensure shouldExit is true to test the true branch in handleExit
+        mainWindow.shouldExit = true;
+        
         // Install a security manager to prevent System.exit from actually exiting
         java.lang.SecurityManager originalSecurityManager = System.getSecurityManager();
         try {
@@ -1665,9 +1675,55 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     
     @Test
     @GUITest
+    public void testMainWindow_OnExitMenuItemClicked_WithShouldExitFalse() {
+        // Test onExitMenuItemClicked() with shouldExit set to false
+        // This ensures all code paths in onExitMenuItemClicked are executed
+        // even when handleExit() doesn't call System.exit()
+        mainWindow.shouldExit = false;
+        
+        // Call onExitMenuItemClicked with a non-null command
+        // This should execute all code in onExitMenuItemClicked and handleExit
+        // without throwing SecurityException
+        java.awt.event.ActionEvent event = new java.awt.event.ActionEvent(
+            mainWindow, java.awt.event.ActionEvent.ACTION_PERFORMED, "Exit");
+        mainWindow.onExitMenuItemClicked(event);
+        
+        // Verify that shouldExit was false
+        assertThat(mainWindow.shouldExit).isFalse();
+        
+        // Restore shouldExit to true for other tests
+        mainWindow.shouldExit = true;
+        window.requireVisible();
+    }
+    
+    @Test
+    @GUITest
+    public void testMainWindow_OnExitMenuItemClicked_WithNullCommandAndShouldExitFalse() {
+        // Test onExitMenuItemClicked() with null command and shouldExit set to false
+        // This ensures all code paths are executed, including the null command branch
+        mainWindow.shouldExit = false;
+        
+        // Call onExitMenuItemClicked with null action command
+        java.awt.event.ActionEvent event = new java.awt.event.ActionEvent(
+            mainWindow, java.awt.event.ActionEvent.ACTION_PERFORMED, null);
+        mainWindow.onExitMenuItemClicked(event);
+        
+        // Verify that shouldExit was false
+        assertThat(mainWindow.shouldExit).isFalse();
+        
+        // Restore shouldExit to true for other tests
+        mainWindow.shouldExit = true;
+        window.requireVisible();
+    }
+    
+    @Test
+    @GUITest
     @SuppressWarnings("removal")
     public void testMainWindow_ExitMenuItem_ActionListener() {
         // Test that the exit menu item action listener (method reference) calls handleExit()
+        // Ensure shouldExit is true to test the true branch in handleExit
+        mainWindow.shouldExit = true;
+        
         // Install a security manager to prevent System.exit from actually exiting
         java.lang.SecurityManager originalSecurityManager = System.getSecurityManager();
         try {

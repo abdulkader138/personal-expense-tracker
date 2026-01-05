@@ -89,6 +89,20 @@
             <version>${guice.version}</version>
         </dependency>
 
+        <!-- ASM override for Java 22 support -->
+        <!-- Guice 7.0.0 bundles an older ASM that doesn't support Java 22 -->
+        <!-- This explicit dependency ensures Java 22 compatibility -->
+        <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm</artifactId>
+            <version>9.7.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm-commons</artifactId>
+            <version>9.7.1</version>
+        </dependency>
+
         <!-- Hamcrest Matchers -->
         <dependency>
             <groupId>org.hamcrest</groupId>
