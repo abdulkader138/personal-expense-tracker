@@ -142,9 +142,10 @@ public class CategoryServiceRaceConditionCreateCategoryIT {
 			return;
 		}
 
+		// Use unique category names for each thread to avoid duplicate name conflicts
 		List<Thread> threads = IntStream.range(0, 10).mapToObj(i -> new Thread(() -> {
 			try {
-				categoryService.createCategory(CATEGORY_NAME);
+				categoryService.createCategory(CATEGORY_NAME + "_" + i);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

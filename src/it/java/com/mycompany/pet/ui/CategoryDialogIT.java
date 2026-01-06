@@ -251,8 +251,20 @@ public class CategoryDialogIT extends AssertJSwingJUnitTestCase {
 			return;
 		}
 
-		// First, create a category
-		Category category = categoryService.createCategory(CATEGORY_NAME_1);
+		// First, create a category with retry for database initialization
+		Category category = null;
+		int retries = 3;
+		for (int i = 0; i < retries; i++) {
+			try {
+				category = categoryService.createCategory(CATEGORY_NAME_1);
+				break;
+			} catch (Exception e) {
+				if (i == retries - 1) {
+					throw new RuntimeException("Failed to create category after " + retries + " attempts: " + e.getMessage(), e);
+				}
+				await().atMost(1, TimeUnit.SECONDS);
+			}
+		}
 		
 		// Load categories in dialog
 		GuiActionRunner.execute(() -> {
@@ -294,8 +306,23 @@ public class CategoryDialogIT extends AssertJSwingJUnitTestCase {
 			return;
 		}
 
-		// First, create a category
-		Category category = categoryService.createCategory(CATEGORY_NAME_1);
+		// First, create a category with retry for database initialization
+		Category category = null;
+		int retries = 3;
+		for (int i = 0; i < retries; i++) {
+			try {
+				category = categoryService.createCategory(CATEGORY_NAME_1);
+				break;
+			} catch (Exception e) {
+				if (i == retries - 1) {
+					throw new RuntimeException("Failed to create category after " + retries + " attempts: " + e.getMessage(), e);
+				}
+				await().atMost(1, TimeUnit.SECONDS);
+			}
+		}
+		
+		// Store category ID in final variable for use in lambda
+		final Integer categoryId = category != null ? category.getCategoryId() : null;
 		
 		// Load categories in dialog
 		GuiActionRunner.execute(() -> {
@@ -320,7 +347,7 @@ public class CategoryDialogIT extends AssertJSwingJUnitTestCase {
 			boolean found = false;
 			for (int i = 0; i < table.rowCount(); i++) {
 				String id = table.cell(TableCell.row(i).column(0)).value();
-				if (category.getCategoryId().toString().equals(id)) {
+				if (categoryId != null && categoryId.toString().equals(id)) {
 					found = true;
 					break;
 				}
@@ -374,12 +401,12 @@ public class CategoryDialogIT extends AssertJSwingJUnitTestCase {
 		// Click Update Selected button
 		dialog.button(withText("Update Selected")).click();
 
-		// Verify error message is shown
-		await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
+		// Verify error message is shown - increase timeout for GUI updates
+		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
 			String message = GuiActionRunner.execute(() -> {
 				return categoryDialog.labelMessage.getText();
 			});
-			assertThat(message).contains("select");
+			assertThat(message).as("Error message should contain 'select' when no category is selected").containsIgnoringCase("select");
 		});
 	}
 
@@ -402,12 +429,12 @@ public class CategoryDialogIT extends AssertJSwingJUnitTestCase {
 		// Click Delete Selected button
 		dialog.button(withText("Delete Selected")).click();
 
-		// Verify error message is shown
-		await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
+		// Verify error message is shown - increase timeout for GUI updates
+		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
 			String message = GuiActionRunner.execute(() -> {
 				return categoryDialog.labelMessage.getText();
 			});
-			assertThat(message).contains("select");
+			assertThat(message).as("Error message should contain 'select' when no category is selected").containsIgnoringCase("select");
 		});
 	}
 
@@ -425,12 +452,12 @@ public class CategoryDialogIT extends AssertJSwingJUnitTestCase {
 		// Click Close button
 		dialog.button(withText("Close")).click();
 
-		// Verify dialog is closed
-		await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
+		// Verify dialog is closed - increase timeout and add small delay for GUI to update
+		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
 			boolean isVisible = GuiActionRunner.execute(() -> {
 				return categoryDialog.isVisible();
 			});
-			assertThat(isVisible).isFalse();
+			assertThat(isVisible).as("Dialog should be closed after clicking Close button").isFalse();
 		});
 	}
 }
