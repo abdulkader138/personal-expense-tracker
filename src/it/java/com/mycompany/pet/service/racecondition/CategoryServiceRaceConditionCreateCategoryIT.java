@@ -142,20 +142,44 @@ public class CategoryServiceRaceConditionCreateCategoryIT {
 			return;
 		}
 
+		// Clean up any existing categories before test
+		try {
+			List<Category> existing = categoryService.getAllCategories();
+			for (Category cat : existing) {
+				categoryService.deleteCategory(cat.getCategoryId());
+			}
+		} catch (SQLException e) {
+			// Ignore cleanup errors
+		}
+
 		// Use unique category names for each thread to avoid duplicate name conflicts
+		// Store results to track successful creations
+		java.util.concurrent.atomic.AtomicInteger successCount = new java.util.concurrent.atomic.AtomicInteger(0);
 		List<Thread> threads = IntStream.range(0, 10).mapToObj(i -> new Thread(() -> {
 			try {
 				categoryService.createCategory(CATEGORY_NAME + "_" + i);
+				successCount.incrementAndGet();
 			} catch (Exception e) {
+				System.err.println("Thread " + i + " failed to create category: " + e.getMessage());
 				e.printStackTrace();
 			}
 		})).peek(t -> t.start()).collect(Collectors.toList());
 		await().atMost(10, TimeUnit.SECONDS).until(() -> threads.stream().noneMatch(t -> t.isAlive()));
 
+		// Wait a bit for database to sync
+		await().atMost(2, TimeUnit.SECONDS).until(() -> {
+			try {
+				List<Category> categories = categoryService.getAllCategories();
+				return categories.size() >= successCount.get();
+			} catch (SQLException e) {
+				return false;
+			}
+		});
+
 		// Verify all categories were created
 		try {
 			List<Category> categories = categoryService.getAllCategories();
-			assertThat(categories).hasSize(10);
+			assertThat(categories).as("Expected 10 categories but found " + categories.size() + ". Success count: " + successCount.get()).hasSize(10);
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
