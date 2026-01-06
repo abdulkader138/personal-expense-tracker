@@ -142,14 +142,23 @@ public class CategoryServiceRaceConditionCreateCategoryIT {
 			return;
 		}
 
-		// Clean up any existing categories before test
+		// Clean up any existing categories before test - drop collection for clean state
 		try {
-			List<Category> existing = categoryService.getAllCategories();
-			for (Category cat : existing) {
-				categoryService.deleteCategory(cat.getCategoryId());
+			databaseConnection.getDatabase().getCollection("categories").drop();
+			// Wait for database to sync after drop
+			await().atMost(2, TimeUnit.SECONDS);
+		} catch (Exception e) {
+			// If drop fails, try individual deletions
+			try {
+				List<Category> existing = categoryService.getAllCategories();
+				for (Category cat : existing) {
+					categoryService.deleteCategory(cat.getCategoryId());
+				}
+				// Wait for deletions to complete
+				await().atMost(2, TimeUnit.SECONDS);
+			} catch (SQLException ex) {
+				// Ignore cleanup errors
 			}
-		} catch (SQLException e) {
-			// Ignore cleanup errors
 		}
 
 		// Use unique category names for each thread to avoid duplicate name conflicts

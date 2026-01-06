@@ -147,6 +147,9 @@ public class CategoryDialogIT extends AssertJSwingJUnitTestCase {
 			categoryService = new CategoryService(categoryDAO);
 			expenseService = null; // Not needed for category dialog
 
+			// Set test mode BEFORE creating dialog to ensure error messages work properly
+			System.setProperty("test.mode", "true");
+			
 			// Create controllers from services
 			CategoryController categoryController = new CategoryController(categoryService);
 			ExpenseController expenseController = new ExpenseController(expenseService);
@@ -372,18 +375,21 @@ public class CategoryDialogIT extends AssertJSwingJUnitTestCase {
 		// Click Delete Selected button
 		dialog.button(withText("Delete Selected")).click();
 
-		// Verify category was deleted
+		// Verify category was deleted - wait for table to update
 		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+			// Wait for table to refresh after delete
+			robot().waitForIdle();
 			// Category should be removed from table
 			boolean found = false;
-			for (int i = 0; i < table.rowCount(); i++) {
+			int rowCount = table.rowCount();
+			for (int i = 0; i < rowCount; i++) {
 				String id = table.cell(TableCell.row(i).column(0)).value();
 				if (categoryId != null && categoryId.toString().equals(id)) {
 					found = true;
 					break;
 				}
 			}
-			assertThat(found).isFalse();
+			assertThat(found).as("Category with ID " + categoryId + " should be removed from table").isFalse();
 		});
 	}
 
@@ -427,10 +433,13 @@ public class CategoryDialogIT extends AssertJSwingJUnitTestCase {
 		// Clear selection
 		GuiActionRunner.execute(() -> {
 			categoryDialog.categoryTable.clearSelection();
+			categoryDialog.lastErrorMessage = null; // Clear previous error
 		});
+		robot().waitForIdle();
 
 		// Click Update Selected button
 		dialog.button(withText("Update Selected")).click();
+		robot().waitForIdle();
 
 		// Verify error message is shown - check both labelMessage and lastErrorMessage
 		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
@@ -461,10 +470,13 @@ public class CategoryDialogIT extends AssertJSwingJUnitTestCase {
 		// Clear selection
 		GuiActionRunner.execute(() -> {
 			categoryDialog.categoryTable.clearSelection();
+			categoryDialog.lastErrorMessage = null; // Clear previous error
 		});
+		robot().waitForIdle();
 
 		// Click Delete Selected button
 		dialog.button(withText("Delete Selected")).click();
+		robot().waitForIdle();
 
 		// Verify error message is shown - check both labelMessage and lastErrorMessage
 		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
@@ -495,24 +507,13 @@ public class CategoryDialogIT extends AssertJSwingJUnitTestCase {
 		// Click Close button
 		dialog.button(withText("Close")).click();
 
-		// Verify dialog is closed - check both visibility and disposal
+		// Verify dialog is closed - check visibility (dispose() makes it not visible)
 		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
 			boolean isVisible = GuiActionRunner.execute(() -> {
 				return categoryDialog.isVisible();
 			});
-			boolean isDisposed = GuiActionRunner.execute(() -> {
-				// Check if dialog window is disposed
-				java.awt.Window[] windows = java.awt.Window.getWindows();
-				for (java.awt.Window w : windows) {
-					if (w == categoryDialog) {
-						return false; // Dialog still exists
-					}
-				}
-				return true; // Dialog not found in windows list
-			});
-			// Dialog should be either not visible or disposed
-			boolean isClosed = !isVisible || isDisposed;
-			assertThat(isClosed).as("Dialog should be closed (not visible or disposed) after clicking Close button. Visible: " + isVisible + ", Disposed: " + isDisposed).isTrue();
+			// After dispose(), dialog should not be visible
+			assertThat(isVisible).as("Dialog should not be visible after clicking Close button").isFalse();
 		});
 	}
 }
