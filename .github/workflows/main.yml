@@ -97,19 +97,37 @@ jobs:
         if: matrix.java-version == 17
         run: mvn jacoco:report
       
+      - name: Prepare coverage reports directory
+        if: matrix.java-version == 17 && always()
+        run: |
+          mkdir -p target/site/jacoco || true
+          touch target/site/jacoco/.gitkeep || true
+        continue-on-error: true
+      
       - name: Upload coverage reports
         if: matrix.java-version == 17 && always()
         uses: actions/upload-artifact@v4
         with:
           name: jacoco-report-java-${{ matrix.java-version }}
           path: target/site/jacoco/
+          retention-days: 1
+          if-no-files-found: warn
       
       - name: Upload test reports
+        if: always()
+        run: |
+          mkdir -p target/surefire-reports || true
+          touch target/surefire-reports/.gitkeep || true
+        continue-on-error: true
+      
+      - name: Upload test reports artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-reports-java-${{ matrix.java-version }}
           path: target/surefire-reports/
+          retention-days: 1
+          if-no-files-found: warn
 
   # Integration Tests - Only on Java 17 with Docker
   # Always run on push/workflow_dispatch, conditionally on PR based on file changes
@@ -174,12 +192,21 @@ jobs:
             find target/failsafe-reports -name "*.txt" -exec cat {} \;
           fi
       
+      - name: Prepare integration test reports directory
+        if: always()
+        run: |
+          mkdir -p target/failsafe-reports || true
+          touch target/failsafe-reports/.gitkeep || true
+        continue-on-error: true
+      
       - name: Upload integration test reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: failsafe-reports
           path: target/failsafe-reports/
+          retention-days: 1
+          if-no-files-found: warn
 
   # Mutation Testing - On Java 8
   # Run on push/workflow_dispatch, conditionally on PR based on test file changes
@@ -227,12 +254,21 @@ jobs:
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
       
+      - name: Prepare mutation reports directory
+        if: always()
+        run: |
+          mkdir -p target/pit-reports || true
+          touch target/pit-reports/.gitkeep || true
+        continue-on-error: true
+      
       - name: Upload mutation reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: pit-reports
           path: target/pit-reports/
+          retention-days: 1
+          if-no-files-found: warn
 
   # Coverage Check - Only on Java 17
   # Run after unit-tests complete
@@ -284,6 +320,13 @@ jobs:
           exit 1
         continue-on-error: true
       
+      - name: Prepare JaCoCo report directory
+        if: always()
+        run: |
+          mkdir -p target/site/jacoco || true
+          touch target/site/jacoco/.gitkeep || true
+        continue-on-error: true
+      
       - name: Upload JaCoCo report for SonarCloud
         if: always()
         uses: actions/upload-artifact@v4
@@ -307,8 +350,9 @@ jobs:
 
   # SonarCloud Analysis
   # Only run on push events (not PRs) after coverage check
+  # Independent of integration-tests to avoid blocking
   sonarcloud:
-    needs: [unit-tests, coverage-check]
+    needs: [coverage-check]
     if: |
       always() &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
@@ -386,19 +430,14 @@ jobs:
           exit 1
         continue-on-error: true
       
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        with:
-          projectBaseDir: .
-          args: >
-            -Dsonar.projectKey=abdulkader138_personal-expense-tracker
-            -Dsonar.organization=abdulkader138
-            -Dsonar.host.url=https://sonarcloud.io
-            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-            -Dsonar.sources=src/main/java
-            -Dsonar.tests=src/test/java
-            -Dsonar.java.binaries=target/classes
-            -Dsonar.ci.autoconfig.disabled=false
+      - name: SonarCloud Scan (using Maven plugin)
+        run: |
+          xvfb-run -a mvn sonar:sonar -U --batch-mode \
+            -Dmaven.compiler.source=17 \
+            -Dmaven.compiler.target=17 \
+            -Dmaven.wagon.http.retryHandler.count=5 \
+            -Dmaven.wagon.httpconnectionManager.ttlSeconds=30 \
+            -Dmaven.wagon.http.readTimeout=60000
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
