@@ -73,13 +73,24 @@ jobs:
       
       - name: Run unit tests with coverage
         run: |
-          xvfb-run mvn clean test jacoco:report -U --batch-mode \
-            -Dmaven.compiler.source=${{ matrix.java-version }} \
-            -Dmaven.compiler.target=${{ matrix.java-version }} \
-            -Pui-tests \
-            -Dsurefire.excludes="**/*IT.java" \
-            -Dmaven.wagon.http.retryHandler.count=3 \
-            -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
+          set +e
+          for i in 1 2 3; do
+            if xvfb-run mvn clean test jacoco:report -U --batch-mode \
+              -Dmaven.compiler.source=${{ matrix.java-version }} \
+              -Dmaven.compiler.target=${{ matrix.java-version }} \
+              -Pui-tests \
+              -Dsurefire.excludes="**/*IT.java" \
+              -Dmaven.wagon.http.retryHandler.count=5 \
+              -Dmaven.wagon.httpconnectionManager.ttlSeconds=30 \
+              -Dmaven.wagon.http.readTimeout=60000; then
+              exit 0
+            fi
+            if [ $i -lt 3 ]; then
+              echo "Attempt $i failed, retrying in $((i * 10)) seconds..."
+              sleep $((i * 10))
+            fi
+          done
+          exit 1
         continue-on-error: ${{ matrix.java-version != 17 }}
       
       - name: Generate JaCoCo report
@@ -132,12 +143,23 @@ jobs:
       
       - name: Run integration tests
         run: |
-          xvfb-run -a mvn clean verify -U --batch-mode \
-            -DskipITs=false \
-            -Dmaven.compiler.source=17 \
-            -Dmaven.compiler.target=17 \
-            -Dmaven.wagon.http.retryHandler.count=3 \
-            -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
+          set +e
+          for i in 1 2 3; do
+            if xvfb-run -a mvn clean verify -U --batch-mode \
+              -DskipITs=false \
+              -Dmaven.compiler.source=17 \
+              -Dmaven.compiler.target=17 \
+              -Dmaven.wagon.http.retryHandler.count=5 \
+              -Dmaven.wagon.httpconnectionManager.ttlSeconds=30 \
+              -Dmaven.wagon.http.readTimeout=60000; then
+              exit 0
+            fi
+            if [ $i -lt 3 ]; then
+              echo "Attempt $i failed, retrying in $((i * 10)) seconds..."
+              sleep $((i * 10))
+            fi
+          done
+          exit 1
         continue-on-error: true
         env:
           # Ensure Testcontainers can access Docker
@@ -185,11 +207,22 @@ jobs:
       
       - name: Run PIT mutation testing
         run: |
-          xvfb-run -a mvn clean test-compile org.pitest:pitest-maven:mutationCoverage -U --batch-mode \
-            -Dmaven.compiler.source=8 \
-            -Dmaven.compiler.target=8 \
-            -Dmaven.wagon.http.retryHandler.count=3 \
-            -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
+          set +e
+          for i in 1 2 3; do
+            if xvfb-run -a mvn clean test-compile org.pitest:pitest-maven:mutationCoverage -U --batch-mode \
+              -Dmaven.compiler.source=8 \
+              -Dmaven.compiler.target=8 \
+              -Dmaven.wagon.http.retryHandler.count=5 \
+              -Dmaven.wagon.httpconnectionManager.ttlSeconds=30 \
+              -Dmaven.wagon.http.readTimeout=60000; then
+              exit 0
+            fi
+            if [ $i -lt 3 ]; then
+              echo "Attempt $i failed, retrying in $((i * 10)) seconds..."
+              sleep $((i * 10))
+            fi
+          done
+          exit 1
         continue-on-error: true
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
@@ -206,7 +239,7 @@ jobs:
   coverage-check:
     needs: [unit-tests, detect-changes]
     if: |
-      (needs.unit-tests.result == 'success' || needs.unit-tests.result == 'failure') &&
+      always() &&
       (github.event_name == 'workflow_dispatch' || 
        github.event_name == 'push' || 
        (github.event_name == 'pull_request' && needs.detect-changes.outputs.java == 'true'))
@@ -229,13 +262,26 @@ jobs:
       
       - name: Run tests and generate JaCoCo report
         run: |
-          xvfb-run mvn clean test jacoco:report -U --batch-mode \
-            -Dmaven.compiler.source=17 \
-            -Dmaven.compiler.target=17 \
-            -Pui-tests \
-            -Dsurefire.excludes="**/*IT.java" \
-            -Dmaven.wagon.http.retryHandler.count=3 \
-            -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
+          set +e
+          for i in 1 2 3; do
+            if xvfb-run mvn clean test jacoco:report -U --batch-mode \
+              -Dmaven.compiler.source=17 \
+              -Dmaven.compiler.target=17 \
+              -Pui-tests \
+              -Dsurefire.excludes="**/*IT.java" \
+              -Dmaven.wagon.http.retryHandler.count=5 \
+              -Dmaven.wagon.httpconnectionManager.ttlSeconds=30 \
+              -Dmaven.wagon.http.readTimeout=60000; then
+              exit 0
+            fi
+            if [ $i -lt 3 ]; then
+              echo "Attempt $i failed, retrying in $((i * 10)) seconds..."
+              sleep $((i * 10))
+            fi
+          done
+          # Always try to generate report even if tests failed
+          xvfb-run mvn jacoco:report -U --batch-mode || true
+          exit 1
         continue-on-error: true
       
       - name: Upload JaCoCo report for SonarCloud
@@ -244,6 +290,8 @@ jobs:
         with:
           name: jacoco-report-coverage-check
           path: target/site/jacoco/
+          retention-days: 1
+          if-no-files-found: warn
       
       - name: Upload to Coveralls
         if: github.event_name == 'push'
@@ -262,8 +310,8 @@ jobs:
   sonarcloud:
     needs: [unit-tests, coverage-check]
     if: |
-      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
-      (needs.coverage-check.result == 'success' || needs.coverage-check.result == 'failure')
+      always() &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     name: SonarCloud Analysis
     steps:
@@ -296,22 +344,46 @@ jobs:
       - name: Run tests and generate JaCoCo report (if not downloaded)
         if: failure()
         run: |
-          xvfb-run mvn clean test jacoco:report -U --batch-mode \
-            -Dmaven.compiler.source=17 \
-            -Dmaven.compiler.target=17 \
-            -Pui-tests \
-            -Dsurefire.excludes="**/*IT.java" \
-            -Dmaven.wagon.http.retryHandler.count=3 \
-            -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
+          set +e
+          for i in 1 2 3; do
+            if xvfb-run mvn clean test jacoco:report -U --batch-mode \
+              -Dmaven.compiler.source=17 \
+              -Dmaven.compiler.target=17 \
+              -Pui-tests \
+              -Dsurefire.excludes="**/*IT.java" \
+              -Dmaven.wagon.http.retryHandler.count=5 \
+              -Dmaven.wagon.httpconnectionManager.ttlSeconds=30 \
+              -Dmaven.wagon.http.readTimeout=60000; then
+              exit 0
+            fi
+            if [ $i -lt 3 ]; then
+              echo "Attempt $i failed, retrying in $((i * 10)) seconds..."
+              sleep $((i * 10))
+            fi
+          done
+          # Always try to generate report even if tests failed
+          xvfb-run mvn jacoco:report -U --batch-mode || true
+          exit 1
         continue-on-error: true
       
       - name: Compile code for SonarCloud analysis
         run: |
-          xvfb-run -a mvn compile -U --batch-mode \
-            -Dmaven.compiler.source=17 \
-            -Dmaven.compiler.target=17 \
-            -Dmaven.wagon.http.retryHandler.count=3 \
-            -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
+          set +e
+          for i in 1 2 3; do
+            if xvfb-run -a mvn compile -U --batch-mode \
+              -Dmaven.compiler.source=17 \
+              -Dmaven.compiler.target=17 \
+              -Dmaven.wagon.http.retryHandler.count=5 \
+              -Dmaven.wagon.httpconnectionManager.ttlSeconds=30 \
+              -Dmaven.wagon.http.readTimeout=60000; then
+              exit 0
+            fi
+            if [ $i -lt 3 ]; then
+              echo "Attempt $i failed, retrying in $((i * 10)) seconds..."
+              sleep $((i * 10))
+            fi
+          done
+          exit 1
         continue-on-error: true
       
       - name: SonarCloud Scan
@@ -350,12 +422,22 @@ jobs:
       
       - name: Build project
         run: |
-          mvn clean install -U --batch-mode \
-            -DskipITs=true \
-            -Dmaven.compiler.source=17 \
-            -Dmaven.compiler.target=17 \
-            -Dmaven.wagon.http.retryHandler.count=5 \
-            -Dmaven.wagon.httpconnectionManager.ttlSeconds=30 \
-            -Dmaven.wagon.http.readTimeout=60000
+          set +e
+          for i in 1 2 3; do
+            if mvn clean install -U --batch-mode \
+              -DskipITs=true \
+              -Dmaven.compiler.source=17 \
+              -Dmaven.compiler.target=17 \
+              -Dmaven.wagon.http.retryHandler.count=5 \
+              -Dmaven.wagon.httpconnectionManager.ttlSeconds=30 \
+              -Dmaven.wagon.http.readTimeout=60000; then
+              exit 0
+            fi
+            if [ $i -lt 3 ]; then
+              echo "Attempt $i failed, retrying in $((i * 10)) seconds..."
+              sleep $((i * 10))
+            fi
+          done
+          exit 1
         continue-on-error: false
 
