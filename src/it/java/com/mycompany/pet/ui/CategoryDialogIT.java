@@ -224,13 +224,14 @@ public class CategoryDialogIT extends AssertJSwingJUnitTestCase {
 		// Click Add Category button
 		dialog.button(withText("Add Category")).click();
 
-		// Wait for async operation
+		// Wait for async operation - category creation and table reload
 		robot().waitForIdle();
 		
-		// Verify category was added
+		// Verify category was added - wait for table to refresh after async loadCategories()
 		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+			robot().waitForIdle();
 			JTableFixture table = dialog.table();
-			assertThat(table.rowCount()).isGreaterThan(0);
+			assertThat(table.rowCount()).as("Table should have at least one row after adding category").isGreaterThan(0);
 			// Check if the category name appears in the table
 			boolean found = false;
 			for (int i = 0; i < table.rowCount(); i++) {
@@ -374,10 +375,11 @@ public class CategoryDialogIT extends AssertJSwingJUnitTestCase {
 		
 		// Click Delete Selected button
 		dialog.button(withText("Delete Selected")).click();
+		robot().waitForIdle();
 
-		// Verify category was deleted - wait for table to update
+		// Verify category was deleted - wait for table to update after async loadCategories()
 		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
-			// Wait for table to refresh after delete
+			// Wait for table to refresh after delete and async reload
 			robot().waitForIdle();
 			// Category should be removed from table
 			boolean found = false;
@@ -430,19 +432,31 @@ public class CategoryDialogIT extends AssertJSwingJUnitTestCase {
 			return;
 		}
 
-		// Clear selection
+		// Clear selection and ensure no previous error
 		GuiActionRunner.execute(() -> {
 			categoryDialog.categoryTable.clearSelection();
 			categoryDialog.lastErrorMessage = null; // Clear previous error
+			if (categoryDialog.labelMessage != null) {
+				categoryDialog.labelMessage.setText("");
+			}
 		});
 		robot().waitForIdle();
+		
+		// Small delay to ensure state is clean
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		}
 
-		// Click Update Selected button
+		// Click Update Selected button - this should trigger onUpdateButtonClick() which calls setErrorMessage()
 		dialog.button(withText("Update Selected")).click();
 		robot().waitForIdle();
 
 		// Verify error message is shown - check both labelMessage and lastErrorMessage
-		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+		// The error message is set synchronously in setErrorMessage(), but displayed asynchronously
+		await().atMost(5, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+			robot().waitForIdle();
 			String labelText = GuiActionRunner.execute(() -> {
 				return categoryDialog.labelMessage != null ? categoryDialog.labelMessage.getText() : "";
 			});
@@ -467,19 +481,31 @@ public class CategoryDialogIT extends AssertJSwingJUnitTestCase {
 			return;
 		}
 
-		// Clear selection
+		// Clear selection and ensure no previous error
 		GuiActionRunner.execute(() -> {
 			categoryDialog.categoryTable.clearSelection();
 			categoryDialog.lastErrorMessage = null; // Clear previous error
+			if (categoryDialog.labelMessage != null) {
+				categoryDialog.labelMessage.setText("");
+			}
 		});
 		robot().waitForIdle();
+		
+		// Small delay to ensure state is clean
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		}
 
-		// Click Delete Selected button
+		// Click Delete Selected button - this should trigger onDeleteButtonClick() which calls setErrorMessage()
 		dialog.button(withText("Delete Selected")).click();
 		robot().waitForIdle();
 
 		// Verify error message is shown - check both labelMessage and lastErrorMessage
-		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+		// The error message is set synchronously in setErrorMessage(), but displayed asynchronously
+		await().atMost(5, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+			robot().waitForIdle();
 			String labelText = GuiActionRunner.execute(() -> {
 				return categoryDialog.labelMessage != null ? categoryDialog.labelMessage.getText() : "";
 			});
@@ -506,9 +532,12 @@ public class CategoryDialogIT extends AssertJSwingJUnitTestCase {
 
 		// Click Close button
 		dialog.button(withText("Close")).click();
+		robot().waitForIdle();
 
 		// Verify dialog is closed - check visibility (dispose() makes it not visible)
-		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+		// In headless mode, we need to wait a bit for the dispose to complete
+		await().atMost(5, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).untilAsserted(() -> {
+			robot().waitForIdle();
 			boolean isVisible = GuiActionRunner.execute(() -> {
 				return categoryDialog.isVisible();
 			});

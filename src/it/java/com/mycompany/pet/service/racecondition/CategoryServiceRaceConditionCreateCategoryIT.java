@@ -164,22 +164,28 @@ public class CategoryServiceRaceConditionCreateCategoryIT {
 		// Use unique category names for each thread to avoid duplicate name conflicts
 		// Store results to track successful creations
 		java.util.concurrent.atomic.AtomicInteger successCount = new java.util.concurrent.atomic.AtomicInteger(0);
+		java.util.concurrent.atomic.AtomicInteger failureCount = new java.util.concurrent.atomic.AtomicInteger(0);
 		List<Thread> threads = IntStream.range(0, 10).mapToObj(i -> new Thread(() -> {
 			try {
 				categoryService.createCategory(CATEGORY_NAME + "_" + i);
 				successCount.incrementAndGet();
 			} catch (Exception e) {
+				failureCount.incrementAndGet();
 				System.err.println("Thread " + i + " failed to create category: " + e.getMessage());
 				e.printStackTrace();
 			}
 		})).peek(t -> t.start()).collect(Collectors.toList());
-		await().atMost(10, TimeUnit.SECONDS).until(() -> threads.stream().noneMatch(t -> t.isAlive()));
+		
+		// Wait for all threads to complete
+		await().atMost(15, TimeUnit.SECONDS).until(() -> threads.stream().noneMatch(t -> t.isAlive()));
 
-		// Wait a bit for database to sync
-		await().atMost(2, TimeUnit.SECONDS).until(() -> {
+		// Wait for database to sync - check multiple times with longer timeout
+		await().atMost(5, TimeUnit.SECONDS).pollInterval(500, TimeUnit.MILLISECONDS).until(() -> {
 			try {
 				List<Category> categories = categoryService.getAllCategories();
-				return categories.size() >= successCount.get();
+				int currentSize = categories.size();
+				// Wait until we have at least as many categories as successful creations
+				return currentSize >= successCount.get();
 			} catch (SQLException e) {
 				return false;
 			}
@@ -188,7 +194,7 @@ public class CategoryServiceRaceConditionCreateCategoryIT {
 		// Verify all categories were created
 		try {
 			List<Category> categories = categoryService.getAllCategories();
-			assertThat(categories).as("Expected 10 categories but found " + categories.size() + ". Success count: " + successCount.get()).hasSize(10);
+			assertThat(categories).as("Expected 10 categories but found " + categories.size() + ". Success count: " + successCount.get() + ", Failure count: " + failureCount.get()).hasSize(10);
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
