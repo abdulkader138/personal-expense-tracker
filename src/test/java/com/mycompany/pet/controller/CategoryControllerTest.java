@@ -1,8 +1,6 @@
 package com.mycompany.pet.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -16,17 +14,15 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 
 import com.mycompany.pet.model.Category;
+import com.mycompany.pet.service.CategoryService;
 import com.mycompany.pet.service.CategoryService;
 
 /**
  * Tests for CategoryController.
  */
 public class CategoryControllerTest {
-    @Mock
     private CategoryService categoryService;
     
     private CategoryController controller;
@@ -37,7 +33,10 @@ public class CategoryControllerTest {
     
     @Before
     public void setUp() {
-        closeable = MockitoAnnotations.openMocks(this);
+        // Use Mockito.mock() instead of @Mock annotation to avoid inline mocking issues
+        // This works around the classpath issue with Mockito inline when CategoryDAO isn't available
+        // during class instrumentation. Creating the mock manually avoids the retransformation issue.
+        categoryService = org.mockito.Mockito.mock(CategoryService.class);
         controller = new CategoryController(categoryService);
     }
     

@@ -8,7 +8,6 @@ import static org.junit.Assume.assumeFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import java.awt.GraphicsEnvironment;
-import javax.swing.JFrame;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -73,11 +72,12 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         boolean isHeadless = GraphicsEnvironment.isHeadless();
         
         if (!forceUITests && isHeadless) {
-            assumeFalse("Skipping UI test - running in headless mode. " +
-                "To run UI tests:\n" +
-                "  1. Use xvfb: xvfb-run -a mvn test -Pui-tests\n" +
-                "  2. Or force: mvn test -Pui-tests -Dforce.ui.tests=true\n" +
-                "  3. Or run locally with display: mvn test -Pui-tests", 
+            assumeFalse("""
+                Skipping UI test - running in headless mode. To run UI tests:
+                  1. Use xvfb: xvfb-run -a mvn test -Pui-tests
+                  2. Or force: mvn test -Pui-tests -Dforce.ui.tests=true
+                  3. Or run locally with display: mvn test -Pui-tests
+                """, 
                 true);
         }
     }
@@ -176,6 +176,8 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         // Then - verify category combo box exists
         JComboBoxFixture categoryCombo = dialog.comboBox();
         categoryCombo.requireVisible();
+        assertThat(categoryCombo.target()).isNotNull();
+        assertThat(categoryCombo.target().isVisible()).isTrue();
     }
 
     @Test
@@ -185,6 +187,9 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         JButtonFixture saveButton = dialog.button(withText("Save"));
         saveButton.requireVisible();
         saveButton.requireEnabled();
+        assertThat(saveButton.target()).isNotNull();
+        assertThat(saveButton.target().isVisible()).isTrue();
+        assertThat(saveButton.target().isEnabled()).isTrue();
     }
 
     @Test
@@ -194,6 +199,9 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         JButtonFixture cancelButton = dialog.button(withText("Cancel"));
         cancelButton.requireVisible();
         cancelButton.requireEnabled();
+        assertThat(cancelButton.target()).isNotNull();
+        assertThat(cancelButton.target().isVisible()).isTrue();
+        assertThat(cancelButton.target().isEnabled()).isTrue();
     }
 
     @Test
@@ -202,6 +210,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         // Then - verify category combo box has items
         JComboBoxFixture categoryCombo = dialog.comboBox();
         categoryCombo.requireItemCount(2); // Should have 2 categories from mock data
+        assertThat(categoryCombo.target().getItemCount()).isEqualTo(2);
     }
 
     @Test
@@ -210,6 +219,13 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         // Then - verify date field is pre-filled with today's date
         // Note: This test verifies the dialog initializes correctly
         dialog.requireVisible();
+        assertThat(dialog.target().isVisible()).isTrue();
+        // Verify date field exists and is not empty
+        String dateText = execute(() -> expenseDialog.dateField.getText());
+        assertThat(dateText).isNotNull();
+        assertThat(dateText).isNotEmpty();
+        // Verify it contains today's date
+        assertThat(dateText).isEqualTo(LocalDate.now().toString());
     }
 
     @Test

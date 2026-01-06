@@ -79,11 +79,12 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         boolean isHeadless = GraphicsEnvironment.isHeadless();
         
         if (!forceUITests && isHeadless) {
-            assumeFalse("Skipping UI test - running in headless mode. " +
-                "To run UI tests:\n" +
-                "  1. Use xvfb: xvfb-run -a mvn test -Pui-tests\n" +
-                "  2. Or force: mvn test -Pui-tests -Dforce.ui.tests=true\n" +
-                "  3. Or run locally with display: mvn test -Pui-tests", 
+            assumeFalse("""
+                Skipping UI test - running in headless mode. To run UI tests:
+                  1. Use xvfb: xvfb-run -a mvn test -Pui-tests
+                  2. Or force: mvn test -Pui-tests -Dforce.ui.tests=true
+                  3. Or run locally with display: mvn test -Pui-tests
+                """, 
                 true);
         }
     }
@@ -4275,7 +4276,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             assertThat(beforeLoad).as("Message should be set before loadCategories").isEqualTo("Error occurred");
             
             // Load categories - in production mode, error messages should be preserved
-            execute(() -> testDialog.loadCategories());
+            execute(testDialog::loadCategories);
             waitForAsyncOperation();
             robot().waitForIdle();
             
@@ -4296,7 +4297,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
                 }
             });
             robot().waitForIdle();
-            execute(() -> testDialog.loadCategories());
+            execute(testDialog::loadCategories);
             waitForAsyncOperation();
             robot().waitForIdle();
             errorMsg = execute(() -> testDialog.labelMessage != null ? testDialog.labelMessage.getText() : "");
@@ -4309,7 +4310,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
                 }
             });
             robot().waitForIdle();
-            execute(() -> testDialog.loadCategories());
+            execute(testDialog::loadCategories);
             waitForAsyncOperation();
             robot().waitForIdle();
             errorMsg = execute(() -> testDialog.labelMessage != null ? testDialog.labelMessage.getText() : "");
@@ -4322,7 +4323,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
                 }
             });
             robot().waitForIdle();
-            execute(() -> testDialog.loadCategories());
+            execute(testDialog::loadCategories);
             waitForAsyncOperation();
             robot().waitForIdle();
             errorMsg = execute(() -> testDialog.labelMessage != null ? testDialog.labelMessage.getText() : "");
@@ -4335,7 +4336,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
                 }
             });
             robot().waitForIdle();
-            execute(() -> testDialog.loadCategories());
+            execute(testDialog::loadCategories);
             waitForAsyncOperation();
             robot().waitForIdle();
             String clearedMsg = execute(() -> testDialog.labelMessage != null ? testDialog.labelMessage.getText() : "");

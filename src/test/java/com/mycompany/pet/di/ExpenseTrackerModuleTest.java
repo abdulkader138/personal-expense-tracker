@@ -18,8 +18,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
 import com.google.inject.util.Modules;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
