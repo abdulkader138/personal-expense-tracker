@@ -73,11 +73,13 @@ jobs:
       
       - name: Run unit tests with coverage
         run: |
-          xvfb-run mvn clean test jacoco:report -U \
+          xvfb-run mvn clean test jacoco:report -U --batch-mode \
             -Dmaven.compiler.source=${{ matrix.java-version }} \
             -Dmaven.compiler.target=${{ matrix.java-version }} \
             -Pui-tests \
-            -Dsurefire.excludes="**/*IT.java"
+            -Dsurefire.excludes="**/*IT.java" \
+            -Dmaven.wagon.http.retryHandler.count=3 \
+            -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
         continue-on-error: ${{ matrix.java-version != 17 }}
       
       - name: Generate JaCoCo report
@@ -129,7 +131,13 @@ jobs:
           docker info
       
       - name: Run integration tests
-        run: xvfb-run -a mvn clean verify -U -DskipITs=false -Dmaven.compiler.source=17 -Dmaven.compiler.target=17
+        run: |
+          xvfb-run -a mvn clean verify -U --batch-mode \
+            -DskipITs=false \
+            -Dmaven.compiler.source=17 \
+            -Dmaven.compiler.target=17 \
+            -Dmaven.wagon.http.retryHandler.count=3 \
+            -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
         continue-on-error: true
         env:
           # Ensure Testcontainers can access Docker
@@ -176,7 +184,12 @@ jobs:
           sudo apt-get install -y xvfb
       
       - name: Run PIT mutation testing
-        run: xvfb-run -a mvn clean test-compile org.pitest:pitest-maven:mutationCoverage -U -Dmaven.compiler.source=8 -Dmaven.compiler.target=8
+        run: |
+          xvfb-run -a mvn clean test-compile org.pitest:pitest-maven:mutationCoverage -U --batch-mode \
+            -Dmaven.compiler.source=8 \
+            -Dmaven.compiler.target=8 \
+            -Dmaven.wagon.http.retryHandler.count=3 \
+            -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
         continue-on-error: true
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
@@ -216,11 +229,13 @@ jobs:
       
       - name: Run tests and generate JaCoCo report
         run: |
-          xvfb-run mvn clean test jacoco:report -U \
+          xvfb-run mvn clean test jacoco:report -U --batch-mode \
             -Dmaven.compiler.source=17 \
             -Dmaven.compiler.target=17 \
             -Pui-tests \
-            -Dsurefire.excludes="**/*IT.java"
+            -Dsurefire.excludes="**/*IT.java" \
+            -Dmaven.wagon.http.retryHandler.count=3 \
+            -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
         continue-on-error: true
       
       - name: Upload JaCoCo report for SonarCloud
@@ -234,7 +249,12 @@ jobs:
         if: github.event_name == 'push'
         env:
           COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-        run: xvfb-run -a mvn coveralls:report -U -Dmaven.compiler.source=17 -Dmaven.compiler.target=17
+        run: |
+          xvfb-run -a mvn coveralls:report -U --batch-mode \
+            -Dmaven.compiler.source=17 \
+            -Dmaven.compiler.target=17 \
+            -Dmaven.wagon.http.retryHandler.count=3 \
+            -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
         continue-on-error: true
 
   # SonarCloud Analysis
@@ -276,16 +296,22 @@ jobs:
       - name: Run tests and generate JaCoCo report (if not downloaded)
         if: failure()
         run: |
-          xvfb-run mvn clean test jacoco:report -U \
+          xvfb-run mvn clean test jacoco:report -U --batch-mode \
             -Dmaven.compiler.source=17 \
             -Dmaven.compiler.target=17 \
             -Pui-tests \
-            -Dsurefire.excludes="**/*IT.java"
+            -Dsurefire.excludes="**/*IT.java" \
+            -Dmaven.wagon.http.retryHandler.count=3 \
+            -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
         continue-on-error: true
       
       - name: Compile code for SonarCloud analysis
         run: |
-          xvfb-run -a mvn compile -U -Dmaven.compiler.source=17 -Dmaven.compiler.target=17
+          xvfb-run -a mvn compile -U --batch-mode \
+            -Dmaven.compiler.source=17 \
+            -Dmaven.compiler.target=17 \
+            -Dmaven.wagon.http.retryHandler.count=3 \
+            -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
         continue-on-error: true
       
       - name: SonarCloud Scan
@@ -323,5 +349,11 @@ jobs:
           cache: maven
       
       - name: Build project
-        run: mvn clean install -U -DskipITs=true -Dmaven.compiler.source=17 -Dmaven.compiler.target=17
+        run: |
+          mvn clean install -U --batch-mode \
+            -DskipITs=true \
+            -Dmaven.compiler.source=17 \
+            -Dmaven.compiler.target=17 \
+            -Dmaven.wagon.http.retryHandler.count=3 \
+            -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
 
