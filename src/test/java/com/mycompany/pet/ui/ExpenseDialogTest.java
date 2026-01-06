@@ -415,21 +415,23 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
             editDialog.descriptionField.setText("Updated Expense");
         });
         
-        // Small delay to ensure selection is set
-        try {
-            Thread.sleep(50);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        // Wait for selection to be set
+        robot().waitForIdle();
+        await().atMost(500, TimeUnit.MILLISECONDS).pollInterval(50, TimeUnit.MILLISECONDS)
+            .until(() -> {
+                robot().waitForIdle();
+                return true;
+            });
         
         editDialogFixture.button(withText("Save")).click();
         
-        // Small delay for save to complete
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        // Wait for save to complete
+        robot().waitForIdle();
+        await().atMost(500, TimeUnit.MILLISECONDS).pollInterval(50, TimeUnit.MILLISECONDS)
+            .until(() -> {
+                robot().waitForIdle();
+                return true;
+            });
         
         // Then - should be saved
         boolean saved = execute(() -> editDialog.isSaved());
@@ -548,7 +550,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testExpenseDialog_Save_WithWhitespace() throws SQLException {
+    public void testExpenseDialog_Save_WithWhitespace() {
         // Given - data with whitespace
         execute(() -> {
             if (expenseDialog.categoryComboBox.getItemCount() > 0) {
@@ -608,12 +610,13 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
             editDialog.descriptionField.setText("Updated Expense");
         });
         
-        // Small delay to ensure selection is set
-        try {
-            Thread.sleep(50);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        // Wait for selection to be set
+        robot().waitForIdle();
+        await().atMost(500, TimeUnit.MILLISECONDS).pollInterval(50, TimeUnit.MILLISECONDS)
+            .until(() -> {
+                robot().waitForIdle();
+                return true;
+            });
         
         editDialogFixture.button(withText("Save")).click();
         
@@ -629,14 +632,14 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testExpenseDialog_Constructor_WithControllers_NewExpense() throws SQLException {
+    public void testExpenseDialog_Constructor_WithControllers_NewExpense() {
         // Given - controllers
-        ExpenseController expenseController = new ExpenseController(expenseService);
-        CategoryController categoryController = new CategoryController(categoryService);
+        ExpenseController testExpenseController = new ExpenseController(expenseService);
+        CategoryController testCategoryController = new CategoryController(categoryService);
         
         // When - create dialog with controllers, expense == null (new expense)
         ExpenseDialog testDialog = execute(() -> {
-            ExpenseDialog ed = new ExpenseDialog(mainWindow, expenseController, categoryController, null);
+            ExpenseDialog ed = new ExpenseDialog(mainWindow, testExpenseController, testCategoryController, null);
             // Ensure non-modal
             if (ed.isModal()) {
                 ed.setModal(false);
@@ -666,12 +669,12 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         Expense expense = new Expense(1, LocalDate.of(2024, 1, 15), 
             new BigDecimal("50.00"), "Test Expense", 1);
         when(categoryService.getCategory(1)).thenReturn(new Category(1, "Food"));
-        ExpenseController expenseController = new ExpenseController(expenseService);
-        CategoryController categoryController = new CategoryController(categoryService);
+        ExpenseController testExpenseController = new ExpenseController(expenseService);
+        CategoryController testCategoryController = new CategoryController(categoryService);
         
         // When - create dialog with controllers, expense != null (edit expense)
         ExpenseDialog testDialog = execute(() -> {
-            ExpenseDialog ed = new ExpenseDialog(mainWindow, expenseController, categoryController, expense);
+            ExpenseDialog ed = new ExpenseDialog(mainWindow, testExpenseController, testCategoryController, expense);
             // Ensure non-modal
             if (ed.isModal()) {
                 ed.setModal(false);
@@ -700,7 +703,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testExpenseDialog_LoadExpenseData_WithNullExpense() throws SQLException {
+    public void testExpenseDialog_LoadExpenseData_WithNullExpense() {
         // Given - dialog with expense == null
         ExpenseDialog testDialog = execute(() -> {
             ExpenseDialog ed = new ExpenseDialog(mainWindow, expenseController, categoryController, null);
