@@ -354,6 +354,8 @@ jobs:
             -DskipITs=true \
             -Dmaven.compiler.source=17 \
             -Dmaven.compiler.target=17 \
-            -Dmaven.wagon.http.retryHandler.count=3 \
-            -Dmaven.wagon.httpconnectionManager.ttlSeconds=25
+            -Dmaven.wagon.http.retryHandler.count=5 \
+            -Dmaven.wagon.httpconnectionManager.ttlSeconds=30 \
+            -Dmaven.wagon.http.readTimeout=60000
+        continue-on-error: false
 
