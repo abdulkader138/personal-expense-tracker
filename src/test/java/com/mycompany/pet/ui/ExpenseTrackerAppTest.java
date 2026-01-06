@@ -112,15 +112,15 @@ public class ExpenseTrackerAppTest {
             try {
                 // When - execute main method
                 // This will execute:
-                // 1. All verbose coverage code in main() (lines 147-207)
-                // 2. The if (isHeadless) condition check (line 208)
-                // 3. The call to handleHeadlessEnvironment() (line 213)
+                // 1. All verbose coverage code in main()
+                // 2. The if (isHeadless) condition check
+                // 3. The call to handleHeadlessEnvironment()
                 // 4. All LOGGER.severe() calls in handleHeadlessEnvironment()
                 // 5. System.exit(1) which throws SecurityException
                 try {
                     ExpenseTrackerApp.main(new String[]{});
-                    // Should not reach here
-                    assertThat(false).as("Expected SecurityException from System.exit(1)").isTrue();
+                    // Should not reach here - System.exit(1) should throw SecurityException
+                    org.junit.Assert.fail("Expected SecurityException from System.exit(1)");
                 } catch (SecurityException e) {
                     // Expected - System.exit(1) was called
                     assertThat(e.getMessage()).isEqualTo("Exit with code 1");
@@ -158,9 +158,6 @@ public class ExpenseTrackerAppTest {
                 mockedGraphicsEnvironment.verify(GraphicsEnvironment::isHeadless, atLeastOnce());
                 // SwingUtilities.invokeLater should NOT be called in headless mode
                 mockedSwingUtilities.verifyNoInteractions();
-                // All verbose coverage code in main() should now be covered
-                // The if (isHeadless) condition check (line 208) should be covered
-                // The call to handleHeadlessEnvironment() (line 213) should be covered
             } finally {
                 System.setSecurityManager(originalSecurityManager);
             }

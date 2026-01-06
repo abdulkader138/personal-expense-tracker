@@ -222,10 +222,10 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         assertThat(dialog.target().isVisible()).isTrue();
         // Verify date field exists and is not empty
         String dateText = execute(() -> expenseDialog.dateField.getText());
-        assertThat(dateText).isNotNull();
-        assertThat(dateText).isNotEmpty();
-        // Verify it contains today's date
-        assertThat(dateText).isEqualTo(LocalDate.now().toString());
+        assertThat(dateText)
+            .isNotNull()
+            .isNotEmpty()
+            .isEqualTo(LocalDate.now().toString());
     }
 
     @Test
@@ -244,6 +244,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         
         // Then - dialog should still be visible (validation error shown)
         dialog.requireVisible();
+        assertThat(dialog.target().isVisible()).isTrue();
     }
 
     @Test
@@ -267,6 +268,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         
         // Then - dialog should still be visible (error handled)
         dialog.requireVisible();
+        assertThat(dialog.target().isVisible()).isTrue();
     }
 
     @Test
@@ -290,6 +292,8 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         
         // Then - dialog should be visible
         editDialogFixture.requireVisible();
+        assertThat(editDialogFixture.target().isVisible()).isTrue();
+        assertThat(editDialogFixture.target().getTitle()).isEqualTo("Edit Expense");
         editDialogFixture.cleanUp();
     }
 
@@ -314,6 +318,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         
         // Then - dialog should still be visible (error handled)
         errorDialogFixture.requireVisible();
+        assertThat(errorDialogFixture.target().isVisible()).isTrue();
         errorDialogFixture.cleanUp();
     }
 
@@ -369,6 +374,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         
         // Then - dialog should still be visible (validation error)
         dialog.requireVisible();
+        assertThat(dialog.target().isVisible()).isTrue();
     }
 
     @Test
@@ -389,6 +395,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         
         // Then - dialog should still be visible (validation error)
         dialog.requireVisible();
+        assertThat(dialog.target().isVisible()).isTrue();
     }
 
     @Test
@@ -508,6 +515,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         
         // Then - dialog should still be visible (category not set but no error)
         editDialogFixture.requireVisible();
+        assertThat(editDialogFixture.target().isVisible()).isTrue();
         editDialogFixture.cleanUp();
     }
 
