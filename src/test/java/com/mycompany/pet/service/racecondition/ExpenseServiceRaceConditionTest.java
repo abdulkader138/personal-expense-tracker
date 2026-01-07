@@ -135,8 +135,8 @@ public class ExpenseServiceRaceConditionTest {
 					} catch (SQLException e) {
 						throw new RuntimeException(e);
 					}
-				})).peek(Thread::start).collect(Collectors.toList());
-		await().atMost(10, TimeUnit.SECONDS).until(() -> threads.stream().noneMatch(t -> t.isAlive()));
+				})).peek(Thread::start).toList();
+		await().atMost(10, TimeUnit.SECONDS).until(() -> threads.stream().noneMatch(Thread::isAlive));
 
 		// Verify - all 10 threads should have created expenses
 		assertThat(expenses).hasSize(10);
@@ -169,8 +169,8 @@ public class ExpenseServiceRaceConditionTest {
 					} catch (SQLException e) {
 						throw new RuntimeException(e);
 					}
-				})).peek(Thread::start).collect(Collectors.toList());
-		await().atMost(10, TimeUnit.SECONDS).until(() -> threads.stream().noneMatch(t -> t.isAlive()));
+				})).peek(Thread::start).toList();
+		await().atMost(10, TimeUnit.SECONDS).until(() -> threads.stream().noneMatch(Thread::isAlive));
 
 		// Verify - expense should be deleted (only once, but multiple threads may try)
 		// The important thing is that the list is empty after all threads complete

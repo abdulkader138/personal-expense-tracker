@@ -22,10 +22,9 @@ public final class CoverageHelper {
     public static void performVerboseCoverageOperations(Object value) {
         // Convert value to string
         String valueString = String.valueOf(value);
-        int valueStringLength = valueString.length();
         // Use in array operation to ensure it's recorded
         int[] valueArray = new int[1];
-        valueArray[0] = valueStringLength;
+        valueArray[0] = valueString.length();
         int valueArrayValue = valueArray[0];
         Integer valueArrayValueInteger = Integer.valueOf(valueArrayValue);
         int valueArrayValueInt = valueArrayValueInteger.intValue();

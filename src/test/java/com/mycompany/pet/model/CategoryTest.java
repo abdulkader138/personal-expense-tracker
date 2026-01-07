@@ -118,14 +118,14 @@ public class CategoryTest {
     public void testHashCode_SameValues() {
         Category category1 = new Category(CATEGORY_ID, CATEGORY_NAME);
         Category category2 = new Category(CATEGORY_ID, CATEGORY_NAME);
-        assertThat(category1.hashCode()).isEqualTo(category2.hashCode());
+        assertThat(category1).hasSameHashCodeAs(category2);
     }
     
     @Test
     public void testHashCode_NullValues() {
         Category category1 = new Category(null, null);
         Category category2 = new Category(null, null);
-        assertThat(category1.hashCode()).isEqualTo(category2.hashCode());
+        assertThat(category1).hasSameHashCodeAs(category2);
     }
     
     @Test

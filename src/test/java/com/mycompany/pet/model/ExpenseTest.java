@@ -182,14 +182,14 @@ public class ExpenseTest {
             EXPENSE_DESCRIPTION, CATEGORY_ID);
         Expense expense2 = new Expense(EXPENSE_ID, EXPENSE_DATE, EXPENSE_AMOUNT, 
             EXPENSE_DESCRIPTION, CATEGORY_ID);
-        assertThat(expense1.hashCode()).isEqualTo(expense2.hashCode());
+        assertThat(expense1).hasSameHashCodeAs(expense2);
     }
     
     @Test
     public void testHashCode_NullValues() {
         Expense expense1 = new Expense(null, null, null, null, null);
         Expense expense2 = new Expense(null, null, null, null, null);
-        assertThat(expense1.hashCode()).isEqualTo(expense2.hashCode());
+        assertThat(expense1).hasSameHashCodeAs(expense2);
     }
     
     @Test

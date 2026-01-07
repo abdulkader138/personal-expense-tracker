@@ -341,7 +341,7 @@ public class ExpenseControllerTest {
         // Then
         assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
         assertThat(result.get()).isNotNull();
-        assertThat(result.get().size()).isEqualTo(1);
+        assertThat(result.get()).hasSize(1);
         verify(expenseService, timeout(2000)).getExpensesByMonth(2024, 1);
     }
     
@@ -464,7 +464,7 @@ public class ExpenseControllerTest {
         // Then
         assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
         assertThat(result.get()).isNotNull();
-        assertThat(result.get().size()).isEqualTo(1);
+        assertThat(result.get()).hasSize(1);
         verify(expenseService, timeout(2000)).getAllExpenses();
     }
     

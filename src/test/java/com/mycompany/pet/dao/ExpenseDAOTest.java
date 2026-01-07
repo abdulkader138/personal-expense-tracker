@@ -151,10 +151,6 @@ public class ExpenseDAOTest {
                 .append("amount", "50.00")
                 .append("description", "Coffee")
                 .append("categoryId", 1);
-        List<Document> documents = new ArrayList<>();
-        documents.add(doc1);
-        documents.add(doc2);
-
         MongoCursor<Document> cursor = mock(MongoCursor.class);
         when(expensesCollection.find()).thenReturn(findIterable);
         when(findIterable.sort(any())).thenReturn(findIterable);
@@ -187,10 +183,6 @@ public class ExpenseDAOTest {
                 .append("amount", "50.00")
                 .append("description", "Coffee")
                 .append("categoryId", 1);
-        List<Document> documents = new ArrayList<>();
-        documents.add(doc1);
-        documents.add(doc2);
-
         MongoCursor<Document> cursor = mock(MongoCursor.class);
         when(expensesCollection.find()).thenReturn(findIterable);
         when(findIterable.iterator()).thenReturn(cursor);
@@ -215,9 +207,6 @@ public class ExpenseDAOTest {
                 .append("amount", "100.50")
                 .append("description", "Lunch")
                 .append("categoryId", categoryId);
-        List<Document> documents = new ArrayList<>();
-        documents.add(doc);
-
         MongoCursor<Document> cursor = mock(MongoCursor.class);
         when(expensesCollection.find(Filters.eq("categoryId", categoryId))).thenReturn(findIterable);
         when(findIterable.sort(any())).thenReturn(findIterable);
@@ -297,10 +286,6 @@ public class ExpenseDAOTest {
                 .append("amount", "50.00")
                 .append("description", "Coffee")
                 .append("categoryId", categoryId);
-        List<Document> documents = new ArrayList<>();
-        documents.add(doc1);
-        documents.add(doc2);
-
         MongoCursor<Document> cursor = mock(MongoCursor.class);
         when(expensesCollection.find(Filters.eq("categoryId", categoryId))).thenReturn(findIterable);
         when(findIterable.iterator()).thenReturn(cursor);
@@ -332,10 +317,6 @@ public class ExpenseDAOTest {
                 .append("amount", "50.00")
                 .append("description", "Coffee")
                 .append("categoryId", 1);
-        List<Document> documents = new ArrayList<>();
-        documents.add(doc1);
-        documents.add(doc2);
-
         MongoCursor<Document> cursor = mock(MongoCursor.class);
         when(expensesCollection.find()).thenReturn(findIterable);
         when(findIterable.iterator()).thenReturn(cursor);

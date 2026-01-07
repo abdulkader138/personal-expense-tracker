@@ -112,13 +112,13 @@ public class CategoryServiceRaceConditionTest {
 		List<Thread> threads = IntStream.range(0, 10)
 				.mapToObj(i -> new Thread(() -> {
 					try {
-					categoryService.createCategory(categoryName);
-				} catch (Exception e) {
-					// Some threads might fail in race conditions - that's expected
-					// Don't log to avoid cluttering test output
-				}
-			})).peek(Thread::start).collect(Collectors.toList());
-		await().atMost(10, TimeUnit.SECONDS).until(() -> threads.stream().noneMatch(t -> t.isAlive()));
+						categoryService.createCategory(categoryName);
+					} catch (Exception e) {
+						// Some threads might fail in race conditions - that's expected
+						// Don't log to avoid cluttering test output
+					}
+				})).peek(Thread::start).toList();
+		await().atMost(10, TimeUnit.SECONDS).until(() -> threads.stream().noneMatch(Thread::isAlive));
 
 		// Verify - all 10 threads should attempt to create categories
 		// In a race condition, some might fail, but the service should handle it gracefully
@@ -157,8 +157,8 @@ public class CategoryServiceRaceConditionTest {
 					} catch (SQLException e) {
 						throw new RuntimeException(e);
 					}
-				})).peek(Thread::start).collect(Collectors.toList());
-		await().atMost(10, TimeUnit.SECONDS).until(() -> threads.stream().noneMatch(t -> t.isAlive()));
+				})).peek(Thread::start).toList();
+		await().atMost(10, TimeUnit.SECONDS).until(() -> threads.stream().noneMatch(Thread::isAlive));
 
 		// Verify - category should be deleted (only once, but multiple threads may try)
 		// The important thing is that the list is empty after all threads complete

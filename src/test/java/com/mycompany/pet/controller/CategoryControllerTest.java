@@ -17,7 +17,6 @@ import org.junit.Test;
 
 import com.mycompany.pet.model.Category;
 import com.mycompany.pet.service.CategoryService;
-import com.mycompany.pet.service.CategoryService;
 
 /**
  * Tests for CategoryController.
@@ -75,72 +74,28 @@ public class CategoryControllerTest {
     }
     
     @Test
-    public void testCreateCategory_WithNullName() throws InterruptedException {
-        // Given
-        CountDownLatch latch = new CountDownLatch(1);
-        AtomicReference<String> errorResult = new AtomicReference<>();
+    public void testCreateCategory_WithInvalidNames() throws InterruptedException {
+        String[] invalidNames = { null, "", "   " };
         
-        // When
-        controller.createCategory(null,
-            category -> {
-                latch.countDown();
-            },
-            error -> {
-                errorResult.set(error);
-                latch.countDown();
-            }
-        );
-        
-        // Then
-        assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
-        assertThat(errorResult.get()).isNotNull().isEqualTo("Category name cannot be empty.");
-        // Service should not be called when name is null
-    }
-    
-    @Test
-    public void testCreateCategory_WithEmptyName() throws InterruptedException {
-        // Given
-        CountDownLatch latch = new CountDownLatch(1);
-        AtomicReference<String> errorResult = new AtomicReference<>();
-        
-        // When
-        controller.createCategory("",
-            category -> {
-                latch.countDown();
-            },
-            error -> {
-                errorResult.set(error);
-                latch.countDown();
-            }
-        );
-        
-        // Then
-        assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
-        assertThat(errorResult.get()).isNotNull().isEqualTo("Category name cannot be empty.");
-        // Service should not be called when name is empty
-    }
-    
-    @Test
-    public void testCreateCategory_WithWhitespaceOnlyName() throws InterruptedException {
-        // Given
-        CountDownLatch latch = new CountDownLatch(1);
-        AtomicReference<String> errorResult = new AtomicReference<>();
-        
-        // When
-        controller.createCategory("   ",
-            category -> {
-                latch.countDown();
-            },
-            error -> {
-                errorResult.set(error);
-                latch.countDown();
-            }
-        );
-        
-        // Then
-        assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
-        assertThat(errorResult.get()).isNotNull().isEqualTo("Category name cannot be empty.");
-        // Service should not be called when name is whitespace only
+        for (String invalidName : invalidNames) {
+            // Given
+            CountDownLatch latch = new CountDownLatch(1);
+            AtomicReference<String> errorResult = new AtomicReference<>();
+            
+            // When
+            controller.createCategory(invalidName,
+                category -> latch.countDown(),
+                error -> {
+                    errorResult.set(error);
+                    latch.countDown();
+                }
+            );
+            
+            // Then
+            assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
+            assertThat(errorResult.get()).isNotNull().isEqualTo("Category name cannot be empty.");
+            // Service should not be called when name is invalid
+        }
     }
     
     @Test
@@ -196,72 +151,28 @@ public class CategoryControllerTest {
     }
     
     @Test
-    public void testUpdateCategory_WithNullName() throws InterruptedException {
-        // Given
-        CountDownLatch latch = new CountDownLatch(1);
-        AtomicReference<String> errorResult = new AtomicReference<>();
+    public void testUpdateCategory_WithInvalidNames() throws InterruptedException {
+        String[] invalidNames = { null, "", "   " };
         
-        // When
-        controller.updateCategory(CATEGORY_ID_1, null,
-            category -> {
-                latch.countDown();
-            },
-            error -> {
-                errorResult.set(error);
-                latch.countDown();
-            }
-        );
-        
-        // Then
-        assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
-        assertThat(errorResult.get()).isNotNull().isEqualTo("Category name cannot be empty.");
-        // Service should not be called when name is null
-    }
-    
-    @Test
-    public void testUpdateCategory_WithEmptyName() throws InterruptedException {
-        // Given
-        CountDownLatch latch = new CountDownLatch(1);
-        AtomicReference<String> errorResult = new AtomicReference<>();
-        
-        // When
-        controller.updateCategory(CATEGORY_ID_1, "",
-            category -> {
-                latch.countDown();
-            },
-            error -> {
-                errorResult.set(error);
-                latch.countDown();
-            }
-        );
-        
-        // Then
-        assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
-        assertThat(errorResult.get()).isNotNull().isEqualTo("Category name cannot be empty.");
-        // Service should not be called when name is empty
-    }
-    
-    @Test
-    public void testUpdateCategory_WithWhitespaceOnlyName() throws InterruptedException {
-        // Given
-        CountDownLatch latch = new CountDownLatch(1);
-        AtomicReference<String> errorResult = new AtomicReference<>();
-        
-        // When
-        controller.updateCategory(CATEGORY_ID_1, "   ",
-            category -> {
-                latch.countDown();
-            },
-            error -> {
-                errorResult.set(error);
-                latch.countDown();
-            }
-        );
-        
-        // Then
-        assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
-        assertThat(errorResult.get()).isNotNull().isEqualTo("Category name cannot be empty.");
-        // Service should not be called when name is whitespace only
+        for (String invalidName : invalidNames) {
+            // Given
+            CountDownLatch latch = new CountDownLatch(1);
+            AtomicReference<String> errorResult = new AtomicReference<>();
+            
+            // When
+            controller.updateCategory(CATEGORY_ID_1, invalidName,
+                category -> latch.countDown(),
+                error -> {
+                    errorResult.set(error);
+                    latch.countDown();
+                }
+            );
+            
+            // Then
+            assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
+            assertThat(errorResult.get()).isNotNull().isEqualTo("Category name cannot be empty.");
+            // Service should not be called when name is invalid
+        }
     }
     
     @Test
@@ -351,9 +262,7 @@ public class CategoryControllerTest {
         
         // When
         controller.deleteCategory(CATEGORY_ID_1,
-            () -> {
-                latch.countDown();
-            },
+            latch::countDown,
             error -> {
                 errorResult.set(error);
                 latch.countDown();
@@ -377,9 +286,7 @@ public class CategoryControllerTest {
         
         // When
         controller.deleteCategory(CATEGORY_ID_1,
-            () -> {
-                latch.countDown();
-            },
+            latch::countDown,
             error -> {
                 errorResult.set(error);
                 latch.countDown();
@@ -416,7 +323,7 @@ public class CategoryControllerTest {
         // Then
         assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
         assertThat(result.get()).isNotNull();
-        assertThat(result.get().size()).isEqualTo(1);
+        assertThat(result.get()).hasSize(1);
         verify(categoryService, timeout(2000)).getAllCategories();
     }
     

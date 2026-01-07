@@ -540,6 +540,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         
         // Then - dialog should still be visible (error handled)
         editDialogFixture.requireVisible();
+        assertThat(editDialog.isVisible()).isTrue();
         editDialogFixture.cleanUp();
     }
 
