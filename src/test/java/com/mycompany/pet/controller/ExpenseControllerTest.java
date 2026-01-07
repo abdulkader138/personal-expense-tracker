@@ -277,9 +277,7 @@ public class ExpenseControllerTest {
         
         // When
         controller.deleteExpense(EXPENSE_ID_1,
-            () -> {
-                latch.countDown();
-            },
+            latch::countDown,
             error -> {
                 errorResult.set(error);
                 latch.countDown();
@@ -302,9 +300,7 @@ public class ExpenseControllerTest {
         
         // When
         controller.deleteExpense(EXPENSE_ID_1,
-            () -> {
-                latch.countDown();
-            },
+            latch::countDown,
             error -> {
                 errorResult.set(error);
                 latch.countDown();

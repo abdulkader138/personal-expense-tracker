@@ -35,7 +35,7 @@ public class CategoryServiceJUnit5ParameterizedTest {
     private CategoryService categoryService;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         categoryService = new CategoryService(categoryDAO);
     }
 
@@ -53,7 +53,7 @@ public class CategoryServiceJUnit5ParameterizedTest {
 
     @ParameterizedTest(name = "Create category with name: {0}, expected: {1}")
     @MethodSource("categoryNamesProvider")
-    public void testCreateCategoryWithVariousNames(String categoryName, String expectedName) throws SQLException {
+    void testCreateCategoryWithVariousNames(String categoryName, String expectedName) throws SQLException {
         // Given
         when(categoryDAO.create(any(Category.class))).thenAnswer(invocation -> {
             Category cat = invocation.getArgument(0);
@@ -73,7 +73,7 @@ public class CategoryServiceJUnit5ParameterizedTest {
     // Example with @ValueSource for simple values
     @ParameterizedTest(name = "Get category with ID: {0}")
     @org.junit.jupiter.params.provider.ValueSource(ints = { 1, 2, 3, 100, 999 })
-    public void testGetCategoryWithVariousIds(int categoryId) throws SQLException {
+    void testGetCategoryWithVariousIds(int categoryId) throws SQLException {
         // Given
         Category expectedCategory = new Category(categoryId, "Category " + categoryId);
         when(categoryDAO.findById(categoryId)).thenReturn(expectedCategory);

@@ -132,18 +132,20 @@ public class CategoryTest {
     public void testToString() {
         Category category = new Category(CATEGORY_ID, CATEGORY_NAME);
         String toString = category.toString();
-        assertThat(toString).contains("Category{");
-        assertThat(toString).contains("categoryId=" + CATEGORY_ID);
-        assertThat(toString).contains("name='" + CATEGORY_NAME + "'");
+        assertThat(toString)
+            .contains("Category{")
+            .contains("categoryId=" + CATEGORY_ID)
+            .contains("name='" + CATEGORY_NAME + "'");
     }
     
     @Test
     public void testToString_WithNullValues() {
         Category category = new Category(null, null);
         String toString = category.toString();
-        assertThat(toString).contains("Category{");
-        assertThat(toString).contains("categoryId=null");
-        assertThat(toString).contains("name='null'");
+        assertThat(toString)
+            .contains("Category{")
+            .contains("categoryId=null")
+            .contains("name='null'");
     }
 }
 

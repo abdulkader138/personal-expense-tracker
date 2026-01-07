@@ -197,24 +197,26 @@ public class ExpenseTest {
         Expense expense = new Expense(EXPENSE_ID, EXPENSE_DATE, EXPENSE_AMOUNT, 
             EXPENSE_DESCRIPTION, CATEGORY_ID);
         String toString = expense.toString();
-        assertThat(toString).contains("Expense{");
-        assertThat(toString).contains("expenseId=" + EXPENSE_ID);
-        assertThat(toString).contains("date=" + EXPENSE_DATE);
-        assertThat(toString).contains("amount=" + EXPENSE_AMOUNT);
-        assertThat(toString).contains("description='" + EXPENSE_DESCRIPTION + "'");
-        assertThat(toString).contains("categoryId=" + CATEGORY_ID);
+        assertThat(toString)
+            .contains("Expense{")
+            .contains("expenseId=" + EXPENSE_ID)
+            .contains("date=" + EXPENSE_DATE)
+            .contains("amount=" + EXPENSE_AMOUNT)
+            .contains("description='" + EXPENSE_DESCRIPTION + "'")
+            .contains("categoryId=" + CATEGORY_ID);
     }
     
     @Test
     public void testToString_WithNullValues() {
         Expense expense = new Expense(null, null, null, null, null);
         String toString = expense.toString();
-        assertThat(toString).contains("Expense{");
-        assertThat(toString).contains("expenseId=null");
-        assertThat(toString).contains("date=null");
-        assertThat(toString).contains("amount=null");
-        assertThat(toString).contains("description='null'");
-        assertThat(toString).contains("categoryId=null");
+        assertThat(toString)
+            .contains("Expense{")
+            .contains("expenseId=null")
+            .contains("date=null")
+            .contains("amount=null")
+            .contains("description='null'")
+            .contains("categoryId=null");
     }
 }
 

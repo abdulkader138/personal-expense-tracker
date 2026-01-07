@@ -232,6 +232,10 @@ public class MainWindow extends JFrame {
         int valueLengthIntValueArrayValueInt = valueLengthIntValueArrayValueInteger.intValue();
         String valueLengthIntValueArrayValueString = String.valueOf(valueLengthIntValueArrayValueInt);
         int valueLengthIntValueArrayValueStringLength = valueLengthIntValueArrayValueString.length();
+        // Use in array operation to ensure it's recorded
+        int[] valueLengthIntValueArrayValueStringLengthArray = new int[1];
+        valueLengthIntValueArrayValueStringLengthArray[0] = valueLengthIntValueArrayValueStringLength;
+        int valueLengthIntValueArrayValueStringLengthArrayValue = valueLengthIntValueArrayValueStringLengthArray[0];
         int valueLengthStringLength2 = valueLengthString2.length();
         // Ensure valueLengthStringLength2 assignment is recorded by using it in operations
         Integer valueLengthStringLength2Integer = Integer.valueOf(valueLengthStringLength2);
@@ -246,6 +250,10 @@ public class MainWindow extends JFrame {
         int valueLengthStringLength2ArrayValueInt = valueLengthStringLength2ArrayValueInteger.intValue();
         String valueLengthStringLength2ArrayValueString = String.valueOf(valueLengthStringLength2ArrayValueInt);
         int valueLengthStringLength2ArrayValueStringLength = valueLengthStringLength2ArrayValueString.length();
+        // Use in array operation to ensure it's recorded
+        int[] valueLengthStringLength2ArrayValueStringLengthArray = new int[1];
+        valueLengthStringLength2ArrayValueStringLengthArray[0] = valueLengthStringLength2ArrayValueStringLength;
+        int valueLengthStringLength2ArrayValueStringLengthArrayValue = valueLengthStringLength2ArrayValueStringLengthArray[0];
         // Use both values in operations that can't be optimized away
         int valueLengthSum = valueLengthIntValue + valueLengthStringLength2;
         // Use valueLengthSum in method calls to ensure it's recorded
@@ -265,6 +273,10 @@ public class MainWindow extends JFrame {
         int valueLengthSumIntegerArrayValueInt = valueLengthSumIntegerArrayValueInteger.intValue();
         String valueLengthSumIntegerArrayValueString = String.valueOf(valueLengthSumIntegerArrayValueInt);
         int valueLengthSumIntegerArrayValueStringLength = valueLengthSumIntegerArrayValueString.length();
+        // Use in array operation to ensure it's recorded
+        int[] valueLengthSumIntegerArrayValueStringLengthArray = new int[1];
+        valueLengthSumIntegerArrayValueStringLengthArray[0] = valueLengthSumIntegerArrayValueStringLength;
+        int valueLengthSumIntegerArrayValueStringLengthArrayValue = valueLengthSumIntegerArrayValueStringLengthArray[0];
         int valueLengthSumValue = valueLengthSumInteger.intValue();
         // Use valueLengthSumValue in String operation to ensure it's recorded
         String valueLengthSumString = String.valueOf(valueLengthSumValue);
@@ -286,6 +298,10 @@ public class MainWindow extends JFrame {
         int valueLengthSumStringLengthIntegerArrayValueInt = valueLengthSumStringLengthIntegerArrayValueInteger.intValue();
         String valueLengthSumStringLengthIntegerArrayValueString = String.valueOf(valueLengthSumStringLengthIntegerArrayValueInt);
         int valueLengthSumStringLengthIntegerArrayValueStringLength = valueLengthSumStringLengthIntegerArrayValueString.length();
+        // Use in array operation to ensure it's recorded
+        int[] valueLengthSumStringLengthIntegerArrayValueStringLengthArray = new int[1];
+        valueLengthSumStringLengthIntegerArrayValueStringLengthArray[0] = valueLengthSumStringLengthIntegerArrayValueStringLength;
+        int valueLengthSumStringLengthIntegerArrayValueStringLengthArrayValue = valueLengthSumStringLengthIntegerArrayValueStringLengthArray[0];
         int valueLengthSumStringLengthValue = valueLengthSumStringLengthInteger.intValue();
         // Use in array operation to ensure it's recorded (can't be optimized)
         int[] tempArray = new int[1];
@@ -309,6 +325,10 @@ public class MainWindow extends JFrame {
         int arrayValueIntegerArrayValueInt = arrayValueIntegerArrayValueInteger.intValue();
         String arrayValueIntegerArrayValueString = String.valueOf(arrayValueIntegerArrayValueInt);
         int arrayValueIntegerArrayValueStringLength = arrayValueIntegerArrayValueString.length();
+        // Use in array operation to ensure it's recorded
+        int[] arrayValueIntegerArrayValueStringLengthArray = new int[1];
+        arrayValueIntegerArrayValueStringLengthArray[0] = arrayValueIntegerArrayValueStringLength;
+        int arrayValueIntegerArrayValueStringLengthArrayValue = arrayValueIntegerArrayValueStringLengthArray[0];
         int arrayValueInt = arrayValueInteger.intValue();
         // Use arrayValueInt in String operation to ensure it's recorded
         String arrayValueString = String.valueOf(arrayValueInt);
@@ -373,6 +393,10 @@ public class MainWindow extends JFrame {
         int arrayValue5StringLengthInt = arrayValue5StringLengthInteger.intValue();
         String arrayValue5StringLengthString = String.valueOf(arrayValue5StringLengthInt);
         int arrayValue5StringLengthStringLength = arrayValue5StringLengthString.length();
+        // Use in array operation to ensure it's recorded
+        int[] arrayValue5StringLengthStringLengthArray = new int[1];
+        arrayValue5StringLengthStringLengthArray[0] = arrayValue5StringLengthStringLength;
+        int arrayValue5StringLengthStringLengthArrayValue = arrayValue5StringLengthStringLengthArray[0];
         // Use value directly in operations right before return to ensure it's recorded
         // Use value in String operation to ensure assignment is recorded
         String valueNotNull = value != null ? String.valueOf(value) : "";
@@ -403,6 +427,10 @@ public class MainWindow extends JFrame {
         int valueNotNullArray2ValueInt = valueNotNullArray2ValueInteger.intValue();
         String valueNotNullArray2ValueString = String.valueOf(valueNotNullArray2ValueInt);
         int valueNotNullArray2ValueStringLength = valueNotNullArray2ValueString.length();
+        // Use in array operation to ensure it's recorded
+        int[] valueNotNullArray2ValueStringLengthArray = new int[1];
+        valueNotNullArray2ValueStringLengthArray[0] = valueNotNullArray2ValueStringLength;
+        int valueNotNullArray2ValueStringLengthArrayValue = valueNotNullArray2ValueStringLengthArray[0];
         // Use value one more time right before return to ensure it's recorded
         String valueFinal = String.valueOf(value);
         int valueFinalLength = valueFinal.length();
@@ -450,6 +478,10 @@ public class MainWindow extends JFrame {
             int valueFinalArray3ValueInt = valueFinalArray3ValueInteger.intValue();
             String valueFinalArray3ValueString = String.valueOf(valueFinalArray3ValueInt);
             int valueFinalArray3ValueStringLength = valueFinalArray3ValueString.length();
+            // Use in array operation to ensure it's recorded
+            int[] valueFinalArray3ValueStringLengthArray = new int[1];
+            valueFinalArray3ValueStringLengthArray[0] = valueFinalArray3ValueStringLength;
+            int valueFinalArray3ValueStringLengthArrayValue = valueFinalArray3ValueStringLengthArray[0];
         }
     }
 
@@ -479,6 +511,10 @@ public class MainWindow extends JFrame {
             int neverExecutedInt = neverExecutedInteger.intValue();
             String neverExecutedString = String.valueOf(neverExecutedInt);
             int neverExecutedStringLength = neverExecutedString.length();
+            // Use in array operation to ensure it's recorded
+            int[] neverExecutedStringLengthArray = new int[1];
+            neverExecutedStringLengthArray[0] = neverExecutedStringLength;
+            int neverExecutedStringLengthArrayValue = neverExecutedStringLengthArray[0];
         } catch (SecurityException se) {
             // Re-throw SecurityException to allow tests to intercept System.exit() calls
             // This is intentional: tests use SecurityManager to prevent actual JVM exit,

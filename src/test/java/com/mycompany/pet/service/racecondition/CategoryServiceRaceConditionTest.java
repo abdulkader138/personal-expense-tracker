@@ -38,7 +38,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.junit.After;
@@ -124,7 +123,7 @@ public class CategoryServiceRaceConditionTest {
 		// In a race condition, some might fail, but the service should handle it gracefully
 		// The important thing is that the service handles concurrent access without crashing
 		// We expect at least 8 successful creations (allowing for 2 failures due to race conditions)
-		assertThat(categories.size()).isGreaterThanOrEqualTo(8);
+		assertThat(categories).hasSizeGreaterThanOrEqualTo(8);
 		// Also verify that all created categories have unique IDs (thread-safe)
 		assertThat(categories.stream().map(Category::getCategoryId).distinct().count())
 			.isEqualTo(categories.size());
