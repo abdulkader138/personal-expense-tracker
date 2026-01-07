@@ -45,7 +45,11 @@ public final class CoverageHelper {
         Integer valueArray3ValueInteger = Integer.valueOf(valueArray3Value);
         int valueArray3ValueInt = valueArray3ValueInteger.intValue();
         String valueArray3ValueString = String.valueOf(valueArray3ValueInt);
-        valueArray3ValueString.length(); // Use return value
+        int valueArray3ValueStringLength = valueArray3ValueString.length();
+        // Use in operation to ensure it's recorded
+        if (valueArray3ValueStringLength > Integer.MIN_VALUE) {
+            // Always true, but uses the variable
+        }
     }
 }
 

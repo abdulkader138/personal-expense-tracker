@@ -27,7 +27,7 @@ import com.mycompany.pet.model.Category;
  * JUnit 5 provides more flexible parameterized test options than JUnit 4.
  */
 @ExtendWith(MockitoExtension.class)
-public class CategoryServiceJUnit5ParameterizedTest {
+class CategoryServiceJUnit5ParameterizedTest {
 
     @Mock
     private CategoryDAO categoryDAO;
