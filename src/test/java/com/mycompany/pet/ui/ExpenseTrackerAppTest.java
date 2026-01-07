@@ -901,7 +901,7 @@ public class ExpenseTrackerAppTest {
                 // 4. Line 213: handleHeadlessEnvironment(); - THIS MUST BE CALLED
                 ExpenseTrackerApp.main(new String[]{});
                 // Should not reach here
-                    org.junit.Assert.fail("Expected SecurityException");
+                org.junit.Assert.fail("Expected SecurityException");
             } catch (SecurityException e) {
                 // Expected - System.exit(1) was called
                 assertThat(e.getMessage()).isEqualTo("Exit with code 1");

@@ -331,7 +331,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_LoadCategories() throws SQLException {
+    public void testCategoryDialog_LoadCategories() {
         ensureDialogCreated();
         execute(() -> {
             categoryDialog.loadCategories();
@@ -357,7 +357,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         
         // Table should be empty but no exception should be thrown
         JTableFixture table = dialog.table();
-        assertThat(table.target().getRowCount()).isEqualTo(0);
+        assertThat(table.target().getRowCount()).isZero();
         
         // No error message should be shown
         String message = execute(() -> {
@@ -396,7 +396,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         
         // Table should be empty (no data loaded due to error)
         JTableFixture table = dialog.table();
-        assertThat(table.target().getRowCount()).isEqualTo(0);
+        assertThat(table.target().getRowCount()).isZero();
     }
 
     @Test
@@ -536,7 +536,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_UpdateSelectedCategory_WithSelection() throws SQLException {
+    public void testCategoryDialog_UpdateSelectedCategory_WithSelection() {
         ensureDialogCreated();
         execute(() -> {
             categoryDialog.loadCategories();
@@ -557,7 +557,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_UpdateSelectedCategory_WithEmptyName() throws SQLException {
+    public void testCategoryDialog_UpdateSelectedCategory_WithEmptyName() {
         ensureDialogCreated();
         System.setProperty("test.mode", "true");
         
@@ -614,7 +614,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_UpdateSelectedCategory_WithNullName() throws SQLException {
+    public void testCategoryDialog_UpdateSelectedCategory_WithNullName() {
         ensureDialogCreated();
         System.setProperty("test.mode", "true");
         
@@ -755,7 +755,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_UpdateSelectedCategory_StopsCellEditing() throws SQLException {
+    public void testCategoryDialog_UpdateSelectedCategory_StopsCellEditing() {
         ensureDialogCreated();
         execute(() -> {
             categoryDialog.loadCategories();
@@ -797,7 +797,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_DeleteSelectedCategory_WithSelection() throws SQLException {
+    public void testCategoryDialog_DeleteSelectedCategory_WithSelection() {
         ensureDialogCreated();
         execute(() -> {
             categoryDialog.loadCategories();
@@ -957,8 +957,6 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         execute(() -> {
             // Verify label exists
             assertThat(categoryDialog.labelMessage).isNotNull();
-            // Verify test mode is detected
-            boolean isTest = java.awt.EventQueue.isDispatchThread();
             categoryDialog.showMessage("Test message");
         });
         
@@ -1229,7 +1227,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         
         // Then - table should be empty
         int rowCount = execute(() -> categoryDialog.categoryTableModel.getRowCount());
-        assertThat(rowCount).isEqualTo(0);
+        assertThat(rowCount).isZero();
     }
 
     @Test
@@ -1282,7 +1280,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_LoadCategories_ProductionMode_NonErrorMessage() throws SQLException {
+    public void testCategoryDialog_LoadCategories_ProductionMode_NonErrorMessage() {
         ensureDialogCreated();
         // Clear test mode to test production path
         System.clearProperty("test.mode");
@@ -3537,7 +3535,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             // Table should be empty initially
             int rowCount = execute(() -> testDialog.categoryTable.getRowCount());
             assertThat(rowCount).as("In test mode, categories should not be loaded from constructor")
-                .isEqualTo(0);
+                .isZero();
             
             
             dialogFixture.cleanUp();

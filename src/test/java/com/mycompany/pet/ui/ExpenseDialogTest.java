@@ -358,7 +358,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testExpenseDialog_Save_WithInvalidDate() throws SQLException {
+    public void testExpenseDialog_Save_WithInvalidDate() {
         // Given - invalid date
         execute(() -> {
             if (expenseDialog.categoryComboBox.getItemCount() > 0) {
@@ -379,7 +379,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testExpenseDialog_Save_WithInvalidAmount() throws SQLException {
+    public void testExpenseDialog_Save_WithInvalidAmount() {
         // Given - invalid amount
         execute(() -> {
             if (expenseDialog.categoryComboBox.getItemCount() > 0) {

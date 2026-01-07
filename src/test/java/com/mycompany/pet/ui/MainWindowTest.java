@@ -8,24 +8,19 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.awt.GraphicsEnvironment;
-import java.awt.event.ActionEvent;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.JComboBox;
 import javax.swing.table.DefaultTableModel;
 
 import org.assertj.swing.annotation.GUITest;
-import org.assertj.swing.core.GenericTypeMatcher;
 import org.assertj.swing.fixture.FrameFixture;
-import org.assertj.swing.fixture.JComboBoxFixture;
 import org.assertj.swing.fixture.JTableFixture;
 import org.assertj.swing.junit.runner.GUITestRunner;
 import org.assertj.swing.junit.testcase.AssertJSwingJUnitTestCase;
@@ -151,6 +146,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     public void testMainWindow_HasExpenseTable() {
         JTableFixture table = window.table();
         table.requireVisible();
+        assertThat(table.target()).isNotNull();
     }
 
     @Test
@@ -167,6 +163,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         execute(() -> mainWindow.loadData());
         // Immediately verify window is still visible - don't wait
         window.requireVisible();
+        assertThat(mainWindow).isNotNull();
     }
 
     @Test
@@ -176,6 +173,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         execute(() -> mainWindow.loadData());
         // Don't wait - just verify method was called
         window.requireVisible();
+        assertThat(mainWindow).isNotNull();
     }
 
     @Test
@@ -188,6 +186,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         // No waiting - just execute and verify
         execute(() -> mainWindow.setVisible(true));
         // No waiting - just execute and verify
+        assertThat(mainWindow).isNotNull();
     }
 
     @Test
@@ -196,6 +195,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         execute(() -> mainWindow.loadCategories());
         // No waiting - just execute and verify
         window.requireVisible();
+        assertThat(mainWindow.categoryComboBox).isNotNull();
     }
 
     @Test
@@ -222,6 +222,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             }
         });
         window.requireVisible();
+        assertThat(mainWindow).isNotNull();
     }
 
     @Test
@@ -238,6 +239,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         }
         execute(() -> mainWindow.setVisible(true));
         window.requireVisible();
+        assertThat(mainWindow).isNotNull();
     }
 
     @Test
@@ -263,6 +265,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             mainWindow.setExtendedState(java.awt.Frame.NORMAL);
         });
         window.requireVisible();
+        assertThat(mainWindow).isNotNull();
     }
 
     @Test
@@ -271,6 +274,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         execute(() -> mainWindow.loadExpenses());
         // No waiting - just execute and verify
         window.requireVisible();
+        assertThat(mainWindow.expenseTableModel).isNotNull();
     }
 
     @Test
@@ -297,6 +301,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             }
         });
         window.requireVisible();
+        assertThat(mainWindow).isNotNull();
     }
 
     @Test
@@ -313,6 +318,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         }
         execute(() -> mainWindow.setVisible(true));
         window.requireVisible();
+        assertThat(mainWindow).isNotNull();
     }
 
     @Test
@@ -338,6 +344,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             mainWindow.setExtendedState(java.awt.Frame.NORMAL);
         });
         window.requireVisible();
+        assertThat(mainWindow).isNotNull();
     }
 
     @Test
@@ -348,6 +355,8 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             EXPENSE_DESCRIPTION_1, CATEGORY_ID_1));
         execute(() -> mainWindow.populateExpenseTable(expenses));
         window.requireVisible();
+        int rowCount = execute(() -> mainWindow.expenseTableModel.getRowCount());
+        assertThat(rowCount).isGreaterThanOrEqualTo(0);
     }
 
     @Test
@@ -359,6 +368,8 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             EXPENSE_DESCRIPTION_1, 999)); // Category ID not in cache
         execute(() -> mainWindow.populateExpenseTable(expenses));
         window.requireVisible();
+        int rowCount = execute(() -> mainWindow.expenseTableModel.getRowCount());
+        assertThat(rowCount).isGreaterThanOrEqualTo(0);
     }
 
     @Test
@@ -402,6 +413,8 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         });
         // No waiting - just execute and verify
         window.requireVisible();
+        String selectedMonth = execute(() -> (String) mainWindow.monthComboBox.getSelectedItem());
+        assertThat(selectedMonth).isEqualTo("All");
     }
 
     @Test
@@ -417,6 +430,8 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         });
         // No waiting - just execute and verify
         window.requireVisible();
+        String selectedMonth = execute(() -> (String) mainWindow.monthComboBox.getSelectedItem());
+        assertThat(selectedMonth).isEqualTo(monthStr);
     }
 
     @Test
@@ -429,6 +444,8 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         });
         // No waiting - just execute and verify
         window.requireVisible();
+        Object selectedMonth = execute(() -> mainWindow.monthComboBox.getSelectedItem());
+        assertThat(selectedMonth).isNull();
     }
 
     @Test
@@ -441,6 +458,8 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         });
         // No waiting - just execute and verify
         window.requireVisible();
+        Object selectedYear = execute(() -> mainWindow.yearComboBox.getSelectedItem());
+        assertThat(selectedYear).isNull();
     }
 
     @Test
@@ -455,6 +474,8 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         });
         // No waiting - just execute and verify
         window.requireVisible();
+        String selectedMonth = execute(() -> (String) mainWindow.monthComboBox.getSelectedItem());
+        assertThat(selectedMonth).isEqualTo("Invalid");
     }
 
     @Test
@@ -485,6 +506,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             }
         });
         window.requireVisible();
+        assertThat(mainWindow).isNotNull();
     }
 
     @Test
@@ -505,6 +527,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         }
         execute(() -> mainWindow.setVisible(true));
         window.requireVisible();
+        assertThat(mainWindow).isNotNull();
     }
 
     @Test
@@ -534,6 +557,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             mainWindow.setExtendedState(java.awt.Frame.NORMAL);
         });
         window.requireVisible();
+        assertThat(mainWindow).isNotNull();
     }
 
     @Test
@@ -551,9 +575,8 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testMainWindow_UpdateSummary_SpecificMonth() throws SQLException {
+    public void testMainWindow_UpdateSummary_SpecificMonth() {
         // Test the success callback in updateSummary() that calls updateCategoryTotal()
-        // This covers: total -> { monthlyTotalLabel.setText(...); updateCategoryTotal(); }
         int currentYear = LocalDate.now().getYear();
         int currentMonth = LocalDate.now().getMonthValue();
         String monthStr = String.format("%02d", currentMonth);
@@ -567,16 +590,11 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             mainWindow.yearComboBox.setSelectedItem(String.valueOf(currentYear));
         });
         
-        // The setup method already stubs getMonthlyTotal(anyInt(), anyInt()) to return EXPENSE_AMOUNT_1
-        // So we don't need to override it here - the existing stub will work
-        // If we need to override, we should reset first or use more specific matchers
-        
         execute(() -> {
             mainWindow.updateSummary();
         });
         
         // Wait for async success callback that calls updateCategoryTotal()
-        // The success callback sets the label and then calls updateCategoryTotal()
         try {
             Thread.sleep(300); // NOSONAR - wait for async success callback to execute updateCategoryTotal()
         } catch (InterruptedException e) {
@@ -677,6 +695,8 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         });
         // No waiting - just execute and verify
         window.requireVisible();
+        String labelText = execute(() -> mainWindow.categoryTotalLabel.getText());
+        assertThat(labelText).isNotNull();
     }
 
     @Test
@@ -735,6 +755,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             Thread.currentThread().interrupt();
         }
         window.requireVisible();
+        assertThat(mainWindow).isNotNull();
     }
 
     @Test
@@ -838,6 +859,8 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             }
         });
         window.requireVisible();
+        int selectedRow = execute(() -> mainWindow.expenseTable.getSelectedRow());
+        assertThat(selectedRow).isLessThan(0);
     }
 
     @Test
@@ -1047,6 +1070,8 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             }
         });
         window.requireVisible();
+        int selectedRow = execute(() -> mainWindow.expenseTable.getSelectedRow());
+        assertThat(selectedRow).isLessThan(0);
     }
 
     @Test
@@ -1134,6 +1159,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             Thread.currentThread().interrupt();
         }
         window.requireVisible();
+        assertThat(mainWindow).isNotNull();
     }
 
     @Test

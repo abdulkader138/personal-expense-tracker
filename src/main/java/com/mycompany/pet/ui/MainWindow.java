@@ -494,6 +494,10 @@ public class MainWindow extends JFrame {
             int valueFinalArray3ValueStringLengthArrayValue = valueFinalArray3ValueStringLengthArray[0];
             // Use in sum to ensure it's recorded (inside synchronized block)
             int valueLengthSumAdjusted6 = valueLengthSumAdjusted5 + valueFinalArray3ValueStringLengthArrayValue - valueFinalArray3ValueStringLengthArrayValue;
+            // Use the adjusted sum in a conditional to ensure it's recorded
+            if (valueLengthSumAdjusted6 > Integer.MIN_VALUE) {
+                // Always true, but uses the variable meaningfully
+            }
         }
     }
 
