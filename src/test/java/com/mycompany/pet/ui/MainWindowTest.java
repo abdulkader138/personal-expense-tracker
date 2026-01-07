@@ -1632,6 +1632,45 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     @Test
     @GUITest
     @SuppressWarnings("removal")
+    public void testMainWindow_HandleExit_SecurityExceptionWithEmptyMessage() {
+        // Test handleExit() with SecurityException that has empty message
+        // This covers the else branch of "if (exceptionMessageLength > 0)" in performSystemExit catch block
+        // (line 549: when exceptionMessage is not null but has length 0)
+        mainWindow.shouldExit = true;
+        
+        java.lang.SecurityManager originalSecurityManager = System.getSecurityManager();
+        try {
+            System.setSecurityManager(new java.lang.SecurityManager() {
+                @Override
+                public void checkExit(int status) {
+                    if (status == 0) {
+                        // Throw SecurityException with empty message to cover the else branch
+                        throw new SecurityException("");
+                    }
+                }
+                @Override
+                public void checkPermission(java.security.Permission perm) {
+                    // Allow all permissions
+                }
+            });
+            
+            try {
+                mainWindow.handleExit();
+                org.junit.Assert.fail("Expected SecurityException from System.exit(0)");
+            } catch (SecurityException e) {
+                // Expected - System.exit(0) was prevented
+                // The SecurityException has empty message, covering the else branch at line 549
+                assertThat(e.getMessage()).isEqualTo("");
+            }
+        } finally {
+            System.setSecurityManager(originalSecurityManager);
+        }
+        window.requireVisible();
+    }
+    
+    @Test
+    @GUITest
+    @SuppressWarnings("removal")
     public void testMainWindow_OnExitMenuItemClicked() {
         // Test onExitMenuItemClicked() method directly
         // Ensure shouldExit is true to test the true branch in handleExit
