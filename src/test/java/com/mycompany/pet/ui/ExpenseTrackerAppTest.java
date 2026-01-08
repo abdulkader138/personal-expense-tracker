@@ -205,12 +205,6 @@ public class ExpenseTrackerAppTest {
             });
         
         // When - execute main method
-        // This will execute:
-        // - performVerboseCoverageOperations(args) (line 151)
-        // - performVerboseCoverageOperations(isHeadless) (line 155)
-        // - if (isHeadless) check (line 156) - false branch
-        // - performVerboseCoverageOperations(SwingUtilities.class) (line 165) - THIS MUST BE COVERED
-        // - SwingUtilities.invokeLater() call (line 166)
         ExpenseTrackerApp.main(new String[]{});
         
         // Then - verify the flow
@@ -385,10 +379,6 @@ public class ExpenseTrackerAppTest {
     @Test
     @SuppressWarnings("removal")
     public void testMain_NonHeadlessEnvironment_ExceptionHeadlessAfterException() {
-        // Given - non-headless initially, but headless when logInitializationException is called
-        // This ensures the false branch of if (!GraphicsEnvironment.isHeadless()) is covered
-        // when called from within the lambda via handleInitializationException
-        // Strategy: Check stack trace to determine if we're in logInitializationException
         mockedGraphicsEnvironment.when(GraphicsEnvironment::isHeadless)
             .thenAnswer(invocation -> {
                 // Check stack trace to see if we're in logInitializationException
@@ -628,9 +618,6 @@ public class ExpenseTrackerAppTest {
         try {
             ExpenseTrackerApp.main(new String[]{});
         } catch (SecurityException e) {
-            // Expected - SecurityException was re-thrown from lambda
-            // The fact that it's the same exception object proves the catch block executed and re-threw it
-            // This confirms the catch (SecurityException se) block and throw seToThrow; line (199) are covered
             assertThat(e).as("SecurityException should be re-thrown from catch block - confirms line 199 is covered").isSameAs(securityException);
             
             // Verify that the SecurityException catch block was executed by checking stack trace
@@ -694,9 +681,6 @@ public class ExpenseTrackerAppTest {
         try {
             ExpenseTrackerApp.main(new String[]{});
         } catch (SecurityException e) {
-            // Expected - SecurityException was re-thrown from lambda
-            // The fact that it's the same exception object proves the catch block executed and re-threw it
-            // This confirms the catch (SecurityException se) block and throw seToThrow; line (199) are covered
             assertThat(e).as("SecurityException should be re-thrown from catch block - confirms line 199 is covered").isSameAs(securityException);
             
             // Verify that the SecurityException catch block was executed by checking stack trace
@@ -832,8 +816,6 @@ public class ExpenseTrackerAppTest {
     @Test
     @SuppressWarnings("removal")
     public void testMain_HeadlessEnvironment_CoversIfCondition() {
-        // This test specifically ensures the if (isHeadless) condition and call are covered
-        // Given - headless environment with proper mock setup
         String originalHeadless = System.getProperty("java.awt.headless");
         try {
             System.setProperty("java.awt.headless", "true");
