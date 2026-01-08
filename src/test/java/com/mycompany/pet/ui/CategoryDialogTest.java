@@ -1311,7 +1311,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_LoadCategories_ProductionMode_PreserveErrorMessage() throws SQLException {
+    public void testCategoryDialog_LoadCategories_ProductionMode_PreserveErrorMessage() {
         ensureDialogCreated();
         // Clear test mode to test production path
         System.clearProperty("test.mode");
@@ -1492,7 +1492,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_UpdateButtonClick_WithCellEditing() throws SQLException {
+    public void testCategoryDialog_UpdateButtonClick_WithCellEditing() {
         ensureDialogCreated();
         System.setProperty("test.mode", "true");
         
@@ -1590,7 +1590,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_UpdateButtonClick_SuccessCallback() throws SQLException {
+    public void testCategoryDialog_UpdateButtonClick_SuccessCallback() {
         ensureDialogCreated();
         System.setProperty("test.mode", "true");
         
@@ -1637,7 +1637,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_DeleteButtonClick_SuccessCallback() throws SQLException {
+    public void testCategoryDialog_DeleteButtonClick_SuccessCallback() {
         ensureDialogCreated();
         System.setProperty("test.mode", "true");
         
@@ -1840,7 +1840,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_LoadCategories_WithCategories_TestMode() throws SQLException {
+    public void testCategoryDialog_LoadCategories_WithCategories_TestMode() {
         ensureDialogCreated();
         System.setProperty("test.mode", "true");
         
@@ -1914,7 +1914,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_UpdateButton_ActionListener_TriggersLambda() throws SQLException {
+    public void testCategoryDialog_UpdateButton_ActionListener_TriggersLambda() {
         ensureDialogCreated();
         System.setProperty("test.mode", "true");
         
@@ -1976,7 +1976,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         
         // Verify action listener is attached (this ensures lambda$initializeUI$2 exists)
         execute(() -> {
-            assertThat(categoryDialog.updateButton.getActionListeners().length).isGreaterThan(0);
+            assertThat(categoryDialog.updateButton.getActionListeners()).hasSizeGreaterThan(0);
         });
         
         // Click the Update button using the fixture to trigger the action listener lambda
@@ -1996,7 +1996,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_DeleteButton_ActionListener_TriggersLambda() throws SQLException {
+    public void testCategoryDialog_DeleteButton_ActionListener_TriggersLambda() {
         ensureDialogCreated();
         System.setProperty("test.mode", "true");
         
@@ -2046,7 +2046,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         
         // Verify action listener is attached (this ensures lambda$initializeUI$3 exists)
         execute(() -> {
-            assertThat(categoryDialog.deleteButton.getActionListeners().length).isGreaterThan(0);
+            assertThat(categoryDialog.deleteButton.getActionListeners()).hasSizeGreaterThan(0);
         });
         
         // Click the Delete button using the fixture to trigger the action listener lambda
@@ -2204,7 +2204,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         // Also try clicking directly with robot to ensure event is processed
         execute(() -> {
             // Verify button has action listeners
-            assertThat(categoryDialog.updateButton.getActionListeners().length).isGreaterThan(0);
+            assertThat(categoryDialog.updateButton.getActionListeners()).hasSizeGreaterThan(0);
         });
         
         // The action listener runs synchronously on EDT, so wait for it
@@ -2275,7 +2275,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         // Also verify button has action listeners
         execute(() -> {
             // Verify button has action listeners
-            assertThat(categoryDialog.deleteButton.getActionListeners().length).isGreaterThan(0);
+            assertThat(categoryDialog.deleteButton.getActionListeners()).hasSizeGreaterThan(0);
         });
         
         // The action listener runs synchronously on EDT, so wait for it
@@ -2332,7 +2332,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         // Verify close button has action listener (lambda$initializeUI$3)
         execute(() -> {
             javax.swing.JButton btn = closeButton.target();
-            assertThat(btn.getActionListeners().length).isGreaterThan(0);
+            assertThat(btn.getActionListeners()).hasSizeGreaterThan(0);
             
             // Fire action event directly to ensure lambda$initializeUI$3 is executed
             java.awt.event.ActionEvent event = new java.awt.event.ActionEvent(btn, 
@@ -2522,7 +2522,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_LoadCategories_ProductionMode_NonErrorMessage_Clears() throws SQLException {
+    public void testCategoryDialog_LoadCategories_ProductionMode_NonErrorMessage_Clears() {
         ensureDialogCreated();
         // Clear test mode to test production path
         System.clearProperty("test.mode");
@@ -2554,7 +2554,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_LoadCategories_ProductionMode_ErrorMessage_Preserved() throws SQLException {
+    public void testCategoryDialog_LoadCategories_ProductionMode_ErrorMessage_Preserved() {
         ensureDialogCreated();
         // Clear test mode to test production path
         System.clearProperty("test.mode");
@@ -2585,7 +2585,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_LoadCategories_ProductionMode_SelectMessage_Preserved() throws SQLException {
+    public void testCategoryDialog_LoadCategories_ProductionMode_SelectMessage_Preserved() {
         ensureDialogCreated();
         // Clear test mode to test production path
         System.clearProperty("test.mode");
@@ -2616,7 +2616,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_LoadCategories_ProductionMode_EmptyMessage() throws SQLException {
+    public void testCategoryDialog_LoadCategories_ProductionMode_EmptyMessage() {
         ensureDialogCreated();
         // Clear test mode to test production path
         System.clearProperty("test.mode");
@@ -2647,7 +2647,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_LoadCategories_ProductionMode_NullMessage() throws SQLException {
+    public void testCategoryDialog_LoadCategories_ProductionMode_NullMessage() {
         ensureDialogCreated();
         // Clear test mode to test production path
         System.clearProperty("test.mode");
@@ -2736,7 +2736,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_UpdateButtonClick_WithWhitespaceName() throws SQLException {
+    public void testCategoryDialog_UpdateButtonClick_WithWhitespaceName() {
         ensureDialogCreated();
         System.setProperty("test.mode", "true");
         
@@ -3465,7 +3465,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             mockedSwingUtilities = Mockito.mockStatic(SwingUtilities.class, Mockito.CALLS_REAL_METHODS);
             
             // Make isEventDispatchThread return false so the code takes the invokeAndWait path
-            mockedSwingUtilities.when(() -> SwingUtilities.isEventDispatchThread())
+            mockedSwingUtilities.when(SwingUtilities::isEventDispatchThread)
                 .thenReturn(false);
             
             // Make invokeAndWait throw InterruptedException to trigger the catch block
@@ -3487,7 +3487,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             robot().waitForIdle();
             
             // Verify that isEventDispatchThread was called
-            mockedSwingUtilities.verify(() -> SwingUtilities.isEventDispatchThread(), Mockito.atLeastOnce());
+            mockedSwingUtilities.verify(SwingUtilities::isEventDispatchThread, Mockito.atLeastOnce());
             
             // Verify that invokeAndWait was called (and threw exception)
             mockedSwingUtilities.verify(() -> SwingUtilities.invokeAndWait(Mockito.any(Runnable.class)), Mockito.atLeastOnce());
@@ -3516,7 +3516,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_Constructor_TestMode_DoesNotLoadCategories() throws SQLException {
+    public void testCategoryDialog_Constructor_TestMode_DoesNotLoadCategories() {
         // Given - test mode enabled
         System.setProperty("test.mode", "true");
         try {
@@ -3546,7 +3546,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_DeleteButtonClick_NoOption() throws SQLException {
+    public void testCategoryDialog_DeleteButtonClick_NoOption() {
         // Given - category in table, test mode disabled
         System.setProperty("test.mode", "false");
         try {
@@ -3559,9 +3559,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             DialogFixture dialogFixture = new DialogFixture(robot(), testDialog);
             
             // Load categories
-            execute(() -> {
-                testDialog.loadCategories();
-            });
+            execute(testDialog::loadCategories);
             robot().waitForIdle();
             
             // Wait for categories to load
@@ -3581,7 +3579,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_GetLastErrorMessage() throws SQLException {
+    public void testCategoryDialog_GetLastErrorMessage() {
         // Given - dialog with an error message set
         ensureDialogCreated();
         
@@ -3686,7 +3684,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_LastErrorMessage_DefensiveChecks() throws SQLException {
+    public void testCategoryDialog_LastErrorMessage_DefensiveChecks() {
         // Given - dialog created
         ensureDialogCreated();
         
@@ -3841,7 +3839,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_LastErrorMessage_DefensiveCheck_AfterShowMessage() throws SQLException {
+    public void testCategoryDialog_LastErrorMessage_DefensiveCheck_AfterShowMessage() {
         // Given - dialog created, lastErrorMessage set to a different value
         ensureDialogCreated();
         
@@ -3931,7 +3929,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_OnDeleteButtonClick_ProductionMode_ShowsConfirmDialog() throws SQLException {
+    public void testCategoryDialog_OnDeleteButtonClick_ProductionMode_ShowsConfirmDialog() {
         // Given - production mode (test.mode = false), category selected
         System.setProperty("test.mode", "false");
         try {
@@ -3944,9 +3942,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             DialogFixture dialogFixture = new DialogFixture(robot(), testDialog);
             
             // Load categories
-            execute(() -> {
-                testDialog.loadCategories();
-            });
+            execute(testDialog::loadCategories);
             waitForTableRows(1, testDialog);
             
             // When - select a category and call onDeleteButtonClick in production mode

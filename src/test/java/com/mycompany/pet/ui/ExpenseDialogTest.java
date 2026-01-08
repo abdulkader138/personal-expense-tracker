@@ -324,7 +324,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testExpenseDialog_Save_WithValidData() throws SQLException {
+    public void testExpenseDialog_Save_WithValidData() {
         // Given - valid data with category selected
         execute(() -> {
             // Wait for categories to be loaded
@@ -457,7 +457,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
             });
         
         // Then - should be saved
-        boolean saved = execute(() -> editDialog.isSaved());
+        boolean saved = execute(editDialog::isSaved);
         assertThat(saved).isTrue();
         
         editDialogFixture.cleanUp();
@@ -745,9 +745,7 @@ public class ExpenseDialogTest extends AssertJSwingJUnitTestCase {
         waitForAsyncOperation();
         
         // When - call loadExpenseData directly (should return early)
-        execute(() -> {
-            testDialog.loadExpenseData(); // Should return early since expense is null
-        });
+        execute(testDialog::loadExpenseData);
         
         // Then - no exception should be thrown
         // Fields should remain as initialized (date pre-filled, others empty)

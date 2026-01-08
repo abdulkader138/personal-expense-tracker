@@ -379,5 +379,16 @@ public class CategoryControllerTest {
         assertThat(result).isNull();
         verify(categoryService).getCategory(CATEGORY_ID_1);
     }
+    
+    @Test(expected = SQLException.class)
+    public void testGetCategory_SQLException() throws SQLException {
+        // Given
+        when(categoryService.getCategory(CATEGORY_ID_1)).thenThrow(new SQLException("Database error"));
+        
+        // When
+        controller.getCategory(CATEGORY_ID_1);
+        
+        // Then - exception should be thrown
+    }
 }
 
