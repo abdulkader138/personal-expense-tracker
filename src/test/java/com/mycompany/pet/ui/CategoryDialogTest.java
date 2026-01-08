@@ -1361,105 +1361,70 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testCategoryDialog_ShowMessage_InvokeAndWaitException() {
-        ensureDialogCreated();
-        System.setProperty("test.mode", "true");
+    public void testCategoryDialog_ShowMessage_NonEDT_Scenarios() {
+        // Parameterized test covering three scenarios:
+        // 1. InvokeAndWait exception path
+        // 2. Empty message in test mode
+        // 3. Empty message in production mode
+        Runnable setupRunnable = () -> categoryDialog.lastErrorMessage = "Initial error";
+        Object[][] testCases = {
+            // {testMode, initialMessage, messageToShow, expectedContains, setupRunnable}
+            {"true", "Initial message", "Test message with exception handling", "Test message with exception handling", null},
+            {"true", "Initial message", "", "", null},
+            {null, "Initial message", "", "", setupRunnable}
+        };
         
-        // Test the invokeAndWait exception path by calling from non-EDT thread
-        // and simulating an exception scenario
-        Thread nonEDTThread = new Thread(() -> {
-            // This will use invokeAndWait, and if it throws, it should fall back to invokeLater
-            categoryDialog.showMessage("Test message with exception handling");
-        });
-        nonEDTThread.start();
-        
-        try {
-            nonEDTThread.join(2000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        
-        robot().waitForIdle();
-        
-        // Verify message was set (either via invokeAndWait or invokeLater fallback)
-        String message = execute(() -> {
-            if (categoryDialog.labelMessage != null) {
-                return categoryDialog.labelMessage.getText();
+        for (Object[] testCase : testCases) {
+            ensureDialogCreated();
+            String testMode = (String) testCase[0];
+            String initialMessage = (String) testCase[1];
+            String messageToShow = (String) testCase[2];
+            String expectedContains = (String) testCase[3];
+            Runnable setup = (Runnable) testCase[4];
+            
+            if (testMode != null) {
+                System.setProperty("test.mode", testMode);
+            } else {
+                System.clearProperty("test.mode");
             }
-            return "";
-        });
-        assertThat(message).contains("Test message with exception handling");
-    }
-
-    @Test
-    @GUITest
-    public void testCategoryDialog_ShowMessage_EmptyMessage_NonEDT_TestMode() {
-        ensureDialogCreated();
-        System.setProperty("test.mode", "true");
-        
-        // First set a message
-        execute(() -> {
-            categoryDialog.showMessage("Initial message");
-        });
-        robot().waitForIdle();
-        
-        // Then clear it from non-EDT thread to test the invokeLater path
-        Thread nonEDTThread = new Thread(() -> {
-            categoryDialog.showMessage("");
-        });
-        nonEDTThread.start();
-        
-        try {
-            nonEDTThread.join(2000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+            
+            // First set a message
+            execute(() -> {
+                categoryDialog.showMessage(initialMessage);
+                if (setup != null) {
+                    setup.run();
+                }
+            });
+            robot().waitForIdle();
+            
+            // Then show message from non-EDT thread
+            Thread nonEDTThread = new Thread(() -> {
+                categoryDialog.showMessage(messageToShow);
+            });
+            nonEDTThread.start();
+            
+            try {
+                nonEDTThread.join(2000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            
+            robot().waitForIdle();
+            
+            // Verify result
+            String labelText = execute(() -> {
+                return categoryDialog.labelMessage != null ? categoryDialog.labelMessage.getText() : "";
+            });
+            
+            if (expectedContains.isEmpty()) {
+                assertThat(labelText).isEmpty();
+            } else {
+                assertThat(labelText).contains(expectedContains);
+            }
+            
+            // Restore test mode
+            System.setProperty("test.mode", "true");
         }
-        
-        robot().waitForIdle();
-        
-        // In test mode, label should be cleared but lastErrorMessage should persist
-        String labelText = execute(() -> {
-            return categoryDialog.labelMessage != null ? categoryDialog.labelMessage.getText() : "";
-        });
-        assertThat(labelText).isEmpty();
-    }
-
-    @Test
-    @GUITest
-    public void testCategoryDialog_ShowMessage_EmptyMessage_NonEDT_ProductionMode() {
-        ensureDialogCreated();
-        // Clear test mode
-        System.clearProperty("test.mode");
-        
-        // First set a message
-        execute(() -> {
-            categoryDialog.showMessage("Initial message");
-            categoryDialog.lastErrorMessage = "Initial error";
-        });
-        robot().waitForIdle();
-        
-        // Then clear it from non-EDT thread to test the invokeLater path in production mode
-        Thread nonEDTThread = new Thread(() -> {
-            categoryDialog.showMessage("");
-        });
-        nonEDTThread.start();
-        
-        try {
-            nonEDTThread.join(2000);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        
-        robot().waitForIdle();
-        
-        // In production mode, both label and lastErrorMessage should be cleared
-        String labelText = execute(() -> {
-            return categoryDialog.labelMessage != null ? categoryDialog.labelMessage.getText() : "";
-        });
-        assertThat(labelText).isEmpty();
-        
-        // Restore test mode
-        System.setProperty("test.mode", "true");
     }
 
     @Test
@@ -4169,9 +4134,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             robot().waitForIdle();
             
             // Load categories - this should clear the non-error message in production mode
-            execute(() -> {
-                testDialog.loadCategories();
-            });
+            execute(testDialog::loadCategories);
             waitForAsyncOperation();
             robot().waitForIdle();
             

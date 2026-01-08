@@ -40,7 +40,7 @@ public class CoverageHelperTest {
         
         // Then - no exception should be thrown
         // This test ensures all lines in performVerboseCoverageOperations are covered
-        assertThat(testObjects.length).isGreaterThan(0);
+        assertThat(testObjects).hasSizeGreaterThan(0);
     }
     
     @Test
@@ -49,12 +49,13 @@ public class CoverageHelperTest {
         CoverageHelper.performVerboseCoverageOperations(null);
         
         // Test with non-null values to cover the if branch (value != null)
-        CoverageHelper.performVerboseCoverageOperations("test");
-        CoverageHelper.performVerboseCoverageOperations(123);
-        CoverageHelper.performVerboseCoverageOperations(new Object());
+        Object[] testObjects = {"test", 123, new Object()};
+        for (Object obj : testObjects) {
+            CoverageHelper.performVerboseCoverageOperations(obj);
+        }
         
         // Verify that operations completed without exception
-        assertThat("test").isNotNull();
+        assertThat(testObjects).hasSizeGreaterThan(0);
     }
     
     
@@ -66,7 +67,7 @@ public class CoverageHelperTest {
         Constructor<CoverageHelper> constructor = CoverageHelper.class.getDeclaredConstructor();
         constructor.setAccessible(true);
         
-        Throwable throwable = catchThrowable(() -> constructor.newInstance());
+        Throwable throwable = catchThrowable(constructor::newInstance);
         
         assertThat(throwable)
             .isInstanceOf(InvocationTargetException.class);

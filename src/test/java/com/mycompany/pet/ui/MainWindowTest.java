@@ -563,62 +563,53 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    public void testMainWindow_UpdateSummary_AllMonths() {
-        execute(() -> {
-            mainWindow.monthComboBox.setSelectedItem("All");
-            mainWindow.yearComboBox.setSelectedItem("2024");
-            mainWindow.updateSummary();
-        });
-        // updateSummary() sets label synchronously for "All" case
-        String labelText = execute(() -> mainWindow.monthlyTotalLabel.getText());
-        assertThat(labelText).isEqualTo("Monthly Total: N/A");
-    }
-
-    @Test
-    @GUITest
-    public void testMainWindow_UpdateSummary_SpecificMonth() {
-        // Test the success callback in updateSummary() that calls updateCategoryTotal()
-        int currentYear = LocalDate.now().getYear();
-        int currentMonth = LocalDate.now().getMonthValue();
-        String monthStr = String.format("%02d", currentMonth);
-        
-        // Ensure a category is selected so updateCategoryTotal() has something to work with
-        Category testCategory = new Category(CATEGORY_ID_1, CATEGORY_NAME_1);
-        execute(() -> {
+    public void testMainWindow_UpdateSummary_Scenarios() {
+        // Parameterized test covering three scenarios:
+        // 1. "All" months
+        // 2. Specific month
+        // 3. Null month
+        Runnable setupRunnable = () -> {
+            Category testCategory = new Category(CATEGORY_ID_1, CATEGORY_NAME_1);
             mainWindow.categoryComboBox.addItem(testCategory);
             mainWindow.categoryComboBox.setSelectedItem(testCategory);
-            mainWindow.monthComboBox.setSelectedItem(monthStr);
-            mainWindow.yearComboBox.setSelectedItem(String.valueOf(currentYear));
-        });
+        };
+        Object[][] testCases = {
+            // {month, year, expectedContains, setupRunnable}
+            {"All", "2024", "Monthly Total: N/A", null},
+            {null, "2024", "Monthly Total: N/A", null},
+            {String.format("%02d", LocalDate.now().getMonthValue()), String.valueOf(LocalDate.now().getYear()), 
+                "Monthly Total: $", setupRunnable}
+        };
         
-        execute(() -> {
-            mainWindow.updateSummary();
-        });
-        
-        // Wait for async success callback that calls updateCategoryTotal()
-        try {
-            Thread.sleep(300); // NOSONAR - wait for async success callback to execute updateCategoryTotal()
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+        for (Object[] testCase : testCases) {
+            String month = (String) testCase[0];
+            String year = (String) testCase[1];
+            String expectedContains = (String) testCase[2];
+            Runnable setup = (Runnable) testCase[3];
+            
+            execute(() -> {
+                if (setup != null) {
+                    setup.run();
+                }
+                mainWindow.monthComboBox.setSelectedItem(month);
+                mainWindow.yearComboBox.setSelectedItem(year);
+                mainWindow.updateSummary();
+            });
+            
+            if (month != null && !"All".equals(month)) {
+                // Wait for async success callback that calls updateCategoryTotal()
+                try {
+                    Thread.sleep(300); // NOSONAR - wait for async success callback to execute updateCategoryTotal()
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+            
+            // Verify the label
+            String labelText = execute(() -> mainWindow.monthlyTotalLabel.getText());
+            assertThat(labelText).contains(expectedContains);
+            window.requireVisible();
         }
-        
-        // Verify the label was updated (indicates success callback executed)
-        String labelText = execute(() -> mainWindow.monthlyTotalLabel.getText());
-        assertThat(labelText).contains("Monthly Total: $");
-        window.requireVisible();
-    }
-
-    @Test
-    @GUITest
-    public void testMainWindow_UpdateSummary_NullMonth() {
-        execute(() -> {
-            mainWindow.monthComboBox.setSelectedItem(null);
-            mainWindow.yearComboBox.setSelectedItem("2024");
-            mainWindow.updateSummary();
-        });
-        // updateSummary() sets label synchronously for null case
-        String labelText = execute(() -> mainWindow.monthlyTotalLabel.getText());
-        assertThat(labelText).isEqualTo("Monthly Total: N/A");
     }
 
     @Test
