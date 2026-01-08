@@ -111,21 +111,11 @@ public class ExpenseTrackerAppTest {
             
             try {
                 // When - execute main method
-                // This will execute:
-                // 1. All verbose coverage code in main()
-                // 2. The if (isHeadless) condition check
-                // 3. The call to handleHeadlessEnvironment()
-                // 4. All LOGGER.severe() calls in handleHeadlessEnvironment()
-                // 5. System.exit(1) which throws SecurityException
                 try {
                     ExpenseTrackerApp.main(new String[]{});
-                    // Should not reach here - System.exit(1) should throw SecurityException
                     org.junit.Assert.fail("Expected SecurityException from System.exit(1)");
                 } catch (SecurityException e) {
-                    // Expected - System.exit(1) was called
                     assertThat(e.getMessage()).isEqualTo("Exit with code 1");
-                    // Verify that the exception was thrown from System.exit by checking the stack trace
-                    // This ensures the call to handleHeadlessEnvironment() was executed
                     StackTraceElement[] stackTrace = e.getStackTrace();
                     boolean foundSystemExit = false;
                     boolean foundHandleHeadlessEnvironment = false;
@@ -224,13 +214,10 @@ public class ExpenseTrackerAppTest {
         ExpenseTrackerApp.main(new String[]{});
         
         // Then - verify the flow
-        // Note: isHeadless may be called multiple times during AWT class loading, so use atLeastOnce
         mockedGraphicsEnvironment.verify(GraphicsEnvironment::isHeadless, atLeastOnce());
-        // Verify SwingUtilities.invokeLater was called - this confirms line 165 was executed before it
         mockedSwingUtilities.verify(() -> SwingUtilities.invokeLater(any(Runnable.class)), times(1));
         mockedGuice.verify(() -> Guice.createInjector(any(ExpenseTrackerModule.class)), times(1));
         verify(mockInjector, times(1)).getInstance(MainWindow.class);
-        // Verify mainWindow.setVisible(true) was called - this confirms line 186 is covered
         verify(mockMainWindow, times(1)).setVisible(true);
         mockedJOptionPane.verifyNoInteractions();
         // Verify the module was created (builder methods were called)
@@ -276,20 +263,12 @@ public class ExpenseTrackerAppTest {
         
             try {
                 // When - execute main method which will trigger exception handler
-                // This will execute:
-                // 1. catch (Exception e) block catches RuntimeException from Guice.createInjector()
-                // 2. handleInitializationException(e) is called (line 215) - THIS LINE MUST BE COVERED
-                // 3. Inside handleInitializationException(), System.exit(1) is called
-                // 4. SecurityManager throws SecurityException
                 try {
                     ExpenseTrackerApp.main(new String[]{});
                     // Should not reach here
                     org.junit.Assert.fail("Expected SecurityException from System.exit(1)");
                 } catch (SecurityException e) {
-                    // Expected - System.exit(1) was called from handleInitializationException()
                     assertThat(e.getMessage()).isEqualTo("Exit with code 1");
-                    // Verify that the exception was thrown from System.exit by checking the stack trace
-                    // This ensures handleInitializationException() was called and System.exit() was executed
                     StackTraceElement[] stackTrace = e.getStackTrace();
                     boolean foundSystemExit = false;
                     boolean foundHandleInitializationException = false;
@@ -327,8 +306,6 @@ public class ExpenseTrackerAppTest {
     @SuppressWarnings("removal")
     public void testMain_NonHeadlessEnvironment_ExceptionWithNullMessage() {
         // Given - non-headless environment with exception that has null message
-        // This test covers the null branch of the ternary operator on line 230:
-        // int exceptionMessageLength = exceptionMessage != null ? exceptionMessage.length() : 0;
         mockedGraphicsEnvironment.when(GraphicsEnvironment::isHeadless).thenReturn(false);
         
         // Create exception with null message to cover the null branch
@@ -461,20 +438,12 @@ public class ExpenseTrackerAppTest {
         
             try {
                 // When - execute main method which will trigger exception handler
-                // This will execute:
-                // 1. catch (Exception e) block catches RuntimeException from Guice.createInjector()
-                // 2. handleInitializationException(e) is called (line 215) - THIS LINE MUST BE COVERED
-                // 3. Inside handleInitializationException(), System.exit(1) is called
-                // 4. SecurityManager throws SecurityException
                 try {
                     ExpenseTrackerApp.main(new String[]{});
                     // Should not reach here
                     org.junit.Assert.fail("Expected SecurityException from System.exit(1)");
                 } catch (SecurityException e) {
-                    // Expected - System.exit(1) was called from handleInitializationException()
                     assertThat(e.getMessage()).isEqualTo("Exit with code 1");
-                    // Verify that the exception was thrown from System.exit by checking the stack trace
-                    // This ensures handleInitializationException() was called and System.exit() was executed
                     StackTraceElement[] stackTrace = e.getStackTrace();
                     boolean foundSystemExit = false;
                     boolean foundHandleInitializationException = false;
@@ -816,7 +785,7 @@ public class ExpenseTrackerAppTest {
         // Then - no exception should be thrown
         // This test ensures all lines in performVerboseCoverageOperations are covered
         // Including the call with SwingUtilities.class (line 165 in main)
-        assertThat(testObjects.length).isGreaterThan(0);
+        assertThat(testObjects).hasSizeGreaterThan(0);
     }
     
     @Test
@@ -893,14 +862,8 @@ public class ExpenseTrackerAppTest {
             });
             
             try {
-                // When - execute main method
-                // This MUST execute:
-                // 1. Line 178: boolean isHeadless = GraphicsEnvironment.isHeadless();
-                // 2. Lines 179-207: All verbose coverage code using isHeadless
-                // 3. Line 208: if (isHeadless) { - THIS MUST BE TRUE
-                // 4. Line 213: handleHeadlessEnvironment(); - THIS MUST BE CALLED
-                ExpenseTrackerApp.main(new String[]{});
-                // Should not reach here
+            // When - execute main method
+            ExpenseTrackerApp.main(new String[]{});
                 org.junit.Assert.fail("Expected SecurityException");
             } catch (SecurityException e) {
                 // Expected - System.exit(1) was called

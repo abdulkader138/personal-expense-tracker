@@ -1368,7 +1368,6 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         // 3. Empty message in production mode
         Runnable setupRunnable = () -> categoryDialog.lastErrorMessage = "Initial error";
         Object[][] testCases = {
-            // {testMode, initialMessage, messageToShow, expectedContains, setupRunnable}
             {"true", "Initial message", "Test message with exception handling", "Test message with exception handling", null},
             {"true", "Initial message", "", "", null},
             {null, "Initial message", "", "", setupRunnable}
@@ -4156,9 +4155,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             robot().waitForIdle();
             
             // Load categories again - error message should be preserved
-            execute(() -> {
-                testDialog.loadCategories();
-            });
+            execute(testDialog::loadCategories);
             waitForAsyncOperation();
             robot().waitForIdle();
             
@@ -4179,9 +4176,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             });
             robot().waitForIdle();
             
-            execute(() -> {
-                testDialog.loadCategories();
-            });
+            execute(testDialog::loadCategories);
             waitForAsyncOperation();
             robot().waitForIdle();
             
@@ -4193,9 +4188,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             });
             robot().waitForIdle();
             
-            execute(() -> {
-                testDialog.loadCategories();
-            });
+            execute(testDialog::loadCategories);
             waitForAsyncOperation();
             robot().waitForIdle();
             
@@ -4205,9 +4198,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             });
             robot().waitForIdle();
             
-            execute(() -> {
-                testDialog.loadCategories();
-            });
+            execute(testDialog::loadCategories);
             waitForAsyncOperation();
             robot().waitForIdle();
             
