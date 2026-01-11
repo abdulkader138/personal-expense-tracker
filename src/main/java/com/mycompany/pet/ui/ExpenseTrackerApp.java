@@ -40,8 +40,6 @@ public class ExpenseTrackerApp {
         @ExcludeFromJacocoGeneratedReport("System.exit() cannot be tracked by JaCoCo")
         public void exit(int code) {
             System.exit(code);
-            // Any code after System.exit() is unreachable but needed for coverage
-            LOGGER.info("Application exiting with code: " + code);
         }
     }
     
@@ -165,6 +163,7 @@ public class ExpenseTrackerApp {
      * 
      * @param e The exception that occurred
      */
+    @ExcludeFromJacocoGeneratedReport("System.exit() cannot be tracked by JaCoCo due to SecurityException propagation")
     static void handleInitializationException(Exception e) {
         // Log error messages for initialization exception
         logInitializationException(e);

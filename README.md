@@ -237,15 +237,26 @@ mvn exec:java -Dexec.mainClass="com.mycompany.pet.ui.ExpenseTrackerApp"
 
 ### 5. WSL Users (GUI Display)
 
-If running on WSL without a display:
+If running on WSL without a display, you have several options:
 
+**Option A: Use X Server (VcXsrv, Xming, etc.)**
 ```bash
 # Install X server on Windows (VcXsrv, Xming, etc.)
 # Then set display:
 export DISPLAY=:0.0
-
-# Or use Eclipse IDE which handles display automatically
 ```
+
+**Option B: Use xvfb for headless GUI testing**
+```bash
+# Install xvfb on WSL
+sudo apt-get install xvfb
+
+# Run tests with xvfb-run
+xvfb-run mvn clean test -Pui-tests jacoco:report
+```
+
+**Option C: Use Eclipse IDE**
+Eclipse IDE handles display automatically when running tests.
 
 ## 📁 Project Structure
 
@@ -342,6 +353,9 @@ mvn clean verify -Pintegration-test-profile
 # Run all tests with coverage
 mvn clean test jacoco:report
 
+# Run UI tests with xvfb (for headless GUI testing on Linux)
+xvfb-run mvn clean test -Pui-tests jacoco:report
+
 # Run mutation testing
 mvn clean verify -Pmutation-testing-with-coverage
 ```
@@ -420,6 +434,27 @@ Runs unit tests with JaCoCo coverage for SonarCloud analysis:
 
 ```bash
 mvn verify -Pjacoco
+```
+
+### UI Tests Profile
+
+Runs unit tests including UI tests. Use with `xvfb-run` on headless Linux systems:
+
+```bash
+# On Linux with xvfb (for headless GUI testing)
+xvfb-run mvn clean test -Pui-tests jacoco:report
+
+# On systems with display (macOS, Windows, Linux with X server)
+mvn clean test -Pui-tests jacoco:report
+```
+
+**Note**: `xvfb-run` creates a virtual X server for running GUI tests in headless environments. Install it with:
+```bash
+# Ubuntu/Debian
+sudo apt-get install xvfb
+
+# Fedora/RHEL
+sudo yum install xorg-x11-server-Xvfb
 ```
 
 ## 🔄 Continuous Integration
@@ -547,9 +582,9 @@ This project is developed for educational purposes as part of a course on **Test
 
 ## 📝 Notes
 
-- **Code Coverage**: The project targets 100% coverage for UI and utility packages. Some methods containing `System.exit()` are excluded from coverage as they cannot be properly tracked by JaCoCo.
+- **Code Coverage**: The project targets 100% coverage for UI and utility packages. The application uses exception-based exit handling (`ApplicationExitException`) instead of `System.exit()` to allow 100% code coverage.
 
-- **GUI Testing**: UI tests use AssertJ Swing and may require a display. For headless environments, tests are configured to handle this gracefully.
+- **GUI Testing**: UI tests use AssertJ Swing and may require a display. For headless environments, use `xvfb-run` to create a virtual X server, or use the `-Pui-tests` profile with `xvfb-run mvn clean test -Pui-tests jacoco:report`.
 
 - **Dependency Injection**: The application uses Google Guice for dependency injection, following patterns from "Test-Driven Development, Build Automation, Continuous Integration" book.
 

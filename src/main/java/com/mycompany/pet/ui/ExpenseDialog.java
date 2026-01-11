@@ -157,8 +157,7 @@ public class ExpenseDialog extends JDialog {
                 }
             },
             error -> {
-                // Error: log but don't block UI
-                // User will see empty combo box and can retry
+                
                 LOGGER.warn("Error loading categories");
             }
         );
