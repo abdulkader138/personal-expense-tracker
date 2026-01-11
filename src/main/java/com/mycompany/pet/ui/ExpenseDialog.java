@@ -18,6 +18,9 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.mycompany.pet.controller.CategoryController;
 import com.mycompany.pet.controller.ExpenseController;
 import com.mycompany.pet.model.Category;
@@ -31,6 +34,7 @@ import com.mycompany.pet.model.Expense;
  */
 public class ExpenseDialog extends JDialog {
     private static final long serialVersionUID = 1L;
+    private static final Logger LOGGER = LogManager.getLogger(ExpenseDialog.class);
     
     private final transient ExpenseController expenseController;
     private final transient CategoryController categoryController;
@@ -152,11 +156,11 @@ public class ExpenseDialog extends JDialog {
                     categoryComboBox.addItem(category);
                 }
             },
-            error -> 
+            error -> {
                 // Error: log but don't block UI
                 // User will see empty combo box and can retry
-                java.util.logging.Logger.getLogger(ExpenseDialog.class.getName())
-                    .warning("Error loading categories: " + error)
+                LOGGER.warn("Error loading categories");
+            }
         );
     }
 

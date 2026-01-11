@@ -29,6 +29,7 @@
         <awaitility.version>4.2.0</awaitility.version>
         <logback-classic.version>1.2.12</logback-classic.version>
         <slf4j-api.version>1.7.36</slf4j-api.version>
+        <log4j.version>2.23.1</log4j.version>
         <cucumber.version>5.5.0</cucumber.version>
         <junit5.version>5.10.0</junit5.version>
         <guice.version>7.0.0</guice.version>
@@ -147,6 +148,27 @@
             <version>${logback-classic.version}</version>
         </dependency>
         
+        <!-- Apache Log4j 2 Core -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
+        
+        <!-- Apache Log4j 2 API -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
+        
+        <!-- Log4j to SLF4J Bridge (for compatibility with dependencies using SLF4J) -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
+        
         <!-- Awaitility for async testing -->
         <dependency>
             <groupId>org.awaitility</groupId>
@@ -249,7 +271,10 @@
                     <release>17</release>
                     <compilerArgs>
                         <arg>-parameters</arg>
+                        <arg>-Xlint:-removal</arg>
                     </compilerArgs>
+                    <showWarnings>true</showWarnings>
+                    <failOnWarning>false</failOnWarning>
                 </configuration>
             </plugin>
 
