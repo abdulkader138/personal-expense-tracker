@@ -3964,34 +3964,24 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         ensureDialogCreated();
         System.setProperty("test.mode", "true");
         
-        // Test the exception handler lambda (lambda$setLabelTextOnEDT$12) at line 280
-        // Make the Runnable throw by using a label that throws when setText is called
+        // Test setLabelTextOnEDT with invokeLater (changed from invokeAndWait)
+        // Since invokeLater doesn't throw exceptions like invokeAndWait, we just verify
+        // that the method completes successfully when called from a non-EDT thread
         JLabel originalLabel = execute(() -> categoryDialog.labelMessage);
         
         final int[] callCount = {0};
-        JLabel throwingLabel = execute(() -> new JLabel() {
+        JLabel testLabel = execute(() -> new JLabel() {
             @Override
             public void setText(String text) {
                 callCount[0]++;
-                if (callCount[0] == 1) {
-                    // First call (from constructor) - allow it
-                    super.setText(text);
-                } else if (callCount[0] == 2) {
-                    // Second call (from invokeAndWait Runnable) - throw to trigger exception handler
-                    throw new RuntimeException("Test exception");
-                } else {
-                    // Third call (from invokeLater lambda at line 280) - succeed so lambda completes
-                    super.setText(text);
-                }
+                super.setText(text);
             }
         });
         
-        execute(() -> categoryDialog.labelMessage = throwingLabel);
+        execute(() -> categoryDialog.labelMessage = testLabel);
         robot().waitForIdle();
         
-        // Reset counter logic: constructor called once (callCount = 1), next call should be #2 (throw)
-        
-        // Call from non-EDT - Runnable will throw, causing invokeAndWait to throw InvocationTargetException
+        // Call from non-EDT - should use invokeLater (no exceptions thrown)
         Thread t = new Thread(() -> categoryDialog.setLabelTextOnEDT("Test"));
         t.start();
         try {
@@ -4000,16 +3990,20 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             Thread.currentThread().interrupt();
         }
         
-        // Wait for invokeLater to execute the lambda (line 280) and complete
+        // Wait for invokeLater to execute on EDT
         robot().waitForIdle();
-        await().atMost(3, TimeUnit.SECONDS).pollInterval(50, TimeUnit.MILLISECONDS).until(() -> {
+        await().atMost(2, TimeUnit.SECONDS).pollInterval(50, TimeUnit.MILLISECONDS).until(() -> {
             robot().waitForIdle();
-            // Verify lambda executed by checking setText was called twice
-            return callCount[0] >= 2;
+            // Verify setText was called (constructor may have called it once, then our call)
+            return callCount[0] >= 1;
         });
         
-        // Verify the lambda executed (setText should have been called twice)
-        assertThat(callCount[0]).as("setText should be called twice: once from invokeAndWait (throws), once from invokeLater lambda").isGreaterThanOrEqualTo(2);
+        // Verify setText was called (at least once from our call)
+        assertThat(callCount[0]).as("setText should be called at least once when setLabelTextOnEDT is invoked").isGreaterThanOrEqualTo(1);
+        
+        // Verify the text was set
+        String labelText = execute(() -> testLabel.getText());
+        assertThat(labelText).as("Label text should be set to 'Test'").isEqualTo("Test");
         
         execute(() -> categoryDialog.labelMessage = originalLabel);
     }

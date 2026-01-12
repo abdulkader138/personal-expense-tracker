@@ -205,6 +205,13 @@ public class ExpenseTrackerApp {
      * @param args Command line arguments
      */
     public static void main(String[] args) {
+        // Suppress Guice ASM warnings (non-fatal, caused by Java 22 class files)
+        // This suppresses the "Unsupported class file major version 66" warning
+        java.util.logging.Logger guiceLogger = java.util.logging.Logger.getLogger("com.google.inject.internal.util.LineNumbers");
+        guiceLogger.setLevel(java.util.logging.Level.SEVERE);
+        java.util.logging.Logger guiceUtilLogger = java.util.logging.Logger.getLogger("com.google.inject.internal.util");
+        guiceUtilLogger.setLevel(java.util.logging.Level.SEVERE);
+        
         // Ensure args parameter is recorded by using it in operations
         CoverageHelper.performVerboseCoverageOperations(args);
         

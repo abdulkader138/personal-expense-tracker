@@ -27,7 +27,6 @@
         <jacoco.version>0.8.11</jacoco.version>
         <pitest.version>1.15.0</pitest.version>
         <awaitility.version>4.2.0</awaitility.version>
-        <logback-classic.version>1.2.12</logback-classic.version>
         <slf4j-api.version>1.7.36</slf4j-api.version>
         <log4j.version>2.23.1</log4j.version>
         <cucumber.version>5.5.0</cucumber.version>
@@ -84,15 +83,27 @@
         </dependency>
 
         <!-- Google Guice for Dependency Injection -->
+        <!-- NOTE: Guice 7.0.0 uses repackaged ASM (com.google.inject.internal.asm) that doesn't support Java 22 -->
+        <!-- The code must be compiled with Java 17 to avoid "Unsupported class file major version 66" warnings -->
+        <!-- This is a known limitation: https://github.com/google/guice/issues/1654 -->
         <dependency>
             <groupId>com.google.inject</groupId>
             <artifactId>guice</artifactId>
             <version>${guice.version}</version>
+            <!-- Exclude old ASM to use newer version that supports Java 22 -->
+            <!-- Note: This doesn't fully help because Guice uses repackaged ASM internally -->
+            <exclusions>
+                <exclusion>
+                    <groupId>org.ow2.asm</groupId>
+                    <artifactId>asm</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- ASM override for Java 22 support -->
         <!-- Guice 7.0.0 bundles an older ASM that doesn't support Java 22 -->
         <!-- This explicit dependency ensures Java 22 compatibility -->
+        <!-- Note: Guice uses repackaged ASM, but excluding it and adding newer ASM helps -->
         <dependency>
             <groupId>org.ow2.asm</groupId>
             <artifactId>asm</artifactId>
@@ -141,13 +152,6 @@
             <version>${slf4j-api.version}</version>
         </dependency>
         
-        <!-- Logback Classic (required by MongoDB driver and Testcontainers) -->
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>${logback-classic.version}</version>
-        </dependency>
-        
         <!-- Apache Log4j 2 Core -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
@@ -163,6 +167,7 @@
         </dependency>
         
         <!-- Log4j to SLF4J Bridge (for compatibility with dependencies using SLF4J) -->
+        <!-- This provides SLF4J binding for MongoDB driver and Testcontainers -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j-impl</artifactId>
@@ -266,6 +271,9 @@
                 <version>3.11.0</version>
                 <configuration>
                     <!-- Use source/target for compatibility with all Java versions (including Java 8) -->
+                    <!-- IMPORTANT: Must use Java 17 because Guice 7.0.0's internal ASM doesn't support Java 22 -->
+                    <!-- If you see "Unsupported class file major version 66" warnings, ensure you compile with Java 17 -->
+                    <!-- You can set JAVA_HOME to Java 17 or use: mvn clean compile -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 -->
                     <source>17</source>
                     <target>17</target>
                     <release>17</release>
@@ -302,8 +310,8 @@
                     <reuseForks>false</reuseForks>
                     <!-- Set to false to ensure clean EDT state between UI tests -->
                     <testFailureIgnore>false</testFailureIgnore>
-                    <forkedProcessTimeoutInSeconds>300</forkedProcessTimeoutInSeconds>
-                    <!-- Increased timeout for UI tests which may take longer -->
+                    <forkedProcessTimeoutInSeconds>120</forkedProcessTimeoutInSeconds>
+                    <!-- Timeout for entire fork process - increased to allow all tests to complete -->
                     <parallel>none</parallel>
                     <!-- Run tests sequentially to avoid EDT conflicts -->
                     <!-- Note: UI tests are skipped in headless mode by default.

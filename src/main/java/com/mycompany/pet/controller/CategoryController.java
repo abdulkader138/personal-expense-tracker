@@ -37,6 +37,9 @@ public class CategoryController {
             } catch (SQLException e) {
                 String errorMsg = "Error loading categories: " + e.getMessage();
                 javax.swing.SwingUtilities.invokeLater(() -> onError.accept(errorMsg));
+            } catch (RuntimeException e) {
+                String errorMsg = "Error loading categories: " + e.getMessage();
+                javax.swing.SwingUtilities.invokeLater(() -> onError.accept(errorMsg));
             }
         });
         thread.setDaemon(true); // Make daemon thread to avoid blocking JVM shutdown
@@ -62,6 +65,11 @@ public class CategoryController {
                 Category category = categoryService.createCategory(name.trim());
                 javax.swing.SwingUtilities.invokeLater(() -> onSuccess.accept(category));
             } catch (SQLException e) {
+                String errorMsg = "Error adding category: " + e.getMessage();
+                javax.swing.SwingUtilities.invokeLater(() -> onError.accept(errorMsg));
+            } catch (IllegalArgumentException e) {
+                javax.swing.SwingUtilities.invokeLater(() -> onError.accept(e.getMessage()));
+            } catch (RuntimeException e) {
                 String errorMsg = "Error adding category: " + e.getMessage();
                 javax.swing.SwingUtilities.invokeLater(() -> onError.accept(errorMsg));
             }
@@ -95,6 +103,9 @@ public class CategoryController {
                 javax.swing.SwingUtilities.invokeLater(() -> onError.accept(errorMsg));
             } catch (IllegalArgumentException e) {
                 javax.swing.SwingUtilities.invokeLater(() -> onError.accept(e.getMessage()));
+            } catch (RuntimeException e) {
+                String errorMsg = "Error updating category: " + e.getMessage();
+                javax.swing.SwingUtilities.invokeLater(() -> onError.accept(errorMsg));
             }
         });
         thread.setDaemon(true);
@@ -118,6 +129,9 @@ public class CategoryController {
                 javax.swing.SwingUtilities.invokeLater(() -> onError.accept(errorMsg));
             } catch (IllegalArgumentException e) {
                 javax.swing.SwingUtilities.invokeLater(() -> onError.accept(e.getMessage()));
+            } catch (RuntimeException e) {
+                String errorMsg = "Error deleting category: " + e.getMessage();
+                javax.swing.SwingUtilities.invokeLater(() -> onError.accept(errorMsg));
             }
         });
         thread.setDaemon(true);

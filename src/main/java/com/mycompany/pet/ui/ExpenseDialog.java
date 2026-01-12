@@ -209,7 +209,10 @@ public class ExpenseDialog extends JDialog {
                 expenseController.createExpense(date, amount, description, selectedCategory.getCategoryId(),
                     createdExpense -> {
                         saved = true;
-                        dispose();
+                        // Use invokeLater to ensure saved flag is set before dialog closes
+                        javax.swing.SwingUtilities.invokeLater(() -> {
+                            dispose();
+                        });
                     },
                     error -> 
                         JOptionPane.showMessageDialog(this,
@@ -223,7 +226,10 @@ public class ExpenseDialog extends JDialog {
                     selectedCategory.getCategoryId(),
                     updatedExpense -> {
                         saved = true;
-                        dispose();
+                        // Use invokeLater to ensure saved flag is set before dialog closes
+                        javax.swing.SwingUtilities.invokeLater(() -> {
+                            dispose();
+                        });
                     },
                     error -> 
                         JOptionPane.showMessageDialog(this,

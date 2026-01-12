@@ -25,6 +25,9 @@
     </Appenders>
     
     <Loggers>
+        <Logger name="com.google.inject.internal.util.LineNumbers" level="ERROR" additivity="false"/>
+        <Logger name="com.google.inject.internal.util" level="ERROR" additivity="false"/>
+        
         <!-- Application Loggers -->
         <Logger name="com.mycompany.pet" level="INFO" additivity="false">
             <AppenderRef ref="Console"/>

@@ -773,7 +773,9 @@ public class MainWindow extends JFrame {
     public void showAddExpenseDialog() {
         ExpenseDialog dialog = new ExpenseDialog(this, expenseController, categoryController, null);
         dialog.setVisible(true);
-        checkDialogAfterShow(dialog);
+        // Always check the result after dialog closes, regardless of whether it's still showing
+        // The saved flag is set in the async callback, so we need to check it even after dispose
+        handleDialogResult(dialog);
     }
 
     /**
@@ -784,6 +786,10 @@ public class MainWindow extends JFrame {
      */
     void checkDialogAfterShow(ExpenseDialog dialog) {
         if (dialog.isShowing()) {
+            handleDialogResult(dialog);
+        } else {
+            // Even if dialog is not showing, check if it was saved
+            // This handles the case where async operation completed and dialog was disposed
             handleDialogResult(dialog);
         }
     }
