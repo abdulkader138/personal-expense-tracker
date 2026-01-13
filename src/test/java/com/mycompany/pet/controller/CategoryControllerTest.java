@@ -121,6 +121,59 @@ public class CategoryControllerTest {
     }
     
     @Test
+    public void testCreateCategory_IllegalArgumentException() throws InterruptedException, SQLException {
+        // Given
+        when(categoryService.createCategory(CATEGORY_NAME_1))
+            .thenThrow(new IllegalArgumentException("Category name already exists"));
+        
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<String> errorResult = new AtomicReference<>();
+        
+        // When
+        controller.createCategory(CATEGORY_NAME_1,
+            category -> {
+                latch.countDown();
+            },
+            error -> {
+                errorResult.set(error);
+                latch.countDown();
+            }
+        );
+        
+        // Then
+        assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
+        assertThat(errorResult.get()).isEqualTo("Category name already exists");
+        verify(categoryService, timeout(2000)).createCategory(CATEGORY_NAME_1);
+    }
+    
+    @Test
+    public void testCreateCategory_RuntimeException() throws InterruptedException, SQLException {
+        // Given
+        when(categoryService.createCategory(CATEGORY_NAME_1))
+            .thenThrow(new RuntimeException("Unexpected error"));
+        
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<String> errorResult = new AtomicReference<>();
+        
+        // When
+        controller.createCategory(CATEGORY_NAME_1,
+            category -> {
+                latch.countDown();
+            },
+            error -> {
+                errorResult.set(error);
+                latch.countDown();
+            }
+        );
+        
+        // Then
+        assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
+        assertThat(errorResult.get()).isNotNull().contains("Error adding category");
+        assertThat(errorResult.get()).contains("Unexpected error");
+        verify(categoryService, timeout(2000)).createCategory(CATEGORY_NAME_1);
+    }
+    
+    @Test
     public void testUpdateCategory_Success() throws InterruptedException, SQLException {
         // Given
         Category expectedCategory = new Category(CATEGORY_ID_1, CATEGORY_NAME_1);
@@ -346,6 +399,59 @@ public class CategoryControllerTest {
         // Then
         assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
         assertThat(errorResult.get()).isNotNull().contains("Error loading categories");
+        verify(categoryService, timeout(2000)).getAllCategories();
+    }
+    
+    @Test
+    public void testLoadCategories_IllegalArgumentException() throws InterruptedException, SQLException {
+        // Given
+        when(categoryService.getAllCategories())
+            .thenThrow(new IllegalArgumentException("Invalid request"));
+        
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<String> errorResult = new AtomicReference<>();
+        
+        // When
+        controller.loadCategories(
+            categories -> {
+                latch.countDown();
+            },
+            error -> {
+                errorResult.set(error);
+                latch.countDown();
+            }
+        );
+        
+        // Then
+        assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
+        assertThat(errorResult.get()).isEqualTo("Invalid request");
+        verify(categoryService, timeout(2000)).getAllCategories();
+    }
+    
+    @Test
+    public void testLoadCategories_RuntimeException() throws InterruptedException, SQLException {
+        // Given
+        when(categoryService.getAllCategories())
+            .thenThrow(new RuntimeException("Unexpected error"));
+        
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<String> errorResult = new AtomicReference<>();
+        
+        // When
+        controller.loadCategories(
+            categories -> {
+                latch.countDown();
+            },
+            error -> {
+                errorResult.set(error);
+                latch.countDown();
+            }
+        );
+        
+        // Then
+        assertThat(latch.await(2, TimeUnit.SECONDS)).isTrue();
+        assertThat(errorResult.get()).isNotNull().contains("Error loading categories");
+        assertThat(errorResult.get()).contains("Unexpected error");
         verify(categoryService, timeout(2000)).getAllCategories();
     }
     
