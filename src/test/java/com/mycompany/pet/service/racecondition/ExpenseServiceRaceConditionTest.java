@@ -10,18 +10,6 @@
  * The methods tested include:
  * - createExpense() for concurrent creation of expenses.
  * - deleteExpense() for concurrent deletion of expenses.
- *
- * Each test follows a structured approach with three main phases:
- * 1. Setup: Created environment for the test.
- * 2. Mocks: Configuring the mock objects (Added separate comment just for better readability).
- * 3. Exercise: Calling an instance method.
- * 4. Verify: Verify that the outcome matches the expected behaviour.
- *
- * The setup and teardown methods handle the initialisation and cleanup of mock objects.
- *
- * @see ExpenseService
- * @see ExpenseDAO
- * @see CategoryDAO
  */
 
 package com.mycompany.pet.service.racecondition;
@@ -172,7 +160,6 @@ public class ExpenseServiceRaceConditionTest {
 		await().atMost(10, TimeUnit.SECONDS).until(() -> threads.stream().noneMatch(Thread::isAlive));
 
 		// Verify - expense should be deleted (only once, but multiple threads may try)
-		// The important thing is that the list is empty after all threads complete
 		assertThat(expenses).isEmpty();
 	}
 }

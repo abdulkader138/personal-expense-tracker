@@ -11,16 +11,6 @@
  * - createCategory() for concurrent creation of categories.
  * - deleteCategory() for concurrent deletion of categories.
  *
- * Each test follows a structured approach with three main phases:
- * 1. Setup: Created environment for the test.
- * 2. Mocks: Configuring the mock objects (Added separate comment just for better readability).
- * 3. Exercise: Calling an instance method.
- * 4. Verify: Verify that the outcome matches the expected behaviour.
- *
- * The setup and teardown methods handle the initialisation and cleanup of mock objects.
- *
- * @see CategoryService
- * @see CategoryDAO
  */
 
 package com.mycompany.pet.service.racecondition;
@@ -120,9 +110,6 @@ public class CategoryServiceRaceConditionTest {
 		await().atMost(10, TimeUnit.SECONDS).until(() -> threads.stream().noneMatch(Thread::isAlive));
 
 		// Verify - all 10 threads should attempt to create categories
-		// In a race condition, some might fail, but the service should handle it gracefully
-		// The important thing is that the service handles concurrent access without crashing
-		// We expect at least 8 successful creations (allowing for 2 failures due to race conditions)
 		assertThat(categories).hasSizeGreaterThanOrEqualTo(8);
 		// Also verify that all created categories have unique IDs (thread-safe)
 		assertThat(categories.stream().map(Category::getCategoryId).distinct().count())
@@ -160,7 +147,6 @@ public class CategoryServiceRaceConditionTest {
 		await().atMost(10, TimeUnit.SECONDS).until(() -> threads.stream().noneMatch(Thread::isAlive));
 
 		// Verify - category should be deleted (only once, but multiple threads may try)
-		// The important thing is that the list is empty after all threads complete
 		assertThat(categories).isEmpty();
 	}
 }

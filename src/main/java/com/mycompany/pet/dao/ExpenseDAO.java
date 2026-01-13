@@ -33,7 +33,6 @@ public class ExpenseDAO {
 
     public Expense create(Expense expense) throws SQLException {
         try {
-            // Generate a simple incremental ID
             Document last = collection.find()
                     .sort(Sorts.descending(FIELD_EXPENSE_ID))
                     .first();
@@ -45,8 +44,8 @@ public class ExpenseDAO {
 
             Document doc = new Document("_id", nextId)
                     .append(FIELD_EXPENSE_ID, nextId)
-                    .append("date", expense.getDate().toString()) // store as ISO date string
-                    .append(FIELD_AMOUNT, expense.getAmount().toString()) // store as string
+                    .append("date", expense.getDate().toString()) 
+                    .append(FIELD_AMOUNT, expense.getAmount().toString()) 
                     .append(FIELD_DESCRIPTION, expense.getDescription())
                     .append(FIELD_CATEGORY_ID, expense.getCategoryId());
 

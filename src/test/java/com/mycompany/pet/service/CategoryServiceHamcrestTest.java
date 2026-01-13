@@ -29,8 +29,6 @@ import com.mycompany.pet.model.Category;
 /**
  * Example test using Hamcrest matchers instead of JUnit assertions.
  * 
- * This demonstrates the concept from "Test-Driven Development, Build Automation, Continuous Integration" book.
- * Hamcrest provides more readable and expressive assertions.
  */
 public class CategoryServiceHamcrestTest {
     @Mock

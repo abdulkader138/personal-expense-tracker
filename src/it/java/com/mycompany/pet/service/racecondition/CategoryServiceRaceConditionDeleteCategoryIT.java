@@ -14,13 +14,6 @@
  * The databaseConfig variable is responsible for starting the Docker container.
  * If the test is run from Eclipse, it runs the Docker container using Testcontainers.
  * If the test is run using a Maven command, it starts a Docker container without test containers.
- *
- * @see CategoryService
- * @see CategoryDAO
- * @see DatabaseConfig
- * @see DBConfig
- * @see MavenContainerConfig
- * @see TestContainerConfig
  */
 
 package com.mycompany.pet.service.racecondition;
@@ -47,31 +40,16 @@ import com.mycompany.pet.database.DatabaseInitializer;
 import com.mycompany.pet.model.Category;
 import com.mycompany.pet.service.CategoryService;
 
-/**
- * The Class CategoryServiceRaceConditionDeleteCategoryIT.
- */
 public class CategoryServiceRaceConditionDeleteCategoryIT {
 
-	/** The category service. */
 	private CategoryService categoryService;
 
-	/** The database connection. */
 	private DatabaseConnection databaseConnection;
 
-	/** The saved category. */
 	private Category savedCategory;
 
-	/**
-	 * This variable is responsible for starting the Docker container. If the test
-	 * is run from Eclipse, it runs the Docker container using Testcontainers. If
-	 * the test is run using a Maven command, it starts a Docker container without
-	 * test containers
-	 */
 	private static DBConfig databaseConfig;
 
-	/**
-	 * Setup server.
-	 */
 	@BeforeClass
 	public static void setupServer() {
 		try {
@@ -82,16 +60,10 @@ public class CategoryServiceRaceConditionDeleteCategoryIT {
 			}
 			databaseConfig.testAndStartDatabaseConnection();
 		} catch (Exception e) {
-			// Skip tests if database setup fails (e.g., Docker not available)
 			org.junit.Assume.assumeNoException("Database setup failed. Docker may not be available. Skipping integration tests.", e);
 		}
 	}
 
-	/**
-	 * Sets the up.
-	 *
-	 * @throws SQLException the SQL exception
-	 */
 	@Before
 	public void setUp() throws SQLException {
 		if (databaseConfig == null) {
@@ -124,9 +96,6 @@ public class CategoryServiceRaceConditionDeleteCategoryIT {
 		}
 	}
 
-	/**
-	 * Release resources.
-	 */
 	@After
 	public void releaseResources() {
 		if (databaseConnection != null) {
@@ -134,9 +103,6 @@ public class CategoryServiceRaceConditionDeleteCategoryIT {
 		}
 	}
 
-	/**
-	 * Delete category concurrent.
-	 */
 	@Test
 	public void deleteCategoryConcurrent() {
 		if (categoryService == null || savedCategory == null) {
@@ -153,7 +119,6 @@ public class CategoryServiceRaceConditionDeleteCategoryIT {
 		})).peek(t -> t.start()).collect(Collectors.toList());
 		await().atMost(10, TimeUnit.SECONDS).until(() -> threads.stream().noneMatch(t -> t.isAlive()));
 
-		// Verify category was deleted
 		try {
 			List<Category> categories = categoryService.getAllCategories();
 			assertThat(categories).doesNotContain(savedCategory);

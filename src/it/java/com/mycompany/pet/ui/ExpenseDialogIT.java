@@ -9,25 +9,12 @@
  * - Ensuring correct validation and error handling for invalid input data.
  * - Using the AssertJSwingJUnitTestCase framework for GUI testing and Awaitility for asynchronous operations.
  * 
- * The databaseConfig variable is responsible for starting the Docker container.
- * If the test is run from Eclipse, it runs the Docker container using Testcontainers.
- * If the test is run using a Maven command, it starts a Docker container without test containers.
- * 
- * @see ExpenseService
- * @see CategoryService
- * @see ExpenseDAO
- * @see CategoryDAO
- * @see DatabaseConfig
- * @see DBConfig
- * @see MavenContainerConfig
- * @see TestContainerConfig
  */
 
 package com.mycompany.pet.ui;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.swing.core.matcher.JButtonMatcher.withText;
-import static org.assertj.swing.edt.GuiActionRunner.execute;
 import static org.awaitility.Awaitility.await;
 
 import java.math.BigDecimal;
@@ -58,59 +45,35 @@ import com.mycompany.pet.model.Expense;
 import com.mycompany.pet.service.CategoryService;
 import com.mycompany.pet.service.ExpenseService;
 
-/**
- * The Class ExpenseDialogIT.
- */
 @RunWith(GUITestRunner.class)
 public class ExpenseDialogIT extends AssertJSwingJUnitTestCase {
 
-	/** The category service. */
 	private CategoryService categoryService;
 
-	/** The expense service. */
 	private ExpenseService expenseService;
 
-	/** The main window. */
 	private MainWindow mainWindow;
 
-	/** The parent frame. */
 	private FrameFixture parentFrame;
 
-	/** The expense dialog. */
 	private ExpenseDialog expenseDialog;
 
-	/** The dialog. */
 	private DialogFixture dialog;
 
-	/** The database connection. */
 	private DatabaseConnection databaseConnection;
 
-	/** The category. */
 	private Category category;
 
-	/**
-	 * This variable is responsible for starting the Docker container. If the test
-	 * is run from Eclipse, it runs the Docker container using Testcontainers. If
-	 * the test is run using a Maven command, it starts a Docker container without
-	 * test containers
-	 */
 	private static DBConfig databaseConfig;
 
-	/** The expense date. */
 	private static final LocalDate EXPENSE_DATE = LocalDate.now();
 
-	/** The expense amount. */
 	private static final BigDecimal EXPENSE_AMOUNT = new BigDecimal("100.50");
 
-	/** The expense description. */
 	private static final String EXPENSE_DESCRIPTION = "Lunch";
 
-	/** The updated expense description. */
 	private static final String UPDATED_EXPENSE_DESCRIPTION = "Dinner";
 
-	/**
-	 * Setup server.
-	 */
 	@BeforeClass
 	public static void setupServer() {
 		try {
@@ -121,16 +84,10 @@ public class ExpenseDialogIT extends AssertJSwingJUnitTestCase {
 			}
 			databaseConfig.testAndStartDatabaseConnection();
 		} catch (Exception e) {
-			// Skip tests if database setup fails (e.g., Docker not available)
 			org.junit.Assume.assumeNoException("Database setup failed. Docker may not be available. Skipping integration tests.", e);
 		}
 	}
 
-	/**
-	 * On set up.
-	 *
-	 * @throws Exception the exception
-	 */
 	@Override
 	protected void onSetUp() throws Exception {
 		if (databaseConfig == null) {
@@ -145,7 +102,6 @@ public class ExpenseDialogIT extends AssertJSwingJUnitTestCase {
 				return;
 			}
 			
-			// Initialize database
 			try {
 				DatabaseInitializer initializer = new DatabaseInitializer(databaseConnection);
 				initializer.initialize();
@@ -154,20 +110,16 @@ public class ExpenseDialogIT extends AssertJSwingJUnitTestCase {
 				return;
 			}
 
-			// Initialize DAOs and Services
 			CategoryDAO categoryDAO = new CategoryDAO(databaseConnection);
 			ExpenseDAO expenseDAO = new ExpenseDAO(databaseConnection);
 			categoryService = new CategoryService(categoryDAO);
 			expenseService = new ExpenseService(expenseDAO, categoryDAO);
 
-			// Create test category
 			category = categoryService.createCategory("Food");
 
-			// Create controllers from services
 			CategoryController categoryController = new CategoryController(categoryService);
 			ExpenseController expenseController = new ExpenseController(expenseService);
 			
-			// Create parent frame (MainWindow) and make it visible first
 			mainWindow = GuiActionRunner.execute(() -> {
 				MainWindow mw = new MainWindow(expenseController, categoryController);
 				mw.setVisible(true);
@@ -176,10 +128,9 @@ public class ExpenseDialogIT extends AssertJSwingJUnitTestCase {
 			parentFrame = new FrameFixture(robot(), mainWindow);
 			parentFrame.show();
 
-			// Create dialog on EDT
 			expenseDialog = GuiActionRunner.execute(() -> {
 				ExpenseDialog ed = new ExpenseDialog(mainWindow, expenseController, categoryController, null);
-				ed.setModal(false); // Make non-modal for testing
+				ed.setModal(false); 
 				ed.setVisible(true);
 				return ed;
 			});
@@ -187,7 +138,6 @@ public class ExpenseDialogIT extends AssertJSwingJUnitTestCase {
 			dialog = new DialogFixture(robot(), expenseDialog);
 			dialog.show();
 			
-			// Wait for initial category load (async operation)
 			robot().waitForIdle();
 			try {
 				Thread.sleep(200);
@@ -195,15 +145,11 @@ public class ExpenseDialogIT extends AssertJSwingJUnitTestCase {
 				Thread.currentThread().interrupt();
 			}
 		} catch (Exception e) {
-			// Skip test if database operations fail
 			org.junit.Assume.assumeNoException("Database operation failed. Skipping test.", e);
 			return;
 		}
 	}
 
-	/**
-	 * On tear down.
-	 */
 	@Override
 	protected void onTearDown() {
 		if (databaseConnection != null) {
@@ -217,9 +163,6 @@ public class ExpenseDialogIT extends AssertJSwingJUnitTestCase {
 		}
 	}
 
-	/**
-	 * Test add expense success.
-	 */
 	@Test
 	@GUITest
 	public void testAddExpenseSuccess() throws SQLException {
@@ -228,12 +171,10 @@ public class ExpenseDialogIT extends AssertJSwingJUnitTestCase {
 			return;
 		}
 
-		// Fill in expense details
 		GuiActionRunner.execute(() -> {
 			expenseDialog.dateField.setText(EXPENSE_DATE.toString());
 			expenseDialog.amountField.setText(EXPENSE_AMOUNT.toString());
 			expenseDialog.descriptionField.setText(EXPENSE_DESCRIPTION);
-			// Select category
 			int itemCount = expenseDialog.categoryComboBox.getItemCount();
 			for (int i = 0; i < itemCount; i++) {
 				Object item = expenseDialog.categoryComboBox.getItemAt(i);
@@ -249,13 +190,10 @@ public class ExpenseDialogIT extends AssertJSwingJUnitTestCase {
 		
 		robot().waitForIdle();
 
-		// Click Save button
 		dialog.button(withText("Save")).click();
 		
-		// Wait for async operation
 		robot().waitForIdle();
 
-		// Verify expense was saved
 		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
 			boolean saved = GuiActionRunner.execute(() -> {
 				return expenseDialog.isSaved();
@@ -264,9 +202,6 @@ public class ExpenseDialogIT extends AssertJSwingJUnitTestCase {
 		});
 	}
 
-	/**
-	 * Test edit expense success.
-	 */
 	@Test
 	@GUITest
 	public void testEditExpenseSuccess() throws SQLException {
@@ -275,21 +210,17 @@ public class ExpenseDialogIT extends AssertJSwingJUnitTestCase {
 			return;
 		}
 
-		// First, create an expense
 		Expense expense = expenseService.createExpense(EXPENSE_DATE, EXPENSE_AMOUNT, EXPENSE_DESCRIPTION, category.getCategoryId());
 
-		// Close the add dialog and create edit dialog
 		GuiActionRunner.execute(() -> {
 			if (expenseDialog != null) {
 				expenseDialog.dispose();
 			}
 		});
 
-		// Create controllers from services
 		CategoryController categoryController = new CategoryController(categoryService);
 		ExpenseController expenseController = new ExpenseController(expenseService);
 		
-		// Create edit dialog
 		ExpenseDialog editDialog = GuiActionRunner.execute(() -> {
 			ExpenseDialog ed = new ExpenseDialog(mainWindow, expenseController, categoryController, expense);
 			ed.setVisible(true);
@@ -298,10 +229,8 @@ public class ExpenseDialogIT extends AssertJSwingJUnitTestCase {
 		DialogFixture editDialogFixture = new DialogFixture(robot(), editDialog);
 		editDialogFixture.show();
 
-		// Update expense details
 		GuiActionRunner.execute(() -> {
 			editDialog.descriptionField.setText(UPDATED_EXPENSE_DESCRIPTION);
-			// Ensure category is selected
 			int itemCount = editDialog.categoryComboBox.getItemCount();
 			for (int i = 0; i < itemCount; i++) {
 				Object item = editDialog.categoryComboBox.getItemAt(i);
@@ -315,10 +244,8 @@ public class ExpenseDialogIT extends AssertJSwingJUnitTestCase {
 			}
 		});
 
-		// Click Save button
 		editDialogFixture.button(withText("Save")).click();
 
-		// Verify expense was saved
 		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
 			boolean saved = GuiActionRunner.execute(() -> {
 				return editDialog.isSaved();
@@ -329,9 +256,6 @@ public class ExpenseDialogIT extends AssertJSwingJUnitTestCase {
 		editDialogFixture.cleanUp();
 	}
 
-	/**
-	 * Test add expense with no category.
-	 */
 	@Test
 	@GUITest
 	public void testAddExpenseWithNoCategory() {
@@ -340,7 +264,6 @@ public class ExpenseDialogIT extends AssertJSwingJUnitTestCase {
 			return;
 		}
 
-		// Fill in expense details but don't select category
 		GuiActionRunner.execute(() -> {
 			expenseDialog.dateField.setText(EXPENSE_DATE.toString());
 			expenseDialog.amountField.setText(EXPENSE_AMOUNT.toString());
@@ -348,10 +271,8 @@ public class ExpenseDialogIT extends AssertJSwingJUnitTestCase {
 			expenseDialog.categoryComboBox.setSelectedItem(null);
 		});
 
-		// Click Save button
 		dialog.button(withText("Save")).click();
 
-		// Verify dialog is still visible (validation error)
 		await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
 			boolean visible = GuiActionRunner.execute(() -> {
 				return expenseDialog.isVisible();
@@ -360,9 +281,6 @@ public class ExpenseDialogIT extends AssertJSwingJUnitTestCase {
 		});
 	}
 
-	/**
-	 * Test add expense with invalid date.
-	 */
 	@Test
 	@GUITest
 	public void testAddExpenseWithInvalidDate() {
@@ -371,12 +289,10 @@ public class ExpenseDialogIT extends AssertJSwingJUnitTestCase {
 			return;
 		}
 
-		// Fill in expense details with invalid date
 		GuiActionRunner.execute(() -> {
 			expenseDialog.dateField.setText("invalid-date");
 			expenseDialog.amountField.setText(EXPENSE_AMOUNT.toString());
 			expenseDialog.descriptionField.setText(EXPENSE_DESCRIPTION);
-			// Select category
 			int itemCount = expenseDialog.categoryComboBox.getItemCount();
 			for (int i = 0; i < itemCount; i++) {
 				Object item = expenseDialog.categoryComboBox.getItemAt(i);
@@ -390,10 +306,8 @@ public class ExpenseDialogIT extends AssertJSwingJUnitTestCase {
 			}
 		});
 
-		// Click Save button
 		dialog.button(withText("Save")).click();
 
-		// Verify dialog is still visible (validation error)
 		await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
 			boolean visible = GuiActionRunner.execute(() -> {
 				return expenseDialog.isVisible();
@@ -402,9 +316,6 @@ public class ExpenseDialogIT extends AssertJSwingJUnitTestCase {
 		});
 	}
 
-	/**
-	 * Test cancel dialog.
-	 */
 	@Test
 	@GUITest
 	public void testCancelDialog() {
@@ -413,10 +324,8 @@ public class ExpenseDialogIT extends AssertJSwingJUnitTestCase {
 			return;
 		}
 
-		// Click Cancel button
 		dialog.button(withText("Cancel")).click();
 
-		// Verify dialog is closed and not saved
 		await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
 			boolean saved = GuiActionRunner.execute(() -> {
 				return expenseDialog.isSaved();

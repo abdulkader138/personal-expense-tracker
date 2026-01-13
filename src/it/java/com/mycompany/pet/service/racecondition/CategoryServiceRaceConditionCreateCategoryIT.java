@@ -14,13 +14,6 @@
  * The databaseConfig variable is responsible for starting the Docker container.
  * If the test is run from Eclipse, it runs the Docker container using Testcontainers.
  * If the test is run using a Maven command, it starts a Docker container without test containers.
- *
- * @see CategoryService
- * @see CategoryDAO
- * @see DatabaseConfig
- * @see DBConfig
- * @see MavenContainerConfig
- * @see TestContainerConfig
  */
 
 package com.mycompany.pet.service.racecondition;
@@ -47,31 +40,16 @@ import com.mycompany.pet.database.DatabaseInitializer;
 import com.mycompany.pet.model.Category;
 import com.mycompany.pet.service.CategoryService;
 
-/**
- * The Class CategoryServiceRaceConditionCreateCategoryIT.
- */
 public class CategoryServiceRaceConditionCreateCategoryIT {
 
-	/** The category service. */
 	private CategoryService categoryService;
 
-	/** The database connection. */
 	private DatabaseConnection databaseConnection;
 
-	/** The category name. */
 	private String CATEGORY_NAME = "Food";
 
-	/**
-	 * This variable is responsible for starting the Docker container. If the test
-	 * is run from Eclipse, it runs the Docker container using Testcontainers. If
-	 * the test is run using a Maven command, it starts a Docker container without
-	 * test containers
-	 */
 	private static DBConfig databaseConfig;
 
-	/**
-	 * Setup server.
-	 */
 	@BeforeClass
 	public static void setupServer() {
 		try {
@@ -82,16 +60,10 @@ public class CategoryServiceRaceConditionCreateCategoryIT {
 			}
 			databaseConfig.testAndStartDatabaseConnection();
 		} catch (Exception e) {
-			// Skip tests if database setup fails (e.g., Docker not available)
 			org.junit.Assume.assumeNoException("Database setup failed. Docker may not be available. Skipping integration tests.", e);
 		}
 	}
 
-	/**
-	 * Sets the up.
-	 *
-	 * @throws SQLException the SQL exception
-	 */
 	@Before
 	public void setUp() throws SQLException {
 		if (databaseConfig == null) {
@@ -122,9 +94,6 @@ public class CategoryServiceRaceConditionCreateCategoryIT {
 		}
 	}
 
-	/**
-	 * Release resources.
-	 */
 	@After
 	public void releaseResources() {
 		if (databaseConnection != null) {
@@ -132,9 +101,6 @@ public class CategoryServiceRaceConditionCreateCategoryIT {
 		}
 	}
 
-	/**
-	 * Create category concurrent.
-	 */
 	@Test
 	public void createCategoryConcurrent() {
 		if (categoryService == null) {
@@ -142,27 +108,20 @@ public class CategoryServiceRaceConditionCreateCategoryIT {
 			return;
 		}
 
-		// Clean up any existing categories before test - drop collection for clean state
 		try {
 			databaseConnection.getDatabase().getCollection("categories").drop();
-			// Wait for database to sync after drop
 			await().atMost(2, TimeUnit.SECONDS);
 		} catch (Exception e) {
-			// If drop fails, try individual deletions
 			try {
 				List<Category> existing = categoryService.getAllCategories();
 				for (Category cat : existing) {
 					categoryService.deleteCategory(cat.getCategoryId());
 				}
-				// Wait for deletions to complete
 				await().atMost(2, TimeUnit.SECONDS);
 			} catch (SQLException ex) {
-				// Ignore cleanup errors
 			}
 		}
 
-		// Use unique category names for each thread to avoid duplicate name conflicts
-		// Store results to track successful creations
 		java.util.concurrent.atomic.AtomicInteger successCount = new java.util.concurrent.atomic.AtomicInteger(0);
 		java.util.concurrent.atomic.AtomicInteger failureCount = new java.util.concurrent.atomic.AtomicInteger(0);
 		List<Thread> threads = IntStream.range(0, 10).mapToObj(i -> new Thread(() -> {
@@ -176,22 +135,18 @@ public class CategoryServiceRaceConditionCreateCategoryIT {
 			}
 		})).peek(t -> t.start()).collect(Collectors.toList());
 		
-		// Wait for all threads to complete
 		await().atMost(15, TimeUnit.SECONDS).until(() -> threads.stream().noneMatch(t -> t.isAlive()));
 
-		// Wait for database to sync - check multiple times with longer timeout
 		await().atMost(5, TimeUnit.SECONDS).pollInterval(500, TimeUnit.MILLISECONDS).until(() -> {
 			try {
 				List<Category> categories = categoryService.getAllCategories();
 				int currentSize = categories.size();
-				// Wait until we have at least as many categories as successful creations
 				return currentSize >= successCount.get();
 			} catch (SQLException e) {
 				return false;
 			}
 		});
 
-		// Verify all categories were created
 		try {
 			List<Category> categories = categoryService.getAllCategories();
 			assertThat(categories).as("Expected 10 categories but found " + categories.size() + ". Success count: " + successCount.get() + ", Failure count: " + failureCount.get()).hasSize(10);

@@ -106,13 +106,9 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         });
         
         window = new FrameFixture(robot(), mainWindow);
-        // Don't call window.show() - it blocks on EDT and causes timeouts
-        // Window is already visible from setVisible(true) above
         
         System.setProperty("test.mode", "true");
         
-        // Wait briefly for initial setup
-        // No waiting - just execute and verify
     }
 
     @Override
@@ -934,7 +930,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             javax.swing.SwingUtilities.invokeLater(() -> mainWindow.loadData());
             // Wait for data to load
             try {
-                Thread.sleep(200); // NOSONAR - wait for async load
+                Thread.sleep(200); 
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }

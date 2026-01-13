@@ -30,7 +30,6 @@ public class CategoryDAO {
 
     public Category create(Category category) throws SQLException {
         try {
-            // Generate a simple incremental ID
             Document last = collection.find()
                     .sort(Sorts.descending(FIELD_CATEGORY_ID))
                     .first();
@@ -84,10 +83,8 @@ public class CategoryDAO {
 
     public boolean delete(Integer categoryId) throws SQLException {
         try {
-            // Delete the category itself
             long deletedCount = collection.deleteOne(Filters.eq(FIELD_CATEGORY_ID, categoryId)).getDeletedCount();
 
-            // Cascade delete expenses with this categoryId to mimic the former FK constraint
             expensesCollection.deleteMany(Filters.eq(FIELD_CATEGORY_ID, categoryId));
 
             return deletedCount > 0;

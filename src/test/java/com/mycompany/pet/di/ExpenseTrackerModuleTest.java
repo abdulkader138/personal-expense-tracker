@@ -116,7 +116,7 @@ public class ExpenseTrackerModuleTest {
         ExpenseTrackerModule result = module.mongoHost(testHost);
 
         // Then
-        assertSame(module, result); // Should return same instance for fluent API
+        assertSame(module, result); 
         
         // Verify the host is used when creating connection
         MongoClient mockClient = mock(MongoClient.class);
@@ -141,7 +141,7 @@ public class ExpenseTrackerModuleTest {
         ExpenseTrackerModule result = module.mongoPort(testPort);
 
         // Then
-        assertSame(module, result); // Should return same instance for fluent API
+        assertSame(module, result); 
         
         // Verify the port is used when creating connection
         MongoClient mockClient = mock(MongoClient.class);
@@ -166,7 +166,7 @@ public class ExpenseTrackerModuleTest {
         ExpenseTrackerModule result = module.databaseName(testDbName);
 
         // Then
-        assertSame(module, result); // Should return same instance for fluent API
+        assertSame(module, result);
         
         // Verify the database name is used when creating connection
         MongoClient mockClient = mock(MongoClient.class);
@@ -209,17 +209,12 @@ public class ExpenseTrackerModuleTest {
         assertNotNull(dbConnection);
     }
 
-    /**
-     * Test configure() method.
-     * The configure method is empty, but we verify it doesn't throw exceptions.
-     */
     @Test
     public void testConfigure() {
         // Given
         ExpenseTrackerModule module = new ExpenseTrackerModule();
 
         // When & Then - configure() is called by Guice when creating injector
-        // We verify it doesn't throw exceptions
         MongoClient mockClient = mock(MongoClient.class);
         mockedMongoClients.when(() -> MongoClients.create(anyString()))
                 .thenReturn(mockClient);
@@ -245,7 +240,6 @@ public class ExpenseTrackerModuleTest {
 
         // Then
         assertNotNull(dbConnection);
-        // Verify the connection string is correct by calling getDatabase() which triggers MongoClients.create()
         dbConnection.getDatabase();
         mockedMongoClients.verify(() -> MongoClients.create("mongodb://localhost:27017"));
     }
@@ -293,12 +287,9 @@ public class ExpenseTrackerModuleTest {
         // Then
         assertNotNull(dbConnection1);
         assertNotNull(dbConnection2);
-        assertSame(dbConnection1, dbConnection2); // Should be same instance (singleton)
+        assertSame(dbConnection1, dbConnection2); 
     }
 
-    /**
-     * Test provideMongoClient() with default values.
-     */
     @Test
     public void testProvideMongoClient_DefaultValues() {
         // Given
@@ -317,9 +308,6 @@ public class ExpenseTrackerModuleTest {
         mockedMongoClients.verify(() -> MongoClients.create("mongodb://localhost:27017"));
     }
 
-    /**
-     * Test provideMongoClient() with custom values.
-     */
     @Test
     public void testProvideMongoClient_CustomValues() {
         // Given
@@ -340,9 +328,6 @@ public class ExpenseTrackerModuleTest {
         mockedMongoClients.verify(() -> MongoClients.create("mongodb://custom-host:9999"));
     }
 
-    /**
-     * Test provideMongoClient() returns singleton.
-     */
     @Test
     public void testProvideMongoClient_Singleton() {
         // Given
@@ -362,11 +347,6 @@ public class ExpenseTrackerModuleTest {
         assertSame(client1, client2); // Should be same instance (singleton)
     }
 
-    /**
-     * Test provideDatabaseInitializer() creates and initializes database.
-     * Note: This test verifies that the method can be called through Guice.
-     * The actual initialization requires a mocked database connection.
-     */
     @Test
     public void testProvideDatabaseInitializer() {
         // Given
@@ -383,7 +363,6 @@ public class ExpenseTrackerModuleTest {
         when(mockDatabase.getCollection("expenses")).thenReturn(mockExpensesCollection);
 
         // When - Guice will call provideDatabaseInitializer which requires DatabaseConnection
-        // DatabaseConnection is provided by provideDatabaseConnection in the same module
         Injector injector = Guice.createInjector(createTestModuleWithMocks(module));
         DatabaseInitializer initializer = injector.getInstance(DatabaseInitializer.class);
 
@@ -391,9 +370,6 @@ public class ExpenseTrackerModuleTest {
         assertNotNull(initializer);
     }
 
-    /**
-     * Test provideDatabaseInitializer() returns singleton.
-     */
     @Test
     public void testProvideDatabaseInitializer_Singleton() {
         // Given
@@ -417,13 +393,9 @@ public class ExpenseTrackerModuleTest {
         // Then
         assertNotNull(initializer1);
         assertNotNull(initializer2);
-        assertSame(initializer1, initializer2); // Should be same instance (singleton)
+        assertSame(initializer1, initializer2);
     }
 
-    /**
-     * Test provideMainWindow() creates MainWindow with controllers.
-     * Uses reflection to call the actual ExpenseTrackerModule.provideMainWindow method.
-     */
     @Test
     public void testProvideMainWindow() throws Exception {
         // Skip test in headless environment (MainWindow requires display)
@@ -446,16 +418,8 @@ public class ExpenseTrackerModuleTest {
 
         // Then
         assertNotNull(mainWindow);
-        // Verify MainWindow was created with the controllers
-        // Note: loadData() is called in provideMainWindow, but we can't easily verify it
     }
 
-    /**
-     * Test provideMainWindow() returns singleton when called through Guice.
-     * This tests the @Singleton annotation behavior.
-     * Note: MainWindow instances may appear different due to JFrame internal state,
-     * but Guice should cache the result of provideMainWindow().
-     */
     @Test
     public void testProvideMainWindow_Singleton() {
         // Skip test in headless environment (MainWindow requires display)
@@ -468,12 +432,9 @@ public class ExpenseTrackerModuleTest {
         mockedMongoClients.when(() -> MongoClients.create(anyString()))
                 .thenReturn(mockClient);
         
-        // Create a test module that uses ExpenseTrackerModule's provideMainWindow logic
-        // We use Modules.override() to override controller providers with mocks
         AbstractModule overrideModule = new AbstractModule() {
             @Override
             protected void configure() {
-                // Override the controller bindings with mocks
                 bind(ExpenseController.class).toInstance(mock(ExpenseController.class));
                 bind(CategoryController.class).toInstance(mock(CategoryController.class));
             }
@@ -488,15 +449,8 @@ public class ExpenseTrackerModuleTest {
         // Then
         assertNotNull(window1);
         assertNotNull(window2);
-        // Verify both instances are created successfully
-        // Note: Due to JFrame internal state, assertSame might fail even if Guice caches correctly
-        // The important thing is that provideMainWindow() is called and works correctly
-        // We verify the method works by checking both instances are not null
     }
 
-    /**
-     * Test provideCategoryDAO() through Guice injection.
-     */
     @Test
     public void testProvideCategoryDAO() {
         // Given
@@ -512,12 +466,9 @@ public class ExpenseTrackerModuleTest {
         when(mockDatabase.getCollection("categories")).thenReturn(mockCategoriesCollection);
         when(mockDatabase.getCollection("expenses")).thenReturn(mockExpensesCollection);
 
-        // When - Request CategoryDAO through Guice, which will call provideCategoryDAO
-        // Only override MainWindow to avoid headless issues, don't override controllers
         AbstractModule overrideModule = new AbstractModule() {
             @Override
             protected void configure() {
-                // Override MainWindow binding with a mock to avoid headless issues
                 bind(MainWindow.class).toInstance(mock(MainWindow.class));
             }
         };
@@ -529,9 +480,6 @@ public class ExpenseTrackerModuleTest {
         assertNotNull(categoryDAO);
     }
 
-    /**
-     * Test provideExpenseDAO() through Guice injection.
-     */
     @Test
     public void testProvideExpenseDAO() {
         // Given
@@ -547,12 +495,9 @@ public class ExpenseTrackerModuleTest {
         when(mockDatabase.getCollection("categories")).thenReturn(mockCategoriesCollection);
         when(mockDatabase.getCollection("expenses")).thenReturn(mockExpensesCollection);
 
-        // When - Request ExpenseDAO through Guice, which will call provideExpenseDAO
-        // Only override MainWindow to avoid headless issues, don't override controllers
         AbstractModule overrideModule = new AbstractModule() {
             @Override
             protected void configure() {
-                // Override MainWindow binding with a mock to avoid headless issues
                 bind(MainWindow.class).toInstance(mock(MainWindow.class));
             }
         };
@@ -564,9 +509,6 @@ public class ExpenseTrackerModuleTest {
         assertNotNull(expenseDAO);
     }
 
-    /**
-     * Test provideCategoryService() through Guice injection.
-     */
     @Test
     public void testProvideCategoryService() {
         // Given
@@ -583,12 +525,9 @@ public class ExpenseTrackerModuleTest {
         when(mockDatabase.getCollection("expenses")).thenReturn(mockExpensesCollection);
 
         // When - Request CategoryService through Guice, which will call provideCategoryService
-        // This requires CategoryDAO, which will be provided by provideCategoryDAO
-        // Only override MainWindow to avoid headless issues, don't override controllers
         AbstractModule overrideModule = new AbstractModule() {
             @Override
             protected void configure() {
-                // Override MainWindow binding with a mock to avoid headless issues
                 bind(MainWindow.class).toInstance(mock(MainWindow.class));
             }
         };
@@ -600,9 +539,6 @@ public class ExpenseTrackerModuleTest {
         assertNotNull(categoryService);
     }
 
-    /**
-     * Test provideExpenseService() through Guice injection.
-     */
     @Test
     public void testProvideExpenseService() {
         // Given
@@ -619,12 +555,9 @@ public class ExpenseTrackerModuleTest {
         when(mockDatabase.getCollection("expenses")).thenReturn(mockExpensesCollection);
 
         // When - Request ExpenseService through Guice, which will call provideExpenseService
-        // This requires ExpenseDAO and CategoryDAO, which will be provided by their respective methods
-        // Only override MainWindow to avoid headless issues, don't override controllers
         AbstractModule overrideModule = new AbstractModule() {
             @Override
             protected void configure() {
-                // Override MainWindow binding with a mock to avoid headless issues
                 bind(MainWindow.class).toInstance(mock(MainWindow.class));
             }
         };
@@ -636,9 +569,6 @@ public class ExpenseTrackerModuleTest {
         assertNotNull(expenseService);
     }
 
-    /**
-     * Test provideCategoryController() through Guice injection.
-     */
     @Test
     public void testProvideCategoryController() {
         // Given
@@ -655,12 +585,9 @@ public class ExpenseTrackerModuleTest {
         when(mockDatabase.getCollection("expenses")).thenReturn(mockExpensesCollection);
 
         // When - Request CategoryController through Guice, which will call provideCategoryController
-        // This requires CategoryService, which will be provided by provideCategoryService
-        // Only override MainWindow to avoid headless issues, don't override controllers
         AbstractModule overrideModule = new AbstractModule() {
             @Override
             protected void configure() {
-                // Override MainWindow binding with a mock to avoid headless issues
                 bind(MainWindow.class).toInstance(mock(MainWindow.class));
             }
         };
@@ -672,9 +599,6 @@ public class ExpenseTrackerModuleTest {
         assertNotNull(categoryController);
     }
 
-    /**
-     * Test provideExpenseController() through Guice injection.
-     */
     @Test
     public void testProvideExpenseController() {
         // Given
@@ -691,12 +615,9 @@ public class ExpenseTrackerModuleTest {
         when(mockDatabase.getCollection("expenses")).thenReturn(mockExpensesCollection);
 
         // When - Request ExpenseController through Guice, which will call provideExpenseController
-        // This requires ExpenseService, which will be provided by provideExpenseService
-        // Only override MainWindow to avoid headless issues, don't override controllers
         AbstractModule overrideModule = new AbstractModule() {
             @Override
             protected void configure() {
-                // Override MainWindow binding with a mock to avoid headless issues
                 bind(MainWindow.class).toInstance(mock(MainWindow.class));
             }
         };

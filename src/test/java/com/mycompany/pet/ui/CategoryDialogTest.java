@@ -4306,6 +4306,11 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             });
             DialogFixture dialogFixture = new DialogFixture(robot(), testDialog);
             
+            // Wait for loadCategories to complete (called from constructor in production mode)
+            // This prevents it from clearing the message we're about to set
+            waitForAsyncOperation();
+            robot().waitForIdle();
+            
             // Test showMessage in production mode - should show JOptionPane
             // Use a thread to automatically close the JOptionPane to avoid blocking
             Thread closeDialogThread = new Thread(() -> {

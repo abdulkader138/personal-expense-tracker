@@ -17,9 +17,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD, ElementType.TYPE})
 public @interface ExcludeFromJacocoGeneratedReport {
-    /**
-     * Optional description of why this is excluded.
-     */
     String value() default "";
 }
 

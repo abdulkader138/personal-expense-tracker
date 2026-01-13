@@ -74,30 +74,20 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 
 	private static final LocalDate EXPENSE_FIXTURE_2_DATE = LocalDate.now().minusDays(1);
 
-	/** The category 1. */
 	private Category category1;
 
-	/** The category 2. */
 	private Category category2;
 
-	/** The expense 1. */
 	private Expense expense1;
 
-	/** The expense 2. */
 	private Expense expense2;
 
-	/** The category service. */
 	private CategoryService categoryService;
 
-	/** The expense service. */
 	private ExpenseService expenseService;
 
-	/**
-	 * Setup server.
-	 */
 	@BeforeClass
 	public static void setupServer() {
-		// Skip UI tests if running in headless mode
 		Assume.assumeFalse("Skipping UI test - running in headless mode", 
 			GraphicsEnvironment.isHeadless());
 		
@@ -105,26 +95,18 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 		databaseConfig.testAndStartDatabaseConnection();
 	}
 
-	/**
-	 * On set up.
-	 *
-	 * @throws Exception the exception
-	 */
 	@Override
 	protected void onSetUp() throws Exception {
 		databaseConnection = databaseConfig.getDatabaseConnection();
 		
-		// Initialize database
 		DatabaseInitializer initializer = new DatabaseInitializer(databaseConnection);
 		initializer.initialize();
 
-		// Initialize DAOs and Services
 		CategoryDAO categoryDAO = new CategoryDAO(databaseConnection);
 		ExpenseDAO expenseDAO = new ExpenseDAO(databaseConnection);
 		categoryService = new CategoryService(categoryDAO);
 		expenseService = new ExpenseService(expenseDAO, categoryDAO);
 
-		// Add test data to database
 		category1 = categoryService.createCategory(CATEGORY_FIXTURE_1_NAME);
 		category2 = categoryService.createCategory(CATEGORY_FIXTURE_2_NAME);
 		expense1 = expenseService.createExpense(EXPENSE_FIXTURE_1_DATE, EXPENSE_FIXTURE_1_AMOUNT,
@@ -132,18 +114,15 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 		expense2 = expenseService.createExpense(EXPENSE_FIXTURE_2_DATE, EXPENSE_FIXTURE_2_AMOUNT,
 			EXPENSE_FIXTURE_2_DESCRIPTION, category2.getCategoryId());
 
-		// Create controllers from services
 		com.mycompany.pet.controller.CategoryController categoryController = new com.mycompany.pet.controller.CategoryController(categoryService);
 		com.mycompany.pet.controller.ExpenseController expenseController = new com.mycompany.pet.controller.ExpenseController(expenseService);
 		
-		// Start application
 		execute(() -> {
 			com.mycompany.pet.ui.MainWindow window = new com.mycompany.pet.ui.MainWindow(expenseController, categoryController);
 			window.setVisible(true);
 			return window;
 		});
 
-		// Find the main window
 		mainWindow = findFrame(new GenericTypeMatcher<JFrame>(JFrame.class) {
 			@Override
 			protected boolean isMatching(JFrame frame) {
@@ -152,9 +131,7 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 		}).using(robot());
 	}
 
-	/**
-	 * On tear down.
-	 */
+	
 	@Override
 	protected void onTearDown() {
 		if (databaseConnection != null) {
@@ -162,9 +139,6 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 		}
 	}
 
-	/**
-	 * Test on start all database elements are shown.
-	 */
 	@Test
 	@GUITest
 	public void testOnStartAllDatabaseElementsAreShown() {
@@ -188,9 +162,6 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 		});
 	}
 
-	/**
-	 * Test add expense success.
-	 */
 	@Test
 	@GUITest
 	public void testAddExpenseSuccess() {
@@ -204,19 +175,14 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 			DialogFixture dialog = mainWindow.dialog();
 			assertThat(dialog).isNotNull();
 			
-			// Fill in expense details - find text boxes by searching for them
-			// We'll try to find them by looking for text fields in the dialog
-			// Date field is typically first
 			dialog.textBox().enterText(date.toString());
 			dialog.textBox().enterText(amount.toString());
 			dialog.textBox().enterText(description);
-			dialog.comboBox().selectItem(0); // Select first category
+			dialog.comboBox().selectItem(0);
 			
-			// Click Save
 			dialog.button(withText("Save")).click();
 		});
 
-		// Verify expense was added
 		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
 			org.assertj.swing.fixture.JTableFixture table = mainWindow.table();
 			boolean found = false;
@@ -230,56 +196,42 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 		});
 	}
 
-	/**
-	 * Test delete expense success.
-	 */
 	@Test
 	@GUITest
 	public void testDeleteExpenseSuccess() {
-		// Wait for table to load
 		await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
 			org.assertj.swing.fixture.JTableFixture table = mainWindow.table();
 			assertThat(table.rowCount()).isGreaterThan(0);
 		});
 
-		// Select first row and delete
 		mainWindow.table().selectRows(0);
 		mainWindow.button(withText("Delete Expense")).click();
 
-		// Confirm deletion
 		await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
 			DialogFixture confirmDialog = mainWindow.dialog();
 			confirmDialog.button(withText("Yes")).click();
 		});
 
-		// Verify expense was deleted
 		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
 			org.assertj.swing.fixture.JTableFixture table = mainWindow.table();
-			// The table should have one less row
 			assertThat(table.rowCount()).isGreaterThanOrEqualTo(1);
 		});
 	}
 
-	/**
-	 * Test add category success.
-	 */
 	@Test
 	@GUITest
 	public void testAddCategorySuccess() {
 		String categoryName = "Entertainment";
 
-		// Open category dialog from menu
 		mainWindow.menuItem("Categories").click();
 
 		await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
 			DialogFixture categoryDialog = mainWindow.dialog();
 			assertThat(categoryDialog).isNotNull();
 			
-			// Add new category
 			categoryDialog.textBox().enterText(categoryName);
 			categoryDialog.button(withText("Add Category")).click();
 			
-			// Verify category was added to table
 			org.assertj.swing.fixture.JTableFixture table = categoryDialog.table();
 			boolean found = false;
 			for (int i = 0; i < table.rowCount(); i++) {
@@ -290,46 +242,32 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 			}
 			assertThat(found).isTrue();
 			
-			// Close dialog
 			categoryDialog.button(withText("Close")).click();
 		});
 	}
 
-	/**
-	 * Test filter expenses by month.
-	 */
 	@Test
 	@GUITest
 	public void testFilterExpensesByMonth() {
-		// Select current month from combo box
 		int currentMonth = LocalDate.now().getMonthValue();
 		String monthStr = String.format("%02d", currentMonth);
 		
-		// Find month combo box (it's in the top panel)
 		mainWindow.comboBox().selectItem(monthStr);
 
 		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
 			org.assertj.swing.fixture.JTableFixture table = mainWindow.table();
-			// Should show expenses from current month
 			assertThat(table.rowCount()).isGreaterThan(0);
 		});
 	}
 
-	/**
-	 * Test category total calculation.
-	 */
 	@Test
 	@GUITest
 	public void testCategoryTotalCalculation() {
-		// Select category from combo box in bottom panel
 		await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
-			// Find the category combo box (there might be multiple, we need the one in bottom panel)
 			mainWindow.comboBox().selectItem(CATEGORY_FIXTURE_1_NAME);
 		});
 
-		// Verify category total is calculated
 		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
-			// The total should be displayed in a label
 			String totalText = mainWindow.label().text();
 			assertThat(totalText).contains("Category Total");
 			assertThat(totalText).contains(EXPENSE_FIXTURE_1_AMOUNT.toString());

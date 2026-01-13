@@ -25,12 +25,6 @@ public class ExpenseController {
         this.expenseService = expenseService;
     }
     
-    /**
-     * Load all expenses.
-     * 
-     * @param onSuccess Callback with list of expenses
-     * @param onError Callback with error message
-     */
     public void loadExpenses(Consumer<List<Expense>> onSuccess, Consumer<String> onError) {
         Thread thread = new Thread(() -> {
             try {
@@ -45,14 +39,6 @@ public class ExpenseController {
         thread.start();
     }
     
-    /**
-     * Load expenses by month.
-     * 
-     * @param year Year
-     * @param month Month (1-12)
-     * @param onSuccess Callback with list of expenses
-     * @param onError Callback with error message
-     */
     public void loadExpensesByMonth(int year, int month, 
                                     Consumer<List<Expense>> onSuccess, Consumer<String> onError) {
         Thread thread = new Thread(() -> {
@@ -68,16 +54,6 @@ public class ExpenseController {
         thread.start();
     }
     
-    /**
-     * Create a new expense.
-     * 
-     * @param date Expense date
-     * @param amount Expense amount
-     * @param description Expense description
-     * @param categoryId Category ID
-     * @param onSuccess Callback with created expense
-     * @param onError Callback with error message
-     */
     public void createExpense(LocalDate date, BigDecimal amount, String description, Integer categoryId,
                               Consumer<Expense> onSuccess, Consumer<String> onError) {
         Thread thread = new Thread(() -> {
@@ -95,17 +71,6 @@ public class ExpenseController {
         thread.start();
     }
     
-    /**
-     * Update an existing expense.
-     * 
-     * @param expenseId Expense ID
-     * @param date Expense date
-     * @param amount Expense amount
-     * @param description Expense description
-     * @param categoryId Category ID
-     * @param onSuccess Callback with updated expense
-     * @param onError Callback with error message
-     */
     public void updateExpense(Integer expenseId, LocalDate date, BigDecimal amount, 
                               String description, Integer categoryId,
                               Consumer<Expense> onSuccess, Consumer<String> onError) {
@@ -124,13 +89,6 @@ public class ExpenseController {
         thread.start();
     }
     
-    /**
-     * Delete an expense.
-     * 
-     * @param expenseId Expense ID
-     * @param onSuccess Callback when deletion succeeds
-     * @param onError Callback with error message
-     */
     public void deleteExpense(Integer expenseId, Runnable onSuccess, Consumer<String> onError) {
         Thread thread = new Thread(() -> {
             try {
@@ -147,25 +105,10 @@ public class ExpenseController {
         thread.start();
     }
     
-    /**
-     * Get an expense by ID.
-     * 
-     * @param expenseId Expense ID
-     * @return Expense or null if not found
-     * @throws SQLException if database error occurs
-     */
     public Expense getExpense(Integer expenseId) throws SQLException {
         return expenseService.getExpense(expenseId);
     }
     
-    /**
-     * Get monthly total.
-     * 
-     * @param year Year
-     * @param month Month (1-12)
-     * @param onSuccess Callback with total amount
-     * @param onError Callback with error message
-     */
     public void getMonthlyTotal(int year, int month, 
                                 Consumer<BigDecimal> onSuccess, Consumer<String> onError) {
         Thread thread = new Thread(() -> {
@@ -181,13 +124,6 @@ public class ExpenseController {
         thread.start();
     }
     
-    /**
-     * Get total by category.
-     * 
-     * @param categoryId Category ID
-     * @param onSuccess Callback with total amount
-     * @param onError Callback with error message
-     */
     public void getTotalByCategory(Integer categoryId, 
                                    Consumer<BigDecimal> onSuccess, Consumer<String> onError) {
         Thread thread = new Thread(() -> {

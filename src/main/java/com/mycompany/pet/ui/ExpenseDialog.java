@@ -26,38 +26,23 @@ import com.mycompany.pet.controller.ExpenseController;
 import com.mycompany.pet.model.Category;
 import com.mycompany.pet.model.Expense;
 
-/**
- * Dialog for adding/editing expenses.
- * 
- * This dialog uses ExpenseController and CategoryController to separate UI concerns from business logic.
- * All database operations are handled asynchronously by the controllers.
- */
 public class ExpenseDialog extends JDialog {
     private static final long serialVersionUID = 1L;
     private static final Logger LOGGER = LogManager.getLogger(ExpenseDialog.class);
     
     private final transient ExpenseController expenseController;
     private final transient CategoryController categoryController;
-    private final transient Expense expense; // null for new expense, non-null for edit
+    private final transient Expense expense; 
     private boolean saved = false;
 
-    // UI Components (package-private for testing)
     JTextField dateField;
     JTextField amountField;
     JTextField descriptionField;
     JComboBox<Category> categoryComboBox;
     
-    /**
-     * Creates a new ExpenseDialog.
-     * 
-     * @param parent Parent frame
-     * @param expenseController Expense controller for business logic
-     * @param categoryController Category controller for loading categories
-     * @param expense Expense to edit (null for new expense)
-     */
     public ExpenseDialog(JFrame parent, ExpenseController expenseController, 
                         CategoryController categoryController, Expense expense) {
-        super(parent, expense == null ? "Add Expense" : "Edit Expense", true); // Always modal
+        super(parent, expense == null ? "Add Expense" : "Edit Expense", true);
         this.expenseController = expenseController;
         this.categoryController = categoryController;
         this.expense = expense;
@@ -143,14 +128,9 @@ public class ExpenseDialog extends JDialog {
         pack();
     }
 
-    /**
-     * Loads categories into the combo box.
-     * Uses controller for async operation.
-     */
     private void loadCategories() {
         categoryController.loadCategories(
             categories -> {
-                // Success: populate combo box
                 categoryComboBox.removeAllItems();
                 for (Category category : categories) {
                     categoryComboBox.addItem(category);
@@ -160,9 +140,6 @@ public class ExpenseDialog extends JDialog {
         );
     }
 
-    /**
-     * Loads expense data into the form fields.
-     */
     void loadExpenseData() {
         if (expense == null) {
             return;
@@ -178,14 +155,9 @@ public class ExpenseDialog extends JDialog {
                 categoryComboBox.setSelectedItem(category);
             }
         } catch (SQLException e) {
-            // Ignore - category will remain unselected
         }
     }
 
-    /**
-     * Handles save button click.
-     * Delegates to controller for business logic.
-     */
     private void onSaveButtonClick() {
         try {
             LocalDate date = LocalDate.parse(dateField.getText().trim());
@@ -202,11 +174,9 @@ public class ExpenseDialog extends JDialog {
             }
 
             if (expense == null) {
-                // Create new expense
                 expenseController.createExpense(date, amount, description, selectedCategory.getCategoryId(),
                     createdExpense -> {
                         saved = true;
-                        // Use invokeLater to ensure saved flag is set before dialog closes
                         javax.swing.SwingUtilities.invokeLater(this::dispose);
                     },
                     error -> 
@@ -216,12 +186,10 @@ public class ExpenseDialog extends JDialog {
                             JOptionPane.ERROR_MESSAGE)
                 );
             } else {
-                // Update existing expense
                 expenseController.updateExpense(expense.getExpenseId(), date, amount, description, 
                     selectedCategory.getCategoryId(),
                     updatedExpense -> {
                         saved = true;
-                        // Use invokeLater to ensure saved flag is set before dialog closes
                         javax.swing.SwingUtilities.invokeLater(this::dispose);
                     },
                     error -> 
@@ -232,7 +200,6 @@ public class ExpenseDialog extends JDialog {
                 );
             }
         } catch (Exception e) {
-            // Validation error (parse exception, etc.)
             JOptionPane.showMessageDialog(this,
                 "Invalid input: " + e.getMessage(),
                 "Validation Error",
@@ -240,11 +207,6 @@ public class ExpenseDialog extends JDialog {
         }
     }
 
-    /**
-     * Returns whether the expense was saved.
-     * 
-     * @return true if expense was saved, false otherwise
-     */
     public boolean isSaved() {
         return saved;
     }

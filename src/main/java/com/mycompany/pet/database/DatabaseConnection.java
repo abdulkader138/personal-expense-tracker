@@ -15,24 +15,15 @@ public class DatabaseConnection {
     private String databaseName;
     private MongoClient mongoClient;
 
-    /**
-     * Creates a connection using the default local MongoDB instance and database name.
-     */
     public DatabaseConnection() {
         this(DEFAULT_CONNECTION_STRING, DEFAULT_DATABASE_NAME);
     }
 
-    /**
-     * Creates a connection for the given MongoDB connection string and database name.
-     */
     public DatabaseConnection(String connectionString, String databaseName) {
         this.connectionString = connectionString;
         this.databaseName = databaseName;
     }
 
-    /**
-     * Lazily creates and returns a MongoDatabase instance.
-     */
     public MongoDatabase getDatabase() {
         if (mongoClient == null) {
             mongoClient = MongoClients.create(connectionString);
@@ -40,9 +31,6 @@ public class DatabaseConnection {
         return mongoClient.getDatabase(databaseName);
     }
 
-    /**
-     * Closes the underlying MongoClient, if it has been created.
-     */
     public void close() {
         if (mongoClient != null) {
             mongoClient.close();

@@ -9,18 +9,6 @@
  * - Ensuring correct validation and error handling for invalid input data.
  * - Using the AssertJSwingJUnitTestCase framework for GUI testing and Awaitility for asynchronous operations.
  * 
- * The databaseConfig variable is responsible for starting the Docker container.
- * If the test is run from Eclipse, it runs the Docker container using Testcontainers.
- * If the test is run using a Maven command, it starts a Docker container without test containers.
- * 
- * @see CategoryService
- * @see ExpenseService
- * @see CategoryDAO
- * @see ExpenseDAO
- * @see DatabaseConfig
- * @see DBConfig
- * @see MavenContainerConfig
- * @see TestContainerConfig
  */
 
 package com.mycompany.pet.ui;
@@ -61,77 +49,48 @@ import com.mycompany.pet.model.Expense;
 import com.mycompany.pet.service.CategoryService;
 import com.mycompany.pet.service.ExpenseService;
 
-/**
- * The Class MainWindowIT.
- */
+
 @RunWith(GUITestRunner.class)
 public class MainWindowIT extends AssertJSwingJUnitTestCase {
 
-	/** The category service. */
 	private CategoryService categoryService;
 
-	/** The expense service. */
 	private ExpenseService expenseService;
 
-	/** The main window. */
 	private MainWindow mainWindow;
 
-	/** The window. */
 	private FrameFixture window;
 
-	/** The database connection. */
 	private DatabaseConnection databaseConnection;
 
-	/**
-	 * This variable is responsible for starting the Docker container. If the test
-	 * is run from Eclipse, it runs the Docker container using Testcontainers. If
-	 * the test is run using a Maven command, it starts a Docker container without
-	 * test containers
-	 */
 	private static DBConfig databaseConfig;
 
-	/** The category id 1. */
 	private static final Integer CATEGORY_ID_1 = 1;
 
-	/** The category name 1. */
 	private static final String CATEGORY_NAME_1 = "Food";
 
-	/** The category id 2. */
 	private static final Integer CATEGORY_ID_2 = 2;
 
-	/** The category name 2. */
 	private static final String CATEGORY_NAME_2 = "Travel";
 
-	/** The expense id 1. */
 	private static final Integer EXPENSE_ID_1 = 1;
 
-	/** The expense amount 1. */
 	private static final BigDecimal EXPENSE_AMOUNT_1 = new BigDecimal("100.50");
 
-	/** The expense description 1. */
 	private static final String EXPENSE_DESCRIPTION_1 = "Lunch";
 
-	/** The expense date 1. */
 	private static final LocalDate EXPENSE_DATE_1 = LocalDate.now();
 
-	/** The expense amount 2. */
 	private static final BigDecimal EXPENSE_AMOUNT_2 = new BigDecimal("200.00");
 
-	/** The expense description 2. */
 	private static final String EXPENSE_DESCRIPTION_2 = "Dinner";
 
-	/** The expense date 2. */
 	private static final LocalDate EXPENSE_DATE_2 = LocalDate.now().minusDays(1);
 
-	/** The category 1. */
 	private Category category1;
 
-	/** The category 2. */
 	private Category category2;
 
-	/**
-	 * Setup server.
-	 */
 	@BeforeClass
 	public static void setupServer() {
 		try {
@@ -142,16 +101,10 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 			}
 			databaseConfig.testAndStartDatabaseConnection();
 		} catch (Exception e) {
-			// Skip tests if database setup fails (e.g., Docker not available)
 			org.junit.Assume.assumeNoException("Database setup failed. Docker may not be available. Skipping integration tests.", e);
 		}
 	}
 
-	/**
-	 * On set up.
-	 *
-	 * @throws Exception the exception
-	 */
 	@Override
 	protected void onSetUp() throws Exception {
 		if (databaseConfig == null) {
@@ -166,7 +119,6 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 				return;
 			}
 			
-			// Initialize database
 			try {
 				DatabaseInitializer initializer = new DatabaseInitializer(databaseConnection);
 				initializer.initialize();
@@ -175,28 +127,23 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 				return;
 			}
 
-			// Initialize DAOs and Services
 			CategoryDAO categoryDAO = new CategoryDAO(databaseConnection);
 			ExpenseDAO expenseDAO = new ExpenseDAO(databaseConnection);
 			categoryService = new CategoryService(categoryDAO);
 			expenseService = new ExpenseService(expenseDAO, categoryDAO);
 
-			// Create test categories
 			try {
 				category1 = categoryService.createCategory(CATEGORY_NAME_1);
 				category2 = categoryService.createCategory(CATEGORY_NAME_2);
 			} catch (SQLException e) {
-				// Skip tests if category creation fails (e.g., database connection issues)
 				org.junit.Assume.assumeNoException("Failed to create test categories. Skipping integration tests.", e);
 				return;
 			}
 		} catch (Exception e) {
-			// Skip test if database operations fail
 			org.junit.Assume.assumeNoException("Database operation failed. Skipping test.", e);
 			return;
 		}
 
-		// Create controllers from services
 		CategoryController categoryController = new CategoryController(categoryService);
 		ExpenseController expenseController = new ExpenseController(expenseService);
 		
@@ -208,9 +155,7 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 		});
 
 		window = new FrameFixture(robot(), mainWindow);
-		// Don't call window.show() - it's already visible and show() can block in headless mode
 		
-		// Wait for initial data load (async operations)
 		robot().waitForIdle();
 		try {
 			Thread.sleep(200);
@@ -219,9 +164,6 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 		}
 	}
 
-	/**
-	 * On tear down.
-	 */
 	@Override
 	protected void onTearDown() {
 		if (databaseConnection != null) {
@@ -229,9 +171,6 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 		}
 	}
 
-	/**
-	 * Test all expenses are displayed.
-	 */
 	@Test
 	@GUITest
 	public void testAllExpensesAreDisplayed() throws SQLException {
@@ -252,33 +191,23 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 		});
 	}
 
-	/**
-	 * Test add expense success.
-	 */
 	@Test
 	@GUITest
 	public void testAddExpenseSuccess() throws SQLException {
 		window.button(withText("Add Expense")).click();
 
-		// Wait for dialog to appear
 		await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
 			DialogFixture dialog = window.dialog();
 			assertThat(dialog).isNotNull();
 			
-			// Fill in expense details - find text boxes by their order
-			// Date field is typically first
 			dialog.textBox().enterText(EXPENSE_DATE_1.toString());
-			// Amount field
 			dialog.textBox().enterText(EXPENSE_AMOUNT_1.toString());
-			// Description field
 			dialog.textBox().enterText(EXPENSE_DESCRIPTION_1);
-			dialog.comboBox().selectItem(0); // Select first category
+			dialog.comboBox().selectItem(0); 
 			
-			// Click Save
 			dialog.button(withText("Save")).click();
 		});
 
-		// Verify expense was added
 		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
 			JTableFixture table = window.table();
 			assertThat(table.rowCount()).isGreaterThan(0);
@@ -286,9 +215,6 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 		});
 	}
 
-	/**
-	 * Test delete expense success.
-	 */
 	@Test
 	@GUITest
 	public void testDeleteExpenseSuccess() throws SQLException {
@@ -304,15 +230,12 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 			table.selectRows(0);
 			window.button(withText("Delete Expense")).click();
 			
-			// Confirm deletion in dialog
 			DialogFixture confirmDialog = window.dialog();
 			confirmDialog.button(withText("Yes")).click();
 		});
 
-		// Verify expense was deleted
 		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
 			JTableFixture table = window.table();
-			// The expense should be removed from the table
 			boolean found = false;
 			for (int i = 0; i < table.rowCount(); i++) {
 				if (table.cell(TableCell.row(i).column(0)).value().equals(expense.getExpenseId().toString())) {
@@ -324,13 +247,9 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 		});
 	}
 
-	/**
-	 * Test filter expenses by month.
-	 */
 	@Test
 	@GUITest
 	public void testFilterExpensesByMonth() throws SQLException {
-		// Create expenses in different months
 		expenseService.createExpense(EXPENSE_DATE_1, EXPENSE_AMOUNT_1, 
 			EXPENSE_DESCRIPTION_1, category1.getCategoryId());
 		expenseService.createExpense(EXPENSE_DATE_2, EXPENSE_AMOUNT_2, 
@@ -344,21 +263,16 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 			}
 		});
 
-		// Select current month
 		int currentMonth = LocalDate.now().getMonthValue();
 		String monthStr = String.format("%02d", currentMonth);
 		window.comboBox().selectItem(monthStr);
 
 		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
 			JTableFixture table = window.table();
-			// Should show expenses from current month
 			assertThat(table.rowCount()).isGreaterThan(0);
 		});
 	}
 
-	/**
-	 * Test category total calculation.
-	 */
 	@Test
 	@GUITest
 	public void testCategoryTotalCalculation() throws SQLException {
@@ -375,12 +289,10 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 			}
 		});
 
-		// Select category from combo box
 		await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
 			window.comboBox().selectItem(category1.getName());
 		});
 
-		// Verify category total is calculated
 		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
 			BigDecimal expectedTotal = EXPENSE_AMOUNT_1.add(EXPENSE_AMOUNT_2);
 			String totalText = window.label().text();
@@ -388,9 +300,6 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 		});
 	}
 
-	/**
-	 * Test edit expense success.
-	 */
 	@Test
 	@GUITest
 	public void testEditExpenseSuccess() throws SQLException {
@@ -410,21 +319,16 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 			table.selectRows(0);
 			window.button(withText("Edit Expense")).click();
 			
-			// Wait for dialog to appear
 			DialogFixture dialog = window.dialog();
 			assertThat(dialog).isNotNull();
 			
-			// Update expense details
 			dialog.textBox().enterText(EXPENSE_DATE_2.toString());
 			dialog.textBox().enterText(EXPENSE_AMOUNT_2.toString());
 			dialog.textBox().enterText(EXPENSE_DESCRIPTION_2);
-			dialog.comboBox().selectItem(1); // Select second category
-			
-			// Click Save
+			dialog.comboBox().selectItem(1); 
 			dialog.button(withText("Save")).click();
 		});
 
-		// Verify expense was updated
 		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
 			GuiActionRunner.execute(() -> {
 				try {
@@ -439,39 +343,24 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 		});
 	}
 
-	/**
-	 * Test edit expense with no selection.
-	 */
 	@Test
 	@GUITest
 	public void testEditExpenseNoSelection() throws SQLException {
-		// Don't select any row
 		window.button(withText("Edit Expense")).click();
 		
-		// Should not open dialog or crash
 		await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> {
-			// No dialog should appear
 		});
 	}
 
-	/**
-	 * Test delete expense with no selection.
-	 */
 	@Test
 	@GUITest
 	public void testDeleteExpenseNoSelection() throws SQLException {
-		// Don't select any row
 		window.button(withText("Delete Expense")).click();
 		
-		// Should not open dialog or crash
 		await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> {
-			// No dialog should appear
 		});
 	}
 
-	/**
-	 * Test delete expense cancel.
-	 */
 	@Test
 	@GUITest
 	public void testDeleteExpenseCancel() throws SQLException {
@@ -491,27 +380,21 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 			table.selectRows(0);
 			window.button(withText("Delete Expense")).click();
 			
-			// Cancel deletion
 			DialogFixture confirmDialog = window.dialog();
 			confirmDialog.button(withText("No")).click();
 		});
 
-		// Verify expense was NOT deleted
 		await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
 			JTableFixture table = window.table();
 			assertThat(table.rowCount()).isGreaterThan(0);
 		});
 	}
 
-	/**
-	 * Test show category dialog.
-	 */
 	@Test
 	@GUITest
 	public void testShowCategoryDialog() throws SQLException {
 		window.menuItemWithPath("Manage", "Categories").click();
 		
-		// Wait for dialog to appear
 		await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
 			DialogFixture dialog = window.dialog();
 			assertThat(dialog).isNotNull();
@@ -519,9 +402,6 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 		});
 	}
 
-	/**
-	 * Test filter expenses by category.
-	 */
 	@Test
 	@GUITest
 	public void testFilterExpensesByCategory() throws SQLException {
@@ -538,22 +418,16 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 			}
 		});
 
-		// Select category from combo box
 		await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
-			// Find category combo box (it's one of the combo boxes)
 			window.comboBox().selectItem(category1.getName());
 		});
 
-		// Verify filtered expenses
 		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
 			JTableFixture table = window.table();
 			assertThat(table.rowCount()).isGreaterThan(0);
 		});
 	}
 
-	/**
-	 * Test filter expenses by year.
-	 */
 	@Test
 	@GUITest
 	public void testFilterExpensesByYear() throws SQLException {
@@ -568,49 +442,36 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 			}
 		});
 
-		// Select year from combo box
 		int currentYear = LocalDate.now().getYear();
 		await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
-			// Find year combo box and select current year
 			window.comboBox().selectItem(String.valueOf(currentYear));
 		});
 
-		// Verify filtered expenses
 		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
 			JTableFixture table = window.table();
 			assertThat(table.rowCount()).isGreaterThan(0);
 		});
 	}
 
-	/**
-	 * Test load data with error handling.
-	 */
 	@Test
 	@GUITest
 	public void testLoadDataErrorHandling() throws SQLException {
-		// Close database connection to simulate error
 		if (databaseConnection != null) {
 			databaseConnection.close();
 		}
 		
-		// Try to load data - should handle error gracefully
 		GuiActionRunner.execute(() -> {
 			try {
 				mainWindow.loadData();
 			} catch (Exception e) {
-				// Expected - should be handled internally
 			}
 		});
 		
-		// Should not crash
 		await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
 			assertThat(window).isNotNull();
 		});
 	}
 
-	/**
-	 * Test updateSummary with null selections.
-	 */
 	@Test
 	@GUITest
 	public void testUpdateSummaryNullSelections() throws SQLException {
@@ -621,14 +482,10 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 		});
 		
 		await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> {
-			// Should handle null gracefully
 			assertThat(window).isNotNull();
 		});
 	}
 
-	/**
-	 * Test updateSummary with "All" month.
-	 */
 	@Test
 	@GUITest
 	public void testUpdateSummaryAllMonth() throws SQLException {
@@ -639,14 +496,10 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 		});
 		
 		await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> {
-			// Should set N/A for "All"
 			assertThat(window).isNotNull();
 		});
 	}
 
-	/**
-	 * Test updateCategoryTotal with null category.
-	 */
 	@Test
 	@GUITest
 	public void testUpdateCategoryTotalNullCategory() throws SQLException {
@@ -656,18 +509,13 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 		});
 		
 		await().atMost(1, TimeUnit.SECONDS).untilAsserted(() -> {
-			// Should handle null gracefully
 			assertThat(window).isNotNull();
 		});
 	}
 
-	/**
-	 * Test filterExpenses error handling.
-	 */
 	@Test
 	@GUITest
 	public void testFilterExpensesErrorHandling() throws SQLException {
-		// Close database to cause error
 		if (databaseConnection != null) {
 			databaseConnection.close();
 		}
@@ -678,7 +526,6 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 			try {
 				mainWindow.filterExpenses();
 			} catch (Exception e) {
-				// Expected - should be handled internally
 			}
 		});
 		
@@ -687,9 +534,6 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 		});
 	}
 
-	/**
-	 * Test edit expense with SQLException.
-	 */
 	@Test
 	@GUITest
 	public void testEditExpenseSQLException() throws SQLException {
@@ -704,7 +548,6 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 			}
 		});
 
-		// Close database to cause error
 		if (databaseConnection != null) {
 			databaseConnection.close();
 		}
@@ -716,15 +559,12 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 				try {
 					mainWindow.showEditExpenseDialog();
 				} catch (Exception e) {
-					// Expected - should be handled internally
 				}
 			});
 		});
 	}
 
-	/**
-	 * Test delete expense with SQLException.
-	 */
+	
 	@Test
 	@GUITest
 	public void testDeleteExpenseSQLException() throws SQLException {
@@ -739,7 +579,6 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 			}
 		});
 
-		// Close database to cause error
 		if (databaseConnection != null) {
 			databaseConnection.close();
 		}
@@ -751,15 +590,11 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 				try {
 					mainWindow.deleteSelectedExpense();
 				} catch (Exception e) {
-					// Expected - should be handled internally
 				}
 			});
 		});
 	}
 
-	/**
-	 * Test combo box action listeners trigger filterExpenses.
-	 */
 	@Test
 	@GUITest
 	public void testComboBoxActionListeners() throws SQLException {
@@ -769,47 +604,35 @@ public class MainWindowIT extends AssertJSwingJUnitTestCase {
 		GuiActionRunner.execute(() -> {
 			try {
 				mainWindow.loadData();
-				// Set isInitializing to false to enable action listeners
 				mainWindow.isInitializing = false;
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}
 		});
 
-		// Trigger month combo box change
 		await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
 			window.comboBox().selectItem("01");
 		});
 
-		// Trigger year combo box change
 		await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
-			// Find year combo box and change it
 			int currentYear = LocalDate.now().getYear();
 			window.comboBox().selectItem(String.valueOf(currentYear));
 		});
 
-		// Trigger category combo box change
 		await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
 			window.comboBox().selectItem(category1.getName());
 		});
 	}
 
-	/**
-	 * Test updateSummary with Exception (not SQLException).
-	 */
 	@Test
 	@GUITest
 	public void testUpdateSummaryGenericException() throws SQLException {
-		// This test ensures the generic Exception catch block is covered
-		// by causing a NumberFormatException when parsing invalid month/year
 		GuiActionRunner.execute(() -> {
 			try {
-				// Set invalid values that will cause NumberFormatException
 				mainWindow.monthComboBox.setSelectedItem("invalid");
 				mainWindow.yearComboBox.setSelectedItem("invalid");
 				mainWindow.updateSummary();
 			} catch (Exception e) {
-				// Expected - should be handled by catch block
 			}
 		});
 		

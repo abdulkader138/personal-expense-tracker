@@ -14,14 +14,6 @@
  * The databaseConfig variable is responsible for starting the Docker container.
  * If the test is run from Eclipse, it runs the Docker container using Testcontainers.
  * If the test is run using a Maven command, it starts a Docker container without test containers.
- *
- * @see ExpenseService
- * @see ExpenseDAO
- * @see CategoryDAO
- * @see DatabaseConfig
- * @see DBConfig
- * @see MavenContainerConfig
- * @see TestContainerConfig
  */
 
 package com.mycompany.pet.service.racecondition;
@@ -52,34 +44,18 @@ import com.mycompany.pet.model.Category;
 import com.mycompany.pet.model.Expense;
 import com.mycompany.pet.service.ExpenseService;
 
-/**
- * The Class ExpenseServiceRaceConditionDeleteExpenseIT.
- */
 public class ExpenseServiceRaceConditionDeleteExpenseIT {
 
-	/** The expense service. */
 	private ExpenseService expenseService;
 
-	/** The database connection. */
 	private DatabaseConnection databaseConnection;
 
-	/** The saved expense. */
 	private Expense savedExpense;
 
-	/** The category. */
 	private Category category;
 
-	/**
-	 * This variable is responsible for starting the Docker container. If the test
-	 * is run from Eclipse, it runs the Docker container using Testcontainers. If
-	 * the test is run using a Maven command, it starts a Docker container without
-	 * test containers
-	 */
 	private static DBConfig databaseConfig;
 
-	/**
-	 * Setup server.
-	 */
 	@BeforeClass
 	public static void setupServer() {
 		try {
@@ -90,16 +66,10 @@ public class ExpenseServiceRaceConditionDeleteExpenseIT {
 			}
 			databaseConfig.testAndStartDatabaseConnection();
 		} catch (Exception e) {
-			// Skip tests if database setup fails (e.g., Docker not available)
 			org.junit.Assume.assumeNoException("Database setup failed. Docker may not be available. Skipping integration tests.", e);
 		}
 	}
 
-	/**
-	 * Sets the up.
-	 *
-	 * @throws SQLException the SQL exception
-	 */
 	@Before
 	public void setUp() throws SQLException {
 		if (databaseConfig == null) {
@@ -114,7 +84,6 @@ public class ExpenseServiceRaceConditionDeleteExpenseIT {
 				return;
 			}
 			
-			// Initialize database
 			try {
 				DatabaseInitializer initializer = new DatabaseInitializer(databaseConnection);
 				initializer.initialize();
@@ -141,9 +110,6 @@ public class ExpenseServiceRaceConditionDeleteExpenseIT {
 		}
 	}
 
-	/**
-	 * Release resources.
-	 */
 	@After
 	public void releaseResources() {
 		if (databaseConnection != null) {
@@ -151,9 +117,6 @@ public class ExpenseServiceRaceConditionDeleteExpenseIT {
 		}
 	}
 
-	/**
-	 * Delete expense concurrent.
-	 */
 	@Test
 	public void deleteExpenseConcurrent() {
 		if (expenseService == null || savedExpense == null) {
@@ -170,7 +133,6 @@ public class ExpenseServiceRaceConditionDeleteExpenseIT {
 		})).peek(t -> t.start()).collect(Collectors.toList());
 		await().atMost(10, TimeUnit.SECONDS).until(() -> threads.stream().noneMatch(t -> t.isAlive()));
 
-		// Verify expense was deleted
 		try {
 			List<Expense> expenses = expenseService.getAllExpenses();
 			assertThat(expenses).doesNotContain(savedExpense);

@@ -15,7 +15,6 @@ public class SynchronousControllerHelper {
     
     /**
      * Executes a supplier synchronously on the EDT.
-     * Useful for testing controller callbacks.
      * 
      * @param supplier Supplier to execute
      * @return Result of supplier

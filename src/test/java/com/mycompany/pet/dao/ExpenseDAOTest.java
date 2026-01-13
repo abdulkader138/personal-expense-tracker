@@ -66,7 +66,7 @@ public class ExpenseDAOTest {
         Expense expense = new Expense(LocalDate.now(), new BigDecimal("100.50"), "Lunch", 1);
         when(expensesCollection.find()).thenReturn(findIterable);
         when(findIterable.sort(any())).thenReturn(findIterable);
-        when(findIterable.first()).thenReturn(null); // No existing expenses
+        when(findIterable.first()).thenReturn(null); 
 
         // When
         Expense result = expenseDAO.create(expense);
@@ -332,9 +332,8 @@ public class ExpenseDAOTest {
 
     @Test
     public void testCreate_WhenLastDocumentHasNoExpenseId() throws SQLException {
-        // Given - edge case: last document exists but doesn't have expenseId field
         Expense expense = new Expense(LocalDate.now(), new BigDecimal("100.50"), "Lunch", 1);
-        Document last = new Document("_id", 5); // No expenseId field
+        Document last = new Document("_id", 5); 
         when(expensesCollection.find()).thenReturn(findIterable);
         when(findIterable.sort(any())).thenReturn(findIterable);
         when(findIterable.first()).thenReturn(last);
@@ -379,10 +378,10 @@ public class ExpenseDAOTest {
         // Given - some expenses match, some don't (to cover both branches of the if condition)
         int year = 2024;
         int month = 1;
-        LocalDate date1 = LocalDate.of(year, month, 15); // Matches - TRUE branch
-        LocalDate date2 = LocalDate.of(year, 2, 20); // Year matches but month doesn't - FALSE branch (second part fails)
-        LocalDate date3 = LocalDate.of(2023, month, 25); // Year doesn't match - FALSE branch (first part fails, short-circuit)
-        LocalDate date4 = LocalDate.of(year, month, 30); // Matches - TRUE branch
+        LocalDate date1 = LocalDate.of(year, month, 15); 
+        LocalDate date2 = LocalDate.of(year, 2, 20); 
+        LocalDate date3 = LocalDate.of(2023, month, 25); 
+        LocalDate date4 = LocalDate.of(year, month, 30); 
         Document doc1 = new Document("expenseId", 1)
                 .append("date", date1.toString())
                 .append("amount", "100.50")
@@ -449,10 +448,10 @@ public class ExpenseDAOTest {
         // Given - some expenses match, some don't (to cover both branches of the if condition)
         int year = 2024;
         int month = 1;
-        LocalDate date1 = LocalDate.of(year, month, 15); // Matches - TRUE branch
-        LocalDate date2 = LocalDate.of(year, 2, 20); // Year matches but month doesn't - FALSE branch (second part fails)
-        LocalDate date3 = LocalDate.of(2023, month, 25); // Year doesn't match - FALSE branch (first part fails, short-circuit)
-        LocalDate date4 = LocalDate.of(year, month, 30); // Matches - TRUE branch
+        LocalDate date1 = LocalDate.of(year, month, 15);
+        LocalDate date2 = LocalDate.of(year, 2, 20); 
+        LocalDate date3 = LocalDate.of(2023, month, 25);
+        LocalDate date4 = LocalDate.of(year, month, 30);
         Document doc1 = new Document("expenseId", 1)
                 .append("date", date1.toString())
                 .append("amount", "100.50")

@@ -53,8 +53,6 @@ public class ExpenseTrackerAppTest {
         
         try {
             mockedGraphicsEnvironment = mockStatic(GraphicsEnvironment.class);
-            // Use CALLS_REAL_METHODS to ensure line 165 (performVerboseCoverageOperations) is recorded
-            // This allows the real SwingUtilities.invokeLater to be called, ensuring coverage
             mockedSwingUtilities = mockStatic(SwingUtilities.class, Mockito.CALLS_REAL_METHODS);
             mockedGuice = mockStatic(Guice.class);
             mockedJOptionPane = mockStatic(JOptionPane.class);

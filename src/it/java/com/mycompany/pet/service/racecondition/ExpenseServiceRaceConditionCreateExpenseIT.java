@@ -14,14 +14,6 @@
  * The databaseConfig variable is responsible for starting the Docker container.
  * If the test is run from Eclipse, it runs the Docker container using Testcontainers.
  * If the test is run using a Maven command, it starts a Docker container without test containers.
- *
- * @see ExpenseService
- * @see ExpenseDAO
- * @see CategoryDAO
- * @see DatabaseConfig
- * @see DBConfig
- * @see MavenContainerConfig
- * @see TestContainerConfig
  */
 
 package com.mycompany.pet.service.racecondition;
@@ -51,40 +43,22 @@ import com.mycompany.pet.database.DatabaseInitializer;
 import com.mycompany.pet.model.Category;
 import com.mycompany.pet.service.ExpenseService;
 
-/**
- * The Class ExpenseServiceRaceConditionCreateExpenseIT.
- */
 public class ExpenseServiceRaceConditionCreateExpenseIT {
 
-	/** The expense service. */
 	private ExpenseService expenseService;
 
-	/** The database connection. */
 	private DatabaseConnection databaseConnection;
 
-	/** The category. */
 	private Category category;
 
-	/** The expense date. */
 	private LocalDate EXPENSE_DATE = LocalDate.now();
 
-	/** The expense amount. */
 	private BigDecimal EXPENSE_AMOUNT = new BigDecimal("100.50");
 
-	/** The expense description. */
 	private String EXPENSE_DESCRIPTION = "Lunch";
 
-	/**
-	 * This variable is responsible for starting the Docker container. If the test
-	 * is run from Eclipse, it runs the Docker container using Testcontainers. If
-	 * the test is run using a Maven command, it starts a Docker container without
-	 * test containers
-	 */
 	private static DBConfig databaseConfig;
 
-	/**
-	 * Setup server.
-	 */
 	@BeforeClass
 	public static void setupServer() {
 		try {
@@ -95,16 +69,10 @@ public class ExpenseServiceRaceConditionCreateExpenseIT {
 			}
 			databaseConfig.testAndStartDatabaseConnection();
 		} catch (Exception e) {
-			// Skip tests if database setup fails (e.g., Docker not available)
 			org.junit.Assume.assumeNoException("Database setup failed. Docker may not be available. Skipping integration tests.", e);
 		}
 	}
 
-	/**
-	 * Sets the up.
-	 *
-	 * @throws SQLException the SQL exception
-	 */
 	@Before
 	public void setUp() throws SQLException {
 		if (databaseConfig == null) {
@@ -138,9 +106,6 @@ public class ExpenseServiceRaceConditionCreateExpenseIT {
 		}
 	}
 
-	/**
-	 * Release resources.
-	 */
 	@After
 	public void releaseResources() {
 		if (databaseConnection != null) {
@@ -148,9 +113,6 @@ public class ExpenseServiceRaceConditionCreateExpenseIT {
 		}
 	}
 
-	/**
-	 * Create expense concurrent.
-	 */
 	@Test
 	public void createExpenseConcurrent() {
 		if (expenseService == null || category == null) {
@@ -167,10 +129,8 @@ public class ExpenseServiceRaceConditionCreateExpenseIT {
 		})).peek(t -> t.start()).collect(Collectors.toList());
 		await().atMost(10, TimeUnit.SECONDS).until(() -> threads.stream().noneMatch(t -> t.isAlive()));
 
-		// Verify all expenses were created
 		try {
 			List<com.mycompany.pet.model.Expense> expenses = expenseService.getAllExpenses();
-			// Should have 10 expenses created by 10 threads
 			assertThat(expenses).hasSize(10);
 		} catch (SQLException e) {
 			throw new RuntimeException(e);

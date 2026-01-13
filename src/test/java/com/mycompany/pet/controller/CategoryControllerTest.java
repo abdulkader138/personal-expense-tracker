@@ -32,9 +32,6 @@ public class CategoryControllerTest {
     
     @Before
     public void setUp() {
-        // Use Mockito.mock() instead of @Mock annotation to avoid inline mocking issues
-        // This works around the classpath issue with Mockito inline when CategoryDAO isn't available
-        // during class instrumentation. Creating the mock manually avoids the retransformation issue.
         categoryService = org.mockito.Mockito.mock(CategoryService.class);
         controller = new CategoryController(categoryService);
     }

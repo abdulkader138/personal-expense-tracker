@@ -17,7 +17,6 @@ import com.google.inject.name.Names;
  * Learning tests for Google Guice Dependency Injection framework.
  * 
  * These tests help us understand how Guice works before applying it to the main project.
- * Based on concepts from "Test-Driven Development, Build Automation, Continuous Integration" book.
  */
 public class GuiceLearningTest {
 

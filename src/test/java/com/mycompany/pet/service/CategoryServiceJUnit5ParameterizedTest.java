@@ -23,8 +23,6 @@ import com.mycompany.pet.model.Category;
  * Parameterized test example for CategoryService using JUnit 5.
  * 
  * This demonstrates JUnit 5 parameterized tests as covered in 
- * "Test-Driven Development, Build Automation, Continuous Integration" book.
- * JUnit 5 provides more flexible parameterized test options than JUnit 4.
  */
 @ExtendWith(MockitoExtension.class)
 class CategoryServiceJUnit5ParameterizedTest {

@@ -23,7 +23,6 @@ import com.mycompany.pet.model.Category;
 /**
  * Parameterized test example for CategoryService using JUnit 4.
  * 
- * This demonstrates the concept from "Test-Driven Development, Build Automation, Continuous Integration" book.
  * Parameterized tests allow testing multiple inputs with the same test logic.
  */
 @RunWith(Parameterized.class)

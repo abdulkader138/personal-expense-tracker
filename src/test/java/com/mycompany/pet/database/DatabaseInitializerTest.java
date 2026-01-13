@@ -58,8 +58,6 @@ public class DatabaseInitializerTest {
         verify(mockDatabase, times(1)).getCollection("categories");
         verify(mockDatabase, times(1)).getCollection("expenses");
 
-        // Verify indexes are created
-        // Note: We can't easily verify the exact IndexOptions, but we can verify the method is called
         verify(mockCategoriesCollection, times(1)).createIndex(any(), any(IndexOptions.class));
         verify(mockExpensesCollection, times(2)).createIndex(any());
     }
@@ -91,7 +89,7 @@ public class DatabaseInitializerTest {
 
         // Then - should not throw exception and should create indexes each time
         verify(mockCategoriesCollection, times(3)).createIndex(any(), any(IndexOptions.class));
-        verify(mockExpensesCollection, times(6)).createIndex(any()); // 2 indexes × 3 calls
+        verify(mockExpensesCollection, times(6)).createIndex(any()); 
     }
 }
 
