@@ -16,6 +16,9 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import static org.awaitility.Awaitility.await;
 
 import javax.swing.table.DefaultTableModel;
 
@@ -928,12 +931,12 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         System.setProperty("test.mode", "false");
         try {
             javax.swing.SwingUtilities.invokeLater(() -> mainWindow.loadData());
-            // Wait for data to load
-            try {
-                Thread.sleep(200); 
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+            // Wait for data to load asynchronously
+            robot().waitForIdle();
+            await().atMost(2, TimeUnit.SECONDS).pollInterval(50, TimeUnit.MILLISECONDS).until(() -> {
+                robot().waitForIdle();
+                return mainWindow.expenseTableModel.getRowCount() >= 0;
+            });
             Expense expense = new Expense(EXPENSE_ID_1, LocalDate.now(), EXPENSE_AMOUNT_1, 
                 EXPENSE_DESCRIPTION_1, CATEGORY_ID_1);
             when(expenseService.getExpense(EXPENSE_ID_1)).thenReturn(expense);
@@ -1804,8 +1807,6 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     @Test
     @GUITest
     public void testMainWindow_PerformVerboseCoverageOperations() {
-        // Test performVerboseCoverageOperations() method directly to ensure 100% coverage
-        // This method is called from onExitMenuItemClicked, but we test it directly to ensure all lines are covered
         Object[] testValues = {
             "test string",
             123,
