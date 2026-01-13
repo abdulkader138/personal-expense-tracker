@@ -16,27 +16,18 @@ import com.mycompany.pet.dao.ExpenseDAO;
 import com.mycompany.pet.database.DatabaseConnection;
 import com.mycompany.pet.database.DatabaseInitializer;
 import com.mycompany.pet.model.Category;
-import com.mycompany.pet.model.Expense;
 import com.mycompany.pet.service.CategoryService;
 import com.mycompany.pet.service.ExpenseService;
 
 import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 
-/**
- * The Class DatabaseSteps.
- */
 public class DatabaseSteps extends ConfigSteps {
 
-	/** The category service. */
 	private CategoryService categoryService;
 
-	/** The expense service. */
 	private ExpenseService expenseService;
 
-	/**
-	 * Setup database.
-	 */
 	@Before
 	public void setupDatabase() {
 		DatabaseConnection dbConnection = databaseConfig.getDatabaseConnection();
@@ -49,12 +40,6 @@ public class DatabaseSteps extends ConfigSteps {
 		expenseService = new ExpenseService(expenseDAO, categoryDAO);
 	}
 
-	/**
-	 * The database contains the category with the following values.
-	 *
-	 * @param values the values
-	 * @throws SQLException the SQL exception
-	 */
 	@Given("The database contains the category with the following values")
 	public void the_database_contains_the_category_with_the_following_values(List<Map<String, String>> values)
 			throws SQLException {
@@ -64,12 +49,6 @@ public class DatabaseSteps extends ConfigSteps {
 		}
 	}
 
-	/**
-	 * The database contains the expense with the following values.
-	 *
-	 * @param values the values
-	 * @throws SQLException the SQL exception
-	 */
 	@Given("The database contains the expense with the following values")
 	public void the_database_contains_the_expense_with_the_following_values(List<Map<String, String>> values)
 			throws SQLException {
@@ -79,7 +58,6 @@ public class DatabaseSteps extends ConfigSteps {
 			String description = row.get("Description");
 			String categoryName = row.get("Category");
 
-			// Find or create category
 			Category category = null;
 			try {
 				List<Category> categories = categoryService.getAllCategories();
@@ -100,12 +78,6 @@ public class DatabaseSteps extends ConfigSteps {
 		}
 	}
 
-	/**
-	 * The database deletes the expense with the following values.
-	 *
-	 * @param values the values
-	 * @throws SQLException the SQL exception
-	 */
 	@Given("The database deletes the expense with the following values")
 	public void the_database_deletes_the_expense_with_the_following_values(List<Map<String, String>> values)
 			throws SQLException {

@@ -785,13 +785,9 @@ public class MainWindow extends JFrame {
      * @param dialog The dialog to check
      */
     void checkDialogAfterShow(ExpenseDialog dialog) {
-        if (dialog.isShowing()) {
-            handleDialogResult(dialog);
-        } else {
-            // Even if dialog is not showing, check if it was saved
-            // This handles the case where async operation completed and dialog was disposed
-            handleDialogResult(dialog);
-        }
+        // Always handle dialog result regardless of showing state
+        // This handles both cases: dialog still showing or async operation completed and dialog was disposed
+        handleDialogResult(dialog);
     }
 
     /**

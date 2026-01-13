@@ -30,20 +30,16 @@ public class CategoryController {
      * @param onError Callback with error message
      */
     public void loadCategories(Consumer<List<Category>> onSuccess, Consumer<String> onError) {
-        Thread thread = new Thread(() -> {
+        executeAsync(() -> {
             try {
                 List<Category> categories = categoryService.getAllCategories();
-                javax.swing.SwingUtilities.invokeLater(() -> onSuccess.accept(categories));
-            } catch (SQLException e) {
-                String errorMsg = "Error loading categories: " + e.getMessage();
-                javax.swing.SwingUtilities.invokeLater(() -> onError.accept(errorMsg));
-            } catch (RuntimeException e) {
-                String errorMsg = "Error loading categories: " + e.getMessage();
-                javax.swing.SwingUtilities.invokeLater(() -> onError.accept(errorMsg));
+                invokeOnSwingThread(() -> onSuccess.accept(categories));
+            } catch (IllegalArgumentException e) {
+                invokeOnSwingThread(() -> onError.accept(e.getMessage()));
+            } catch (SQLException | RuntimeException e) {
+                handleError("Error loading categories", e.getMessage(), onError);
             }
         });
-        thread.setDaemon(true); // Make daemon thread to avoid blocking JVM shutdown
-        thread.start();
     }
     
     /**
@@ -54,28 +50,20 @@ public class CategoryController {
      * @param onError Callback with error message
      */
     public void createCategory(String name, Consumer<Category> onSuccess, Consumer<String> onError) {
-        if (name == null || name.trim().isEmpty()) {
-            javax.swing.SwingUtilities.invokeLater(() -> 
-                onError.accept("Category name cannot be empty."));
+        if (!validateCategoryName(name, onError)) {
             return;
         }
         
-        Thread thread = new Thread(() -> {
+        executeAsync(() -> {
             try {
                 Category category = categoryService.createCategory(name.trim());
-                javax.swing.SwingUtilities.invokeLater(() -> onSuccess.accept(category));
-            } catch (SQLException e) {
-                String errorMsg = "Error adding category: " + e.getMessage();
-                javax.swing.SwingUtilities.invokeLater(() -> onError.accept(errorMsg));
+                invokeOnSwingThread(() -> onSuccess.accept(category));
             } catch (IllegalArgumentException e) {
-                javax.swing.SwingUtilities.invokeLater(() -> onError.accept(e.getMessage()));
-            } catch (RuntimeException e) {
-                String errorMsg = "Error adding category: " + e.getMessage();
-                javax.swing.SwingUtilities.invokeLater(() -> onError.accept(errorMsg));
+                invokeOnSwingThread(() -> onError.accept(e.getMessage()));
+            } catch (SQLException | RuntimeException e) {
+                handleError("Error adding category", e.getMessage(), onError);
             }
         });
-        thread.setDaemon(true);
-        thread.start();
     }
     
     /**
@@ -88,28 +76,20 @@ public class CategoryController {
      */
     public void updateCategory(Integer categoryId, String name, 
                                Consumer<Category> onSuccess, Consumer<String> onError) {
-        if (name == null || name.trim().isEmpty()) {
-            javax.swing.SwingUtilities.invokeLater(() -> 
-                onError.accept("Category name cannot be empty."));
+        if (!validateCategoryName(name, onError)) {
             return;
         }
         
-        Thread thread = new Thread(() -> {
+        executeAsync(() -> {
             try {
                 Category category = categoryService.updateCategory(categoryId, name.trim());
-                javax.swing.SwingUtilities.invokeLater(() -> onSuccess.accept(category));
-            } catch (SQLException e) {
-                String errorMsg = "Error updating category: " + e.getMessage();
-                javax.swing.SwingUtilities.invokeLater(() -> onError.accept(errorMsg));
+                invokeOnSwingThread(() -> onSuccess.accept(category));
             } catch (IllegalArgumentException e) {
-                javax.swing.SwingUtilities.invokeLater(() -> onError.accept(e.getMessage()));
-            } catch (RuntimeException e) {
-                String errorMsg = "Error updating category: " + e.getMessage();
-                javax.swing.SwingUtilities.invokeLater(() -> onError.accept(errorMsg));
+                invokeOnSwingThread(() -> onError.accept(e.getMessage()));
+            } catch (SQLException | RuntimeException e) {
+                handleError("Error updating category", e.getMessage(), onError);
             }
         });
-        thread.setDaemon(true);
-        thread.start();
     }
     
     /**
@@ -120,22 +100,16 @@ public class CategoryController {
      * @param onError Callback with error message
      */
     public void deleteCategory(Integer categoryId, Runnable onSuccess, Consumer<String> onError) {
-        Thread thread = new Thread(() -> {
+        executeAsync(() -> {
             try {
                 categoryService.deleteCategory(categoryId);
-                javax.swing.SwingUtilities.invokeLater(onSuccess);
-            } catch (SQLException e) {
-                String errorMsg = "Error deleting category: " + e.getMessage();
-                javax.swing.SwingUtilities.invokeLater(() -> onError.accept(errorMsg));
+                invokeOnSwingThread(onSuccess);
             } catch (IllegalArgumentException e) {
-                javax.swing.SwingUtilities.invokeLater(() -> onError.accept(e.getMessage()));
-            } catch (RuntimeException e) {
-                String errorMsg = "Error deleting category: " + e.getMessage();
-                javax.swing.SwingUtilities.invokeLater(() -> onError.accept(errorMsg));
+                invokeOnSwingThread(() -> onError.accept(e.getMessage()));
+            } catch (SQLException | RuntimeException e) {
+                handleError("Error deleting category", e.getMessage(), onError);
             }
         });
-        thread.setDaemon(true);
-        thread.start();
     }
     
     /**
@@ -147,6 +121,53 @@ public class CategoryController {
      */
     public Category getCategory(Integer categoryId) throws SQLException {
         return categoryService.getCategory(categoryId);
+    }
+    
+    /**
+     * Validates category name and invokes error callback if invalid.
+     * 
+     * @param name Category name to validate
+     * @param onError Error callback
+     * @return true if valid, false otherwise
+     */
+    private boolean validateCategoryName(String name, Consumer<String> onError) {
+        if (name == null || name.trim().isEmpty()) {
+            invokeOnSwingThread(() -> onError.accept("Category name cannot be empty."));
+            return false;
+        }
+        return true;
+    }
+    
+    /**
+     * Executes an operation asynchronously in a daemon thread.
+     * 
+     * @param operation The operation to execute
+     */
+    private void executeAsync(Runnable operation) {
+        Thread thread = new Thread(operation);
+        thread.setDaemon(true);
+        thread.start();
+    }
+    
+    /**
+     * Handles errors by formatting message and invoking error callback on Swing thread.
+     * 
+     * @param errorPrefix Prefix for error message
+     * @param errorMessage Error message
+     * @param onError Error callback
+     */
+    private void handleError(String errorPrefix, String errorMessage, Consumer<String> onError) {
+        String errorMsg = errorPrefix + ": " + errorMessage;
+        invokeOnSwingThread(() -> onError.accept(errorMsg));
+    }
+    
+    /**
+     * Invokes a runnable on the Swing event dispatch thread.
+     * 
+     * @param runnable The runnable to execute
+     */
+    private void invokeOnSwingThread(Runnable runnable) {
+        javax.swing.SwingUtilities.invokeLater(runnable);
     }
 }
 

@@ -4002,7 +4002,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
         assertThat(callCount[0]).as("setText should be called at least once when setLabelTextOnEDT is invoked").isGreaterThanOrEqualTo(1);
         
         // Verify the text was set
-        String labelText = execute(() -> testLabel.getText());
+        String labelText = execute(testLabel::getText);
         assertThat(labelText).as("Label text should be set to 'Test'").isEqualTo("Test");
         
         execute(() -> categoryDialog.labelMessage = originalLabel);

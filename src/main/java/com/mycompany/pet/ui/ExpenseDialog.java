@@ -156,10 +156,7 @@ public class ExpenseDialog extends JDialog {
                     categoryComboBox.addItem(category);
                 }
             },
-            error -> {
-                
-                LOGGER.warn("Error loading categories");
-            }
+            error -> LOGGER.warn("Error loading categories")
         );
     }
 
@@ -210,9 +207,7 @@ public class ExpenseDialog extends JDialog {
                     createdExpense -> {
                         saved = true;
                         // Use invokeLater to ensure saved flag is set before dialog closes
-                        javax.swing.SwingUtilities.invokeLater(() -> {
-                            dispose();
-                        });
+                        javax.swing.SwingUtilities.invokeLater(this::dispose);
                     },
                     error -> 
                         JOptionPane.showMessageDialog(this,
@@ -227,9 +222,7 @@ public class ExpenseDialog extends JDialog {
                     updatedExpense -> {
                         saved = true;
                         // Use invokeLater to ensure saved flag is set before dialog closes
-                        javax.swing.SwingUtilities.invokeLater(() -> {
-                            dispose();
-                        });
+                        javax.swing.SwingUtilities.invokeLater(this::dispose);
                     },
                     error -> 
                         JOptionPane.showMessageDialog(this,

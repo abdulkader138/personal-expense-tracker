@@ -1,32 +1,6 @@
 /*
  * End-to-end tests for the ExpenseTrackerApp.
  * 
- * These tests cover the following functionalities:
- * 
- * - Setting up and tearing down the test environment, including database connections and GUI initialization.
- * - Interactions with the MainWindow, including adding, updating, fetching, and deleting expenses and categories.
- * - Verification of the correct display of database records in the GUI and the correct handling of various operations.
- * - Ensuring proper error handling and validation for both expenses and categories.
- * - Using the AssertJSwingJUnitTestCase framework for GUI testing, Awaitility for asynchronous operations, and MongoDB for database operations.
- * 
- * 
- * Note:
- * These tests will run using Eclipse but are configured to run using Maven with the `integration-test-profile` profile. To execute these tests, use the following Maven command with the specified profile and arguments:
- * 
- * ```
- * mvn test -Pintegration-test-profile -Dmongodb.dbName=$DATABASE -Dmongodb.server=maven
- * ```
- * 
- * The tests simulate real-world scenarios by interacting with the GUI and verifying the expected outcomes.
- * 
- * @see CategoryService
- * @see ExpenseService
- * @see CategoryDAO
- * @see ExpenseDAO
- * @see DatabaseConfig
- * @see DBConfig
- * @see MavenContainerConfig
- * @see TestContainerConfig
  */
 
 package com.mycompany.pet;
@@ -67,59 +41,37 @@ import com.mycompany.pet.model.Expense;
 import com.mycompany.pet.service.CategoryService;
 import com.mycompany.pet.service.ExpenseService;
 
-/**
- * The Class ExpenseTrackerAppE2E.
- */
 @RunWith(GUITestRunner.class)
 public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 
-	/**
-	 * This variable is responsible for starting the Docker container. If the test
-	 * is run from Eclipse, it runs the Docker container using Testcontainers. If
-	 * the test is run using a Maven command, it starts a Docker container directly without test container.
-	 */
 	private static DBConfig databaseConfig;
 
-	/** The main window. */
 	private FrameFixture mainWindow;
 
-	/** The database connection. */
 	private static DatabaseConnection databaseConnection;
 
-	/** The Constant CATEGORY_FIXTURE_1_ID. */
 	private static final Integer CATEGORY_FIXTURE_1_ID = 1;
 
-	/** The Constant CATEGORY_FIXTURE_2_ID. */
 	private static final Integer CATEGORY_FIXTURE_2_ID = 2;
 
-	/** The Constant CATEGORY_FIXTURE_1_NAME. */
 	private static final String CATEGORY_FIXTURE_1_NAME = "Food";
 
-	/** The Constant CATEGORY_FIXTURE_2_NAME. */
 	private static final String CATEGORY_FIXTURE_2_NAME = "Travel";
 
-	/** The Constant EXPENSE_FIXTURE_1_ID. */
 	private static final Integer EXPENSE_FIXTURE_1_ID = 1;
 
-	/** The Constant EXPENSE_FIXTURE_2_ID. */
 	private static final Integer EXPENSE_FIXTURE_2_ID = 2;
 
-	/** The Constant EXPENSE_FIXTURE_1_AMOUNT. */
 	private static final BigDecimal EXPENSE_FIXTURE_1_AMOUNT = new BigDecimal("100.50");
 
-	/** The Constant EXPENSE_FIXTURE_2_AMOUNT. */
 	private static final BigDecimal EXPENSE_FIXTURE_2_AMOUNT = new BigDecimal("200.00");
 
-	/** The Constant EXPENSE_FIXTURE_1_DESCRIPTION. */
 	private static final String EXPENSE_FIXTURE_1_DESCRIPTION = "Lunch";
 
-	/** The Constant EXPENSE_FIXTURE_2_DESCRIPTION. */
 	private static final String EXPENSE_FIXTURE_2_DESCRIPTION = "Dinner";
 
-	/** The Constant EXPENSE_FIXTURE_1_DATE. */
 	private static final LocalDate EXPENSE_FIXTURE_1_DATE = LocalDate.now();
 
-	/** The Constant EXPENSE_FIXTURE_2_DATE. */
 	private static final LocalDate EXPENSE_FIXTURE_2_DATE = LocalDate.now().minusDays(1);
 
 	/** The category 1. */

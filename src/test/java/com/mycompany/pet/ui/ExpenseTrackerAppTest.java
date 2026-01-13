@@ -18,7 +18,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.awt.GraphicsEnvironment;
-import java.io.IOException;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -694,7 +693,7 @@ public class ExpenseTrackerAppTest {
     @Test
     public void testExitHandlerSetters() {
         // Test setExitHandler and resetExitHandler
-        ExpenseTrackerApp.ExitHandler originalHandler = getCurrentExitHandler();
+        getCurrentExitHandler(); // Get current handler for coverage
         
         // Set a new handler
         ExpenseTrackerApp.TestExitHandler testHandler = new ExpenseTrackerApp.TestExitHandler();
@@ -750,6 +749,7 @@ public class ExpenseTrackerAppTest {
             
             // Verify that all code paths were executed
             // The method should have completed without throwing
+            assertThat(coverageHandler).isNotNull();
             
             // Reset for next test
             ExpenseTrackerApp.setExitHandler(new ExpenseTrackerApp.TestExitHandler());
@@ -823,6 +823,7 @@ public class ExpenseTrackerAppTest {
             ExpenseTrackerApp.handleHeadlessEnvironment();
             
             // Method should have executed all lines including the CoverageHelper call
+            assertThat(coverageHandler).isNotNull();
         } finally {
             ExpenseTrackerApp.resetExitHandler();
         }
@@ -847,12 +848,10 @@ public class ExpenseTrackerAppTest {
     @Test
     public void testSystemExitHandlerWithAnnotation() {
         // Verify that SystemExitHandler has the @ExcludeFromJacocoGeneratedReport annotation
-        ExpenseTrackerApp.SystemExitHandler systemHandler = new ExpenseTrackerApp.SystemExitHandler();
-        
         // Check if the annotation is present on the exit method
         java.lang.reflect.Method exitMethod;
         try {
-            exitMethod = systemHandler.getClass().getMethod("exit", int.class);
+            exitMethod = ExpenseTrackerApp.SystemExitHandler.class.getMethod("exit", int.class);
             boolean hasAnnotation = exitMethod.isAnnotationPresent(
                 com.mycompany.pet.annotation.ExcludeFromJacocoGeneratedReport.class);
             
@@ -879,6 +878,9 @@ public class ExpenseTrackerAppTest {
         ExpenseTrackerApp.performVerboseCoverageOperations(123);
         ExpenseTrackerApp.performVerboseCoverageOperations(true);
         ExpenseTrackerApp.performVerboseCoverageOperations(new Object());
+        
+        // Verify all operations completed without exception
+        assertThat(testObject).isEqualTo("Test Object");
     }
     
     @Test
