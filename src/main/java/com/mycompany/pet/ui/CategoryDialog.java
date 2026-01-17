@@ -21,6 +21,13 @@ import com.mycompany.pet.model.Category;
 public class CategoryDialog extends JDialog {
     private static final long serialVersionUID = 1L;
     private static final String TEST_MODE_PROPERTY = "test.mode";
+    private static final int DIALOG_WIDTH = 500;
+    private static final int DIALOG_HEIGHT = 420;
+    private static final int BORDER_MARGIN = 10;
+    private static final int MESSAGE_BORDER_MARGIN = 5;
+    private static final int ID_COLUMN_WIDTH = 50;
+    private static final int NAME_COLUMN_WIDTH = 300;
+    private static final int NAME_FIELD_COLUMNS = 15;
     
     private final transient CategoryController controller;
     volatile String lastErrorMessage = null;
@@ -49,14 +56,14 @@ public class CategoryDialog extends JDialog {
     
 
     private void initializeUI() {
-        setSize(500, 420);
+        setSize(DIALOG_WIDTH, DIALOG_HEIGHT);
         setLocationRelativeTo(getParent());
 
-        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JPanel mainPanel = new JPanel(new BorderLayout(BORDER_MARGIN, BORDER_MARGIN));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(BORDER_MARGIN, BORDER_MARGIN, BORDER_MARGIN, BORDER_MARGIN));
 
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        nameField = new JTextField(15);
+        nameField = new JTextField(NAME_FIELD_COLUMNS);
         addButton = new JButton("Add Category");
         addButton.addActionListener(e -> onAddButtonClick());
         topPanel.add(new JLabel("Name:"));
@@ -74,8 +81,8 @@ public class CategoryDialog extends JDialog {
             }
         };
         categoryTable = new JTable(categoryTableModel);
-        categoryTable.getColumnModel().getColumn(0).setPreferredWidth(50);
-        categoryTable.getColumnModel().getColumn(1).setPreferredWidth(300);
+        categoryTable.getColumnModel().getColumn(0).setPreferredWidth(ID_COLUMN_WIDTH);
+        categoryTable.getColumnModel().getColumn(1).setPreferredWidth(NAME_COLUMN_WIDTH);
         JScrollPane scrollPane = new JScrollPane(categoryTable);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
@@ -98,7 +105,7 @@ public class CategoryDialog extends JDialog {
         bottomPanel.add(buttonPanel, BorderLayout.CENTER);
 
         labelMessage = new JLabel("");
-        labelMessage.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        labelMessage.setBorder(BorderFactory.createEmptyBorder(MESSAGE_BORDER_MARGIN, MESSAGE_BORDER_MARGIN, MESSAGE_BORDER_MARGIN, MESSAGE_BORDER_MARGIN));
         bottomPanel.add(labelMessage, BorderLayout.SOUTH);
         
         mainPanel.add(bottomPanel, BorderLayout.SOUTH);
