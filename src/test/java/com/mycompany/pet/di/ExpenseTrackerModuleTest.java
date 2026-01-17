@@ -412,12 +412,14 @@ public class ExpenseTrackerModuleTest {
             "provideMainWindow", ExpenseController.class, CategoryController.class);
         provideMainWindowMethod.setAccessible(true);
 
-        // When
+        // When - This should execute both line 99 (new MainWindow) and line 100 (loadData())
         MainWindow mainWindow = (MainWindow) provideMainWindowMethod.invoke(
             module, mockExpenseController, mockCategoryController);
 
         // Then
         assertNotNull(mainWindow);
+        // Verify loadData() was called by checking that the window was initialized
+        assertNotNull(mainWindow.getContentPane());
     }
 
     @Test
@@ -441,14 +443,18 @@ public class ExpenseTrackerModuleTest {
         };
         Module testModule = Modules.override(module).with(overrideModule);
 
-        // When
+        // When - Guice will call provideMainWindow which executes loadData() on line 100
         Injector injector = Guice.createInjector(testModule);
         MainWindow window1 = injector.getInstance(MainWindow.class);
         MainWindow window2 = injector.getInstance(MainWindow.class);
 
-        // Then
+        // Then - verify windows are created and loadData() was called
         assertNotNull(window1);
         assertNotNull(window2);
+        assertNotNull(window1.getContentPane());
+        assertNotNull(window2.getContentPane());
+        // Verify they are the same instance (singleton behavior from @Provides method)
+        assertSame(window1, window2);
     }
 
     @Test

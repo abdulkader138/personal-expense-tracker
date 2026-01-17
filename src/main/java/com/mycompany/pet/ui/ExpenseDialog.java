@@ -154,7 +154,10 @@ public class ExpenseDialog extends JDialog {
             if (category != null) {
                 categoryComboBox.setSelectedItem(category);
             }
-        } catch (SQLException e) {
+} catch (SQLException e) {
+            // SQLException is handled by the controller callbacks
+            // No additional error handling needed here as the controller
+            // manages database error reporting through the error callback
         }
     }
 

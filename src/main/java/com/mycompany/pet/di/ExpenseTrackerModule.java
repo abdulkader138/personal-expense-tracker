@@ -5,6 +5,7 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
+import com.mycompany.pet.annotation.ExcludeFromJacocoGeneratedReport;
 import com.mycompany.pet.controller.CategoryController;
 import com.mycompany.pet.controller.ExpenseController;
 import com.mycompany.pet.dao.CategoryDAO;
@@ -36,8 +37,11 @@ public class ExpenseTrackerModule extends AbstractModule {
         return this;
     }
 
-    @Override
+@Override
     protected void configure() {
+        // This Guice module uses @Provides methods for dependency injection
+        // No explicit bindings needed in configure() as all dependencies
+        // are provided through @Provides annotated methods below
     }
 
     @Provides
@@ -91,6 +95,8 @@ public class ExpenseTrackerModule extends AbstractModule {
     }
 
     @Provides
+    @Singleton
+    @ExcludeFromJacocoGeneratedReport("Exclude from coverage when UI package is excluded (only included when ui-tests profile is active)")
     MainWindow provideMainWindow(ExpenseController expenseController, 
                                   CategoryController categoryController) {
         MainWindow mainWindow = new MainWindow(expenseController, categoryController);

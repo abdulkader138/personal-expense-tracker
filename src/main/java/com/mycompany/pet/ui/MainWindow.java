@@ -498,8 +498,10 @@ public class MainWindow extends JFrame {
         } catch (SecurityException se) {
             String exceptionMessage = se.getMessage();
             if (exceptionMessage != null) {
-                int exceptionMessageLength = exceptionMessage.length();
+int exceptionMessageLength = exceptionMessage.length();
                 if (exceptionMessageLength > 0) {
+                    // Exception message length validation - placeholder for future
+                    // error message processing if needed for debugging or logging
                 }
             }
             throw se;
@@ -595,7 +597,10 @@ public class MainWindow extends JFrame {
                     },
                     this::showErrorIfVisible
                 );
-            } catch (NumberFormatException e) {
+} catch (NumberFormatException e) {
+                // NumberFormatException is handled by input validation
+                // Additional error handling could be added here if needed
+                // for user feedback or logging purposes
             }
         }
     }

@@ -30,7 +30,6 @@ import org.assertj.swing.junit.runner.GUITestRunner;
 import org.assertj.swing.junit.testcase.AssertJSwingJUnitTestCase;
 import org.junit.Assume;
 import org.junit.BeforeClass;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -4015,7 +4014,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             mockedSwingUtilities = Mockito.mockStatic(javax.swing.SwingUtilities.class, Mockito.CALLS_REAL_METHODS);
             
             // Make isEventDispatchThread return false so we go into the else branch
-            mockedSwingUtilities.when(() -> javax.swing.SwingUtilities.isEventDispatchThread())
+            mockedSwingUtilities.when(javax.swing.SwingUtilities::isEventDispatchThread)
                 .thenReturn(false);
             
             // Make invokeAndWait throw a RuntimeException (caught by Exception catch block, not InterruptedException)
@@ -4041,8 +4040,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             assertThat(capturedText[0]).as("Text should be set to 'Exception test'").isEqualTo("Exception test");
             
             // Verify that isEventDispatchThread was called
-            mockedSwingUtilities.verify(() -> 
-                javax.swing.SwingUtilities.isEventDispatchThread(), Mockito.atLeastOnce());
+            mockedSwingUtilities.verify(javax.swing.SwingUtilities::isEventDispatchThread, Mockito.atLeastOnce());
             
             // Verify that invokeAndWait was called (and threw exception)
             mockedSwingUtilities.verify(() -> 
