@@ -593,6 +593,10 @@
                             <environmentVariables>
                                 <DISPLAY>:99</DISPLAY>
                             </environmentVariables>
+                            <!-- Add timeout to prevent infinite hanging -->
+                            <forkedProcessTimeoutInSeconds>300</forkedProcessTimeoutInSeconds>
+                            <parallel>none</parallel>
+                            <threadCount>1</threadCount>
                         </configuration>
                     </plugin>
                 </plugins>
