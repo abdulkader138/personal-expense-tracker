@@ -940,7 +940,7 @@ public class CategoryDialogTest extends AssertJSwingJUnitTestCase {
             }
         });
         // Dialog should not be visible after clicking close OR should be disposed
-        assertThat(isVisible || isDisposed).as("Dialog should not be visible or should be disposed after clicking close").isTrue();
+        assertThat(!isVisible || isDisposed).as("Dialog should not be visible or should be disposed after clicking close").isTrue();
     }
 
     @Test

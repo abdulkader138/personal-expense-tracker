@@ -79,26 +79,29 @@ public class CategoryDialog extends JDialog {
         JScrollPane scrollPane = new JScrollPane(categoryTable);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
 
-        JPanel bottomPanel = new JPanel(new FlowLayout());
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        JPanel buttonPanel = new JPanel(new FlowLayout());
         updateButton = new JButton("Update Selected");
         updateButton.addActionListener(e -> onUpdateButtonClick());
-        bottomPanel.add(updateButton);
+        buttonPanel.add(updateButton);
 
         deleteButton = new JButton("Delete Selected");
         deleteButton.addActionListener(e -> onDeleteButtonClick());
-        bottomPanel.add(deleteButton);
+        buttonPanel.add(deleteButton);
 
         JButton closeButton = new JButton("Close");
         closeButton.addActionListener(e -> {
             setVisible(false);
             dispose();
         });
-        bottomPanel.add(closeButton);
-        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
+        buttonPanel.add(closeButton);
+        bottomPanel.add(buttonPanel, BorderLayout.CENTER);
 
         labelMessage = new JLabel("");
         labelMessage.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        mainPanel.add(labelMessage, BorderLayout.PAGE_END);
+        bottomPanel.add(labelMessage, BorderLayout.SOUTH);
+        
+        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
 
         add(mainPanel);
     }
