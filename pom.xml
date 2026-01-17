@@ -35,14 +35,12 @@
         <hamcrest.version>2.2</hamcrest.version>
         <skipITs>false</skipITs>
         <!-- JVM arguments for Java 9+ (empty for Java 8) -->
-        <surefire.jvm.args>--add-opens java.base/java.util=ALL-UNNAMED --add-opens java.desktop/java.awt=ALL-UNNAMED --add-opens java.desktop/javax.swing=ALL-UNNAMED</surefire.jvm.args>
+        <surefire.jvm.args>--add-opens java.base/java.util=ALL-UNNAMED --add-opens java.desktop/java.awt=ALL-UNNAMED --add-opens java.desktop/javax.swing=ALL-UNNAMED -Xshare:off</surefire.jvm.args>
         
         <!-- SonarCloud configuration -->
         <sonar.projectKey>abdulkader138_personal-expense-tracker</sonar.projectKey>
         <sonar.organization>abdulkader138</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
-        <!-- Removed coverage exclusions to include model classes and ExpenseTrackerApp in coverage -->
-        <!-- No exclusions - all code should be covered -->
         <sonar.junit.reportPaths>
             ${project.build.directory}/surefire-reports
         </sonar.junit.reportPaths>
@@ -82,16 +80,10 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Google Guice for Dependency Injection -->
-        <!-- NOTE: Guice 7.0.0 uses repackaged ASM (com.google.inject.internal.asm) that doesn't support Java 22 -->
-        <!-- The code must be compiled with Java 17 to avoid "Unsupported class file major version 66" warnings -->
-        <!-- This is a known limitation: https://github.com/google/guice/issues/1654 -->
         <dependency>
             <groupId>com.google.inject</groupId>
             <artifactId>guice</artifactId>
             <version>${guice.version}</version>
-            <!-- Exclude old ASM to use newer version that supports Java 22 -->
-            <!-- Note: This doesn't fully help because Guice uses repackaged ASM internally -->
             <exclusions>
                 <exclusion>
                     <groupId>org.ow2.asm</groupId>
@@ -100,10 +92,6 @@
             </exclusions>
         </dependency>
 
-        <!-- ASM override for Java 22 support -->
-        <!-- Guice 7.0.0 bundles an older ASM that doesn't support Java 22 -->
-        <!-- This explicit dependency ensures Java 22 compatibility -->
-        <!-- Note: Guice uses repackaged ASM, but excluding it and adding newer ASM helps -->
         <dependency>
             <groupId>org.ow2.asm</groupId>
             <artifactId>asm</artifactId>
@@ -270,10 +258,6 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
-                    <!-- Use source/target for compatibility with all Java versions (including Java 8) -->
-                    <!-- IMPORTANT: Must use Java 17 because Guice 7.0.0's internal ASM doesn't support Java 22 -->
-                    <!-- If you see "Unsupported class file major version 66" warnings, ensure you compile with Java 17 -->
-                    <!-- You can set JAVA_HOME to Java 17 or use: mvn clean compile -Dmaven.compiler.source=17 -Dmaven.compiler.target=17 -->
                     <source>17</source>
                     <target>17</target>
                     <release>17</release>
@@ -299,8 +283,6 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.1.2</version>
                 <dependencies>
-                    <!-- Explicit JUnit Platform dependencies for JUnit 5 support -->
-                    <!-- JUnit Jupiter 5.10.0 includes platform dependencies, but explicit declaration ensures compatibility -->
                     <dependency>
                         <groupId>org.junit.platform</groupId>
                         <artifactId>junit-platform-launcher</artifactId>
@@ -317,15 +299,9 @@
                     <argLine>${argLine} ${surefire.jvm.args} -Djava.util.logging.config.file=${project.basedir}/src/test/resources/logging.properties</argLine>
                     <forkCount>1</forkCount>
                     <reuseForks>false</reuseForks>
-                    <!-- Set to false to ensure clean EDT state between UI tests -->
                     <testFailureIgnore>false</testFailureIgnore>
                     <forkedProcessTimeoutInSeconds>120</forkedProcessTimeoutInSeconds>
-                    <!-- Timeout for entire fork process - increased to allow all tests to complete -->
                     <parallel>none</parallel>
-                    <!-- Run tests sequentially to avoid EDT conflicts -->
-                    <!-- Note: UI tests are skipped in headless mode by default.
-                         To run UI tests, use: mvn test -Pui-tests -Dforce.ui.tests=true
-                         Or set up xvfb for headless GUI testing -->
                 </configuration>
             </plugin>
 
@@ -406,7 +382,6 @@
                                             <minimum>0.70</minimum>
                                         </limit>
                                     </limits>
-                                    <!-- Removed exclusions to include all classes in coverage -->
                                 </rule>
                             </rules>
                         </configuration>
@@ -414,17 +389,10 @@
                 </executions>
                 <configuration>
                     <!-- Exclude System.exit() related code from coverage -->
-                    <!-- Methods annotated with @ExcludeFromJacocoGeneratedReport are automatically excluded -->
-                    <!-- Exclude lambda methods that contain System.exit() calls -->
-                    <!-- Exclude call sites to excluded methods by excluding the specific lines -->
-                    <!-- Exclude UI package from default coverage (only included when ui-tests profile is active) -->
                     <excludes>
                         <exclude>**/ExpenseTrackerApp$*.lambda$main$*</exclude>
-                        <!-- Exclude call sites to handleHeadlessEnvironment() and handleInitializationException() -->
-                        <!-- These are excluded because the called methods are excluded -->
                         <exclude>**/com/mycompany/pet/ui/**</exclude>
                     </excludes>
-                    <!-- Rules for check goal when called directly (e.g., mvn jacoco:check) -->
                     <rules>
                         <rule>
                             <element>BUNDLE</element>
@@ -445,7 +413,6 @@
                                     <minimum>0.70</minimum>
                                 </limit>
                             </limits>
-                            <!-- Removed exclusions to include all classes in coverage -->
                         </rule>
                     </rules>
                 </configuration>
@@ -600,15 +567,12 @@
                             <includes>
                                 <include>**/*Test.java</include>
                             </includes>
-                            <!-- Force UI tests to run even in headless mode (requires xvfb) -->
                             <systemPropertyVariables>
                                 <force.ui.tests>true</force.ui.tests>
                             </systemPropertyVariables>
-                            <!-- For Linux CI/CD, use xvfb to run GUI tests -->
                             <environmentVariables>
                                 <DISPLAY>:99</DISPLAY>
                             </environmentVariables>
-                            <!-- Add timeout to prevent infinite hanging -->
                             <forkedProcessTimeoutInSeconds>300</forkedProcessTimeoutInSeconds>
                             <parallel>none</parallel>
                             <threadCount>1</threadCount>

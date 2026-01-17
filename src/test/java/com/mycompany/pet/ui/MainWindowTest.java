@@ -49,7 +49,7 @@ import com.mycompany.pet.service.ExpenseService;
 @RunWith(GUITestRunner.class)
 public class MainWindowTest extends AssertJSwingJUnitTestCase {
     @Rule
-    public Timeout globalTimeout = Timeout.seconds(30); // 30 second timeout per test to prevent hanging
+    public Timeout globalTimeout = Timeout.seconds(30); 
     
     private FrameFixture window;
     private MainWindow mainWindow;
@@ -180,12 +180,9 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     @GUITest
     public void testMainWindow_LoadData_ErrorCallback_WindowNotVisible() throws SQLException {
         execute(() -> mainWindow.setVisible(false));
-        // No waiting - just execute and verify
         when(categoryService.getAllCategories()).thenThrow(new SQLException("Database error"));
         execute(() -> mainWindow.loadData());
-        // No waiting - just execute and verify
         execute(() -> mainWindow.setVisible(true));
-        // No waiting - just execute and verify
         assertThat(mainWindow).isNotNull();
     }
 
@@ -203,7 +200,6 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     public void testMainWindow_LoadCategories_ErrorCallback() throws SQLException {
         when(categoryService.getAllCategories()).thenThrow(new SQLException("Database error"));
         execute(() -> mainWindow.loadCategories());
-        // Wait for async error callback to execute
         try {
             Thread.sleep(200); // NOSONAR - wait for async error callback
         } catch (InterruptedException e) {
@@ -231,7 +227,6 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
         execute(() -> mainWindow.setVisible(false));
         when(categoryService.getAllCategories()).thenThrow(new SQLException("Database error"));
         execute(() -> mainWindow.loadCategories());
-        // Wait for async error callback to execute (covers isVisible() == false branch)
         try {
             Thread.sleep(200); // NOSONAR - wait for async error callback
         } catch (InterruptedException e) {
@@ -245,16 +240,12 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     @Test
     @GUITest
     public void testMainWindow_LoadCategories_ErrorCallback_WindowVisibleButNotShowing() throws SQLException {
-        // Test error callback when isVisible() is true but isShowing() is false (iconified)
-        // This covers the isShowing() false branch when isVisible() is true
         when(categoryService.getAllCategories()).thenThrow(new SQLException("Database error"));
         execute(() -> {
             mainWindow.setVisible(true);
-            // Iconify the window - makes isVisible() true but isShowing() false
             mainWindow.setExtendedState(java.awt.Frame.ICONIFIED);
             mainWindow.loadCategories();
         });
-        // Wait for async error callback to execute
         try {
             Thread.sleep(300); // NOSONAR - wait for async error callback
         } catch (InterruptedException e) {
@@ -324,16 +315,12 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     @Test
     @GUITest
     public void testMainWindow_LoadExpenses_ErrorCallback_WindowVisibleButNotShowing() throws SQLException {
-        // Test error callback when isVisible() is true but isShowing() is false (iconified)
-        // This covers the isShowing() false branch when isVisible() is true
         when(expenseService.getAllExpenses()).thenThrow(new SQLException("Database error"));
         execute(() -> {
             mainWindow.setVisible(true);
-            // Iconify the window - makes isVisible() true but isShowing() false
             mainWindow.setExtendedState(java.awt.Frame.ICONIFIED);
             mainWindow.loadExpenses();
         });
-        // Wait for async error callback to execute
         try {
             Thread.sleep(300); // NOSONAR - wait for async error callback
         } catch (InterruptedException e) {
@@ -592,7 +579,6 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
             });
             
             if (month != null && !"All".equals(month)) {
-                // Wait for async success callback that calls updateCategoryTotal()
                 try {
                     Thread.sleep(300); // NOSONAR - wait for async success callback to execute updateCategoryTotal()
                 } catch (InterruptedException e) {
@@ -715,7 +701,6 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
     @GUITest
     public void testMainWindow_ShowAddExpenseDialog_TestMode() {
         System.setProperty("test.mode", "true");
-        // Test showAddExpenseDialog - use invokeLater to avoid blocking on modal dialog
         // This covers the branch where dialog.isShowing() is false (normal case after modal dialog closes)
         Thread disposeThread = new Thread(() -> {
             try {
@@ -954,8 +939,6 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
                 Thread.currentThread().interrupt();
             }
             
-            // Now call showEditExpenseDialog - but we need to intercept the dialog creation
-            // Instead, let's directly test the path by calling the code manually
         execute(() -> {
                 int selectedRow = mainWindow.expenseTable.getSelectedRow();
                 if (selectedRow >= 0) {
@@ -2066,7 +2049,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    @SuppressWarnings("restriction") // Using sun.misc.Unsafe to test unreachable branch
+    @SuppressWarnings({"restriction", "sunapi"}) // Using sun.misc.Unsafe to test unreachable branch
     public void testMainWindow_ShouldFilterExpenses_ExpenseControllerNull() {
         // Test shouldFilterExpenses when expenseController is null
         // Since expenseController is final, we need to use Unsafe to modify it
@@ -2123,7 +2106,7 @@ public class MainWindowTest extends AssertJSwingJUnitTestCase {
 
     @Test
     @GUITest
-    @SuppressWarnings("restriction") // Using sun.misc.Unsafe to test unreachable branch
+    @SuppressWarnings({"restriction", "sunapi"}) // Using sun.misc.Unsafe to test unreachable branch
     public void testMainWindow_ShouldUpdateCategoryTotal_ExpenseControllerNull() {
         // Test shouldUpdateCategoryTotal when expenseController is null
         // Since expenseController is final, we need to use Unsafe to modify it

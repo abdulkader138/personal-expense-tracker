@@ -592,4 +592,4 @@ This project is developed for educational purposes as part of a course on **Test
 
 ---
 
-**Last Updated**: 2024
+**Last Updated**: 2026
