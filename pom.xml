@@ -8,13 +8,8 @@
 	<groupId>com.mycompany</groupId>
 	<artifactId>expense-tracker</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<packaging>pom</packaging>
-
-	<modules>
-		<module>expense-tracker-model</module>
-		<module>expense-tracker-core</module>
-		<module>expense-tracker-ui</module>
-	</modules>
+	<packaging>jar</packaging>
+	<name>expense-tracker</name>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -23,117 +18,155 @@
 
 		<!-- dependency versions -->
 		<junit.version>4.13.2</junit.version>
-		<assertj.version>3.25.3</assertj.version>
-		<mockito.version>5.11.0</mockito.version>
-		<mongo.driver.version>4.11.1</mongo.driver.version>
-		<testcontainers.version>1.19.7</testcontainers.version>
 		<assertj.swing.version>3.17.1</assertj.swing.version>
+		<mockito.version>4.4.0</mockito.version>
+		<mongo.driver.version>3.12.14</mongo.driver.version>
+		<testcontainers.version>1.19.7</testcontainers.version>
 		<awaitility.version>4.2.1</awaitility.version>
+		<logback.version>1.4.14</logback.version>
 
 		<!-- plugin versions -->
-		<maven.compiler.plugin.version>3.12.1</maven.compiler.plugin.version>
-		<maven.surefire.plugin.version>3.2.5</maven.surefire.plugin.version>
-		<maven.failsafe.plugin.version>3.2.5</maven.failsafe.plugin.version>
+		<surefire.version>3.2.5</surefire.version>
+		<failsafe.version>3.2.5</failsafe.version>
 		<jacoco.version>0.8.11</jacoco.version>
 		<pitest.version>1.15.0</pitest.version>
+		<build.helper.version>3.5.0</build.helper.version>
+
+		<!-- sonar exclusions -->
+		<sonar.coverage.exclusions>
+			**/model/**,
+			**/app/**
+		</sonar.coverage.exclusions>
+
+		<sonar.junit.reportPaths>
+			${project.build.directory}/surefire-reports,
+			${project.build.directory}/failsafe-reports
+		</sonar.junit.reportPaths>
 	</properties>
 
-	<dependencyManagement>
-		<dependencies>
-			<!-- internal modules -->
-			<dependency>
-				<groupId>com.mycompany</groupId>
-				<artifactId>expense-tracker-model</artifactId>
-				<version>${project.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.mycompany</groupId>
-				<artifactId>expense-tracker-core</artifactId>
-				<version>${project.version}</version>
-			</dependency>
+	<dependencies>
+		<!-- MongoDB -->
+		<dependency>
+			<groupId>org.mongodb</groupId>
+			<artifactId>mongo-java-driver</artifactId>
+			<version>${mongo.driver.version}</version>
+		</dependency>
 
-			<!-- MongoDB -->
-			<dependency>
-				<groupId>org.mongodb</groupId>
-				<artifactId>mongodb-driver-sync</artifactId>
-				<version>${mongo.driver.version}</version>
-			</dependency>
+		<!-- Logging -->
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>${logback.version}</version>
+		</dependency>
 
-			<!-- JUnit 4 -->
-			<dependency>
-				<groupId>junit</groupId>
-				<artifactId>junit</artifactId>
-				<version>${junit.version}</version>
-				<scope>test</scope>
-			</dependency>
+		<!-- JUnit 4 -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
 
-			<!-- AssertJ -->
-			<dependency>
-				<groupId>org.assertj</groupId>
-				<artifactId>assertj-core</artifactId>
-				<version>${assertj.version}</version>
-				<scope>test</scope>
-			</dependency>
+		<!-- AssertJ Swing -->
+		<dependency>
+			<groupId>org.assertj</groupId>
+			<artifactId>assertj-swing-junit</artifactId>
+			<version>${assertj.swing.version}</version>
+			<scope>test</scope>
+		</dependency>
 
-			<!-- Mockito -->
-			<dependency>
-				<groupId>org.mockito</groupId>
-				<artifactId>mockito-core</artifactId>
-				<version>${mockito.version}</version>
-				<scope>test</scope>
-			</dependency>
+		<!-- Mockito -->
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<version>${mockito.version}</version>
+			<scope>test</scope>
+		</dependency>
 
-			<!-- Testcontainers -->
-			<dependency>
-				<groupId>org.testcontainers</groupId>
-				<artifactId>testcontainers</artifactId>
-				<version>${testcontainers.version}</version>
-				<scope>test</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.testcontainers</groupId>
-				<artifactId>mongodb</artifactId>
-				<version>${testcontainers.version}</version>
-				<scope>test</scope>
-			</dependency>
-			<!-- AssertJ Swing -->
-			<dependency>
-				<groupId>org.assertj</groupId>
-				<artifactId>assertj-swing-junit</artifactId>
-				<version>${assertj.swing.version}</version>
-				<scope>test</scope>
-			</dependency>
+		<!-- Testcontainers -->
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>testcontainers</artifactId>
+			<version>${testcontainers.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>mongodb</artifactId>
+			<version>${testcontainers.version}</version>
+			<scope>test</scope>
+		</dependency>
 
-			<!-- Awaitility -->
-			<dependency>
-				<groupId>org.awaitility</groupId>
-				<artifactId>awaitility</artifactId>
-				<version>${awaitility.version}</version>
-				<scope>test</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
+		<!-- Awaitility -->
+		<dependency>
+			<groupId>org.awaitility</groupId>
+			<artifactId>awaitility</artifactId>
+			<version>${awaitility.version}</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
 
 	<build>
-		<pluginManagement>
-			<plugins>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-compiler-plugin</artifactId>
-					<version>${maven.compiler.plugin.version}</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-surefire-plugin</artifactId>
-					<version>${maven.surefire.plugin.version}</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-failsafe-plugin</artifactId>
-					<version>${maven.failsafe.plugin.version}</version>
-				</plugin>
-			</plugins>
-		</pluginManagement>
+		<plugins>
+			<!-- add src/it/java and src/e2e/java as test source directories -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>${build.helper.version}</version>
+				<executions>
+					<execution>
+						<id>add-test-sources</id>
+						<phase>generate-test-sources</phase>
+						<goals>
+							<goal>add-test-source</goal>
+						</goals>
+						<configuration>
+							<sources>
+								<source>src/it/java</source>
+								<source>src/e2e/java</source>
+							</sources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- unit tests only: *Test.java, exclude IT and E2E -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>${surefire.version}</version>
+				<configuration>
+					<includes>
+						<include>**/*Test.java</include>
+					</includes>
+					<excludes>
+						<exclude>**/*IT.java</exclude>
+						<exclude>**/*E2E.java</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+
+			<!-- integration and e2e tests: *IT.java, *E2E.java -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<version>${failsafe.version}</version>
+				<configuration>
+					<includes>
+						<include>**/*IT.java</include>
+						<include>**/*E2E.java</include>
+					</includes>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>integration-test</goal>
+							<goal>verify</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
 	</build>
 
 	<profiles>
@@ -148,14 +181,20 @@
 						<version>${jacoco.version}</version>
 						<configuration>
 							<excludes>
-								<exclude>com/mycompany/expensetracker/model/**</exclude>
-								<exclude>com/mycompany/expensetracker/App.class</exclude>
+								<exclude>**/model/**</exclude>
+								<exclude>**/app/**</exclude>
 							</excludes>
 						</configuration>
 						<executions>
 							<execution>
 								<goals>
 									<goal>prepare-agent</goal>
+								</goals>
+							</execution>
+							<execution>
+								<id>report</id>
+								<phase>verify</phase>
+								<goals>
 									<goal>report</goal>
 								</goals>
 							</execution>
@@ -176,13 +215,28 @@
 						<version>${pitest.version}</version>
 						<configuration>
 							<targetClasses>
-								<param>com.mycompany.expensetracker.service.*</param>
+								<param>com.mycompany.expensetracker.controller.*</param>
 								<param>com.mycompany.expensetracker.repository.*</param>
 							</targetClasses>
 							<targetTests>
 								<param>com.mycompany.expensetracker.*</param>
 							</targetTests>
-							<mutationThreshold>100</mutationThreshold>
+							<excludedClasses>
+								<param>com.mycompany.expensetracker.model.*</param>
+								<param>com.mycompany.expensetracker.app.*</param>
+								<param>com.mycompany.expensetracker.view.swing.*</param>
+								<param>com.mycompany.expensetracker.repository.mongo.*</param>
+							</excludedClasses>
+							<excludedTestClasses>
+								<param>com.mycompany.expensetracker.*IT</param>
+								<param>com.mycompany.expensetracker.*E2E</param>
+							</excludedTestClasses>
+							<mutators>
+								<mutator>DEFAULTS</mutator>
+							</mutators>
+							<outputFormats>
+								<param>HTML</param>
+							</outputFormats>
 						</configuration>
 						<executions>
 							<execution>
