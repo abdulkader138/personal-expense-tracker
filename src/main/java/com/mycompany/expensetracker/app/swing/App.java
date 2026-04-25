@@ -4,8 +4,8 @@ import javax.swing.SwingUtilities;
 
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
-import com.mycompany.expensetracker.controller.CategoryService;
-import com.mycompany.expensetracker.controller.ExpenseService;
+import com.mycompany.expensetracker.service.CategoryService;
+import com.mycompany.expensetracker.service.ExpenseService;
 import com.mycompany.expensetracker.repository.mongo.MongoCategoryRepository;
 import com.mycompany.expensetracker.repository.mongo.MongoExpenseRepository;
 import com.mycompany.expensetracker.view.swing.ExpenseTrackerController;

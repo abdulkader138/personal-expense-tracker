@@ -2,8 +2,8 @@ package com.mycompany.expensetracker.view.swing;
 
 import java.util.List;
 
-import com.mycompany.expensetracker.controller.CategoryService;
-import com.mycompany.expensetracker.controller.ExpenseService;
+import com.mycompany.expensetracker.service.CategoryService;
+import com.mycompany.expensetracker.service.ExpenseService;
 import com.mycompany.expensetracker.model.Category;
 import com.mycompany.expensetracker.model.Expense;
 
