@@ -215,7 +215,7 @@
 						<version>${pitest.version}</version>
 						<configuration>
 							<targetClasses>
-								<param>com.mycompany.expensetracker.controller.*</param>
+								<param>com.mycompany.expensetracker.service.*</param>
 								<param>com.mycompany.expensetracker.repository.*</param>
 							</targetClasses>
 							<targetTests>
