@@ -23,4 +23,8 @@ public class CategoryService {
 	public List<Category> getAllCategories() {
 		return repository.findAll();
 	}
+
+	public void deleteCategory(String id) {
+		repository.delete(id);
+	}
 }
