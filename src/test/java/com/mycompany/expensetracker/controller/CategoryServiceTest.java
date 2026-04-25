@@ -1,5 +1,6 @@
 package com.mycompany.expensetracker.controller;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -25,5 +26,11 @@ public class CategoryServiceTest {
 		Category category = new Category("1", "Food");
 		service.addCategory(category);
 		verify(repository).save(category);
+	}
+
+	@Test
+	public void testAddCategoryWithNullThrowsException() {
+		assertThatThrownBy(() -> service.addCategory(null))
+				.isInstanceOf(IllegalArgumentException.class);
 	}
 }
