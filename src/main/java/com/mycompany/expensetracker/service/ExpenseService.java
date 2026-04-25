@@ -1,4 +1,4 @@
-package com.mycompany.expensetracker.controller;
+package com.mycompany.expensetracker.service;
 
 import java.util.List;
 
