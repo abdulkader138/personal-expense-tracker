@@ -15,6 +15,9 @@ public class ExpenseService {
 		if (expense == null) {
 			throw new IllegalArgumentException("Expense cannot be null");
 		}
+		if (expense.getAmount() < 0) {
+			throw new IllegalArgumentException("Amount cannot be negative");
+		}
 		repository.save(expense);
 	}
 }
