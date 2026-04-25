@@ -12,6 +12,9 @@ public class ExpenseService {
 	}
 
 	public void addExpense(Expense expense) {
+		if (expense == null) {
+			throw new IllegalArgumentException("Expense cannot be null");
+		}
 		repository.save(expense);
 	}
 }
