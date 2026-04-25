@@ -40,4 +40,12 @@ public class ExpenseTrackerControllerTest {
 		controller.allExpenses();
 		verify(view).showExpenses(expenses);
 	}
+
+	@Test
+	public void testAllCategoriesShowsCategoriesFromService() {
+		List<Category> categories = Arrays.asList(new Category("1", "Food"));
+		when(categoryService.getAllCategories()).thenReturn(categories);
+		controller.allCategories();
+		verify(view).showCategories(categories);
+	}
 }
