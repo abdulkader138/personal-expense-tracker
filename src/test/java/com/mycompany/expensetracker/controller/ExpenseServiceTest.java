@@ -33,4 +33,11 @@ public class ExpenseServiceTest {
 		assertThatThrownBy(() -> service.addExpense(null))
 				.isInstanceOf(IllegalArgumentException.class);
 	}
+
+	@Test
+	public void testAddExpenseWithNegativeAmountThrowsException() {
+		Expense expense = new Expense("1", "Lunch", -5.0, null);
+		assertThatThrownBy(() -> service.addExpense(expense))
+				.isInstanceOf(IllegalArgumentException.class);
+	}
 }
