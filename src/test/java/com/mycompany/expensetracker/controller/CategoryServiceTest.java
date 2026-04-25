@@ -45,4 +45,10 @@ public class CategoryServiceTest {
 		when(repository.findAll()).thenReturn(categories);
 		assertThat(service.getAllCategories()).isEqualTo(categories);
 	}
+
+	@Test
+	public void testDeleteCategoryDelegatesToRepository() {
+		service.deleteCategory("1");
+		verify(repository).delete("1");
+	}
 }
