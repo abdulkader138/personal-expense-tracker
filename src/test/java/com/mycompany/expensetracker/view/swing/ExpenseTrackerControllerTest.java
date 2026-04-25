@@ -70,4 +70,14 @@ public class ExpenseTrackerControllerTest {
 		verify(expenseService, never()).addExpense(any());
 		verify(view).showError(contains("not-a-number"));
 	}
+
+	@Test
+	public void testDeleteExpenseCallsServiceAndRefreshesView() {
+		Expense expense = new Expense("1", "Lunch", 10.0, null);
+		List<Expense> expenses = Arrays.asList();
+		when(expenseService.getAllExpenses()).thenReturn(expenses);
+		controller.deleteExpense(expense);
+		verify(expenseService).deleteExpense("1");
+		verify(view).showExpenses(expenses);
+	}
 }
