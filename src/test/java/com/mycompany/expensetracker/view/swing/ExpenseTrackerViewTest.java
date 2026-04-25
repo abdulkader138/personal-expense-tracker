@@ -57,4 +57,20 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnit4TestCase {
 		GuiActionRunner.execute(() -> view.showExpenses(expenses));
 		assertThat(window.list("listExpenses").contents()).hasSize(2);
 	}
+
+	@Test
+	public void testShowErrorSetsLabelText() {
+		GuiActionRunner.execute(() -> view.showError("Test error message"));
+		window.label("lblError").requireText("Test error message");
+	}
+
+	@Test
+	public void testShowCategoriesUpdatesComboBox() {
+		List<Category> categories = Arrays.asList(
+			new Category("1", "Food"),
+			new Category("2", "Transport")
+		);
+		GuiActionRunner.execute(() -> view.showCategories(categories));
+		window.comboBox("comboCategory").requireItemCount(2);
+	}
 }
