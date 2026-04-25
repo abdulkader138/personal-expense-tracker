@@ -47,4 +47,14 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnit4TestCase {
 		window.textBox("txtDescription").deleteText();
 		window.button("btnAddExpense").requireDisabled();
 	}
+
+	@Test
+	public void testShowExpensesUpdatesListModel() {
+		List<Expense> expenses = Arrays.asList(
+			new Expense("1", "Lunch", 10.0, null),
+			new Expense("2", "Dinner", 20.0, null)
+		);
+		GuiActionRunner.execute(() -> view.showExpenses(expenses));
+		assertThat(window.list("listExpenses").contents()).hasSize(2);
+	}
 }
