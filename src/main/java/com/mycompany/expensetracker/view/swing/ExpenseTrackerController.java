@@ -42,4 +42,9 @@ public class ExpenseTrackerController {
 		expenseService.addExpense(expense);
 		allExpenses();
 	}
+
+	public void deleteExpense(Expense expense) {
+		expenseService.deleteExpense(expense.getId());
+		allExpenses();
+	}
 }
