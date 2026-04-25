@@ -23,4 +23,8 @@ public class ExpenseTrackerController {
 	public void allExpenses() {
 		view.showExpenses(expenseService.getAllExpenses());
 	}
+
+	public void allCategories() {
+		view.showCategories(categoryService.getAllCategories());
+	}
 }
