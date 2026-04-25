@@ -48,4 +48,26 @@ public class ExpenseTrackerControllerTest {
 		controller.allCategories();
 		verify(view).showCategories(categories);
 	}
+
+	@Test
+	public void testNewExpenseCallsServiceAndRefreshesView() {
+		Category category = new Category("1", "Food");
+		List<Expense> expenses = Arrays.asList(new Expense("1", "Lunch", 10.0, category));
+		when(view.getDescriptionText()).thenReturn("Lunch");
+		when(view.getAmountText()).thenReturn("10.0");
+		when(view.getSelectedCategory()).thenReturn(category);
+		when(expenseService.getAllExpenses()).thenReturn(expenses);
+		controller.newExpense();
+		verify(expenseService).addExpense(any(Expense.class));
+		verify(view).showExpenses(expenses);
+	}
+
+	@Test
+	public void testNewExpenseWithInvalidAmountShowsError() {
+		when(view.getDescriptionText()).thenReturn("Lunch");
+		when(view.getAmountText()).thenReturn("not-a-number");
+		controller.newExpense();
+		verify(expenseService, never()).addExpense(any());
+		verify(view).showError(contains("not-a-number"));
+	}
 }
