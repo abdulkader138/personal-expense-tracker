@@ -12,6 +12,9 @@ public class CategoryService {
 	}
 
 	public void addCategory(Category category) {
+		if (category == null) {
+			throw new IllegalArgumentException("Category cannot be null");
+		}
 		repository.save(category);
 	}
 }
