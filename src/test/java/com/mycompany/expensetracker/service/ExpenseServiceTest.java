@@ -1,4 +1,4 @@
-package com.mycompany.expensetracker.controller;
+package com.mycompany.expensetracker.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
