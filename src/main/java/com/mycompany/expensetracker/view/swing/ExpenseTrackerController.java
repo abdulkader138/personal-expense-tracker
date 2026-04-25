@@ -27,4 +27,19 @@ public class ExpenseTrackerController {
 	public void allCategories() {
 		view.showCategories(categoryService.getAllCategories());
 	}
+
+	public void newExpense() {
+		String description = view.getDescriptionText();
+		double amount;
+		try {
+			amount = Double.parseDouble(view.getAmountText());
+		} catch (NumberFormatException e) {
+			view.showError("Invalid amount: " + view.getAmountText());
+			return;
+		}
+		Category category = view.getSelectedCategory();
+		Expense expense = new Expense(java.util.UUID.randomUUID().toString(), description, amount, category);
+		expenseService.addExpense(expense);
+		allExpenses();
+	}
 }
