@@ -1,5 +1,7 @@
 package com.mycompany.expensetracker.controller;
 
+import java.util.List;
+
 import com.mycompany.expensetracker.model.Expense;
 import com.mycompany.expensetracker.repository.ExpenseRepository;
 
@@ -19,5 +21,13 @@ public class ExpenseService {
 			throw new IllegalArgumentException("Amount cannot be negative");
 		}
 		repository.save(expense);
+	}
+
+	public List<Expense> getAllExpenses() {
+		return repository.findAll();
+	}
+
+	public void deleteExpense(String id) {
+		repository.delete(id);
 	}
 }
