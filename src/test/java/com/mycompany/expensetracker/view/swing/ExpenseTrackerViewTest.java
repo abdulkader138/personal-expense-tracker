@@ -39,4 +39,12 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnit4TestCase {
 		window.textBox("txtAmount").enterText("10.0");
 		window.button("btnAddExpense").requireEnabled();
 	}
+
+	@Test
+	public void testAddButtonDisabledWhenDescriptionCleared() {
+		window.textBox("txtDescription").enterText("Lunch");
+		window.textBox("txtAmount").enterText("10.0");
+		window.textBox("txtDescription").deleteText();
+		window.button("btnAddExpense").requireDisabled();
+	}
 }
