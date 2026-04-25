@@ -1,5 +1,6 @@
 package com.mycompany.expensetracker.controller;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -25,5 +26,11 @@ public class ExpenseServiceTest {
 		Expense expense = new Expense("1", "Lunch", 10.0, null);
 		service.addExpense(expense);
 		verify(repository).save(expense);
+	}
+
+	@Test
+	public void testAddExpenseWithNullThrowsException() {
+		assertThatThrownBy(() -> service.addExpense(null))
+				.isInstanceOf(IllegalArgumentException.class);
 	}
 }
