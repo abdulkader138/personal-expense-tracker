@@ -30,7 +30,7 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 
 	@Override
 	protected void onSetUp() {
-		view = GuiActionRunner.execute(() -> new ExpenseTrackerView());
+		view = GuiActionRunner.execute(ExpenseTrackerView::new);
 		window = new FrameFixture(robot(), view);
 		window.show(new java.awt.Dimension(800, 600));
 	}
@@ -38,6 +38,7 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 	@Test
 	public void testAddButtonIsDisabledByDefault() {
 		window.button("btnAddExpense").requireDisabled();
+		assertThat(window.button("btnAddExpense").target().isEnabled()).isFalse();
 	}
 
 	@Test
@@ -45,6 +46,7 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 		window.textBox("txtDescription").enterText("Lunch");
 		window.textBox("txtAmount").enterText("10.0");
 		window.button("btnAddExpense").requireEnabled();
+		assertThat(window.button("btnAddExpense").target().isEnabled()).isTrue();
 	}
 
 	@Test
@@ -53,6 +55,7 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 		window.textBox("txtAmount").enterText("10.0");
 		window.textBox("txtDescription").deleteText();
 		window.button("btnAddExpense").requireDisabled();
+		assertThat(window.button("btnAddExpense").target().isEnabled()).isFalse();
 	}
 
 	@Test
@@ -69,6 +72,7 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 	public void testShowErrorSetsLabelText() {
 		GuiActionRunner.execute(() -> view.showError("Test error message"));
 		window.label("lblError").requireText("Test error message");
+		assertThat(window.label("lblError").target().getText()).isEqualTo("Test error message");
 	}
 
 	@Test
@@ -143,5 +147,6 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 			}
 		});
 		window.button("btnAddExpense").requireEnabled();
+		assertThat(window.button("btnAddExpense").target().isEnabled()).isTrue();
 	}
 }
