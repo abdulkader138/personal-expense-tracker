@@ -35,6 +35,7 @@
 		<jacoco.version>0.8.11</jacoco.version>
 		<pitest.version>1.15.0</pitest.version>
 		<build.helper.version>3.5.0</build.helper.version>
+		<sonar.version>3.11.0.3922</sonar.version>
 
 		<sonar.coverage.exclusions>
 			**/model/**,
@@ -124,6 +125,11 @@
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-failsafe-plugin</artifactId>
 					<version>${failsafe.version}</version>
+				</plugin>
+				<plugin>
+					<groupId>org.sonarsource.scanner.maven</groupId>
+					<artifactId>sonar-maven-plugin</artifactId>
+					<version>${sonar.version}</version>
 				</plugin>
 			</plugins>
 		</pluginManagement>
