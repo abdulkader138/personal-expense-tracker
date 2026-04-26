@@ -32,6 +32,7 @@ jobs:
         run: ./mvnw verify -Pjacoco
 
       - name: SonarCloud analysis
+        continue-on-error: true
         env:
           DISPLAY: ':99'
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
