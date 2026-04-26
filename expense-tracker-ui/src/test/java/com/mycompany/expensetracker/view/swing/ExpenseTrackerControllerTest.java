@@ -7,11 +7,13 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
 import com.mycompany.expensetracker.service.CategoryService;
 import com.mycompany.expensetracker.service.ExpenseService;
@@ -79,5 +81,14 @@ public class ExpenseTrackerControllerTest {
 		controller.deleteExpense(expense);
 		verify(expenseService).deleteExpense("1");
 		verify(view).showExpenses(expenses);
+	}
+
+	@Test
+	public void testDeleteListenerDoesNothingWhenNothingIsSelected() {
+		ArgumentCaptor<ActionListener> captor = ArgumentCaptor.forClass(ActionListener.class);
+		verify(view).addDeleteExpenseListener(captor.capture());
+		when(view.getSelectedExpense()).thenReturn(null);
+		captor.getValue().actionPerformed(null);
+		verify(expenseService, never()).deleteExpense(any());
 	}
 }

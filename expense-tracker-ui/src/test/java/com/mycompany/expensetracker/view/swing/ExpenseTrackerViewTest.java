@@ -1,9 +1,16 @@
 package com.mycompany.expensetracker.view.swing;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
+import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.List;
+
+import javax.swing.event.DocumentListener;
+import javax.swing.text.AbstractDocument;
 
 import org.assertj.swing.edt.GuiActionRunner;
 import org.assertj.swing.fixture.FrameFixture;
@@ -72,5 +79,65 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 		);
 		GuiActionRunner.execute(() -> view.showCategories(categories));
 		window.comboBox("comboCategory").requireItemCount(2);
+	}
+
+	@Test
+	public void testGetDescriptionTextReturnsFieldContent() {
+		GuiActionRunner.execute(() -> view.txtDescription.setText("Lunch"));
+		assertThat(view.getDescriptionText()).isEqualTo("Lunch");
+	}
+
+	@Test
+	public void testGetAmountTextReturnsFieldContent() {
+		GuiActionRunner.execute(() -> view.txtAmount.setText("10.0"));
+		assertThat(view.getAmountText()).isEqualTo("10.0");
+	}
+
+	@Test
+	public void testGetSelectedCategoryReturnsSelectedItem() {
+		Category category = new Category("1", "Food");
+		GuiActionRunner.execute(() -> view.showCategories(Arrays.asList(category)));
+		window.comboBox("comboCategory").selectItem(0);
+		assertThat(view.getSelectedCategory()).isEqualTo(category);
+	}
+
+	@Test
+	public void testGetSelectedExpenseReturnsSelectedItem() {
+		Expense expense = new Expense("1", "Lunch", 10.0, null);
+		GuiActionRunner.execute(() -> view.showExpenses(Arrays.asList(expense)));
+		window.list("listExpenses").selectItem(0);
+		assertThat(view.getSelectedExpense()).isEqualTo(expense);
+	}
+
+	@Test
+	public void testAddAddExpenseListenerAttachesListener() {
+		ActionListener listener = mock(ActionListener.class);
+		GuiActionRunner.execute(() -> view.addAddExpenseListener(listener));
+		window.textBox("txtDescription").enterText("Lunch");
+		window.textBox("txtAmount").enterText("10.0");
+		window.button("btnAddExpense").click();
+		verify(listener).actionPerformed(any());
+	}
+
+	@Test
+	public void testAddDeleteExpenseListenerAttachesListener() {
+		ActionListener listener = mock(ActionListener.class);
+		GuiActionRunner.execute(() -> view.addDeleteExpenseListener(listener));
+		window.button("btnDeleteExpense").click();
+		verify(listener).actionPerformed(any());
+	}
+
+	@Test
+	public void testChangedUpdateEnablesButtonWhenBothFieldsFilled() {
+		GuiActionRunner.execute(() -> {
+			view.txtDescription.setText("Lunch");
+			view.txtAmount.setText("10.0");
+			DocumentListener[] listeners = ((AbstractDocument) view.txtDescription.getDocument())
+					.getListeners(DocumentListener.class);
+			for (DocumentListener l : listeners) {
+				l.changedUpdate(null);
+			}
+		});
+		window.button("btnAddExpense").requireEnabled();
 	}
 }
