@@ -32,7 +32,7 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 	protected void onSetUp() {
 		view = GuiActionRunner.execute(() -> new ExpenseTrackerView());
 		window = new FrameFixture(robot(), view);
-		window.show();
+		window.show(new java.awt.Dimension(800, 600));
 	}
 
 	@Test
@@ -104,8 +104,10 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 	@Test
 	public void testGetSelectedExpenseReturnsSelectedItem() {
 		Expense expense = new Expense("1", "Lunch", 10.0, null);
-		GuiActionRunner.execute(() -> view.showExpenses(Arrays.asList(expense)));
-		window.list("listExpenses").selectItem(0);
+		GuiActionRunner.execute(() -> {
+			view.showExpenses(Arrays.asList(expense));
+			view.listExpenses.setSelectedIndex(0);
+		});
 		assertThat(view.getSelectedExpense()).isEqualTo(expense);
 	}
 
@@ -135,7 +137,9 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 			DocumentListener[] listeners = ((AbstractDocument) view.txtDescription.getDocument())
 					.getListeners(DocumentListener.class);
 			for (DocumentListener l : listeners) {
-				l.changedUpdate(null);
+				if (l.getClass().getEnclosingClass() == ExpenseTrackerView.class) {
+					l.changedUpdate(null);
+				}
 			}
 		});
 		window.button("btnAddExpense").requireEnabled();
