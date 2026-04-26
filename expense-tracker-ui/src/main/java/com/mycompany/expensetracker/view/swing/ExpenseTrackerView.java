@@ -11,6 +11,8 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import java.awt.event.ActionListener;
+
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -127,5 +129,13 @@ public class ExpenseTrackerView extends JFrame {
 
 	public Expense getSelectedExpense() {
 		return listExpenses.getSelectedValue();
+	}
+
+	public void addAddExpenseListener(ActionListener al) {
+		btnAddExpense.addActionListener(al);
+	}
+
+	public void addDeleteExpenseListener(ActionListener al) {
+		btnDeleteExpense.addActionListener(al);
 	}
 }
