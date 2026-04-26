@@ -34,7 +34,7 @@ public class ExpenseTrackerView extends JFrame {
 
 	public ExpenseTrackerView() {
 		setTitle("Expense Tracker");
-		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 		setSize(600, 400);
 
 		txtDescription = new JTextField(20);

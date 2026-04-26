@@ -15,21 +15,21 @@ public class MongoExpenseRepository implements ExpenseRepository {
 
 	private static final String COLLECTION = "expenses";
 
-	private final MongoCollection<Document> collection;
+	private final MongoCollection<Document> mongoCollection;
 
 	public MongoExpenseRepository(MongoDatabase database) {
-		this.collection = database.getCollection(COLLECTION);
+		this.mongoCollection = database.getCollection(COLLECTION);
 	}
 
 	@Override
 	public void save(Expense expense) {
-		collection.insertOne(toDocument(expense));
+		mongoCollection.insertOne(toDocument(expense));
 	}
 
 	@Override
 	public List<Expense> findAll() {
 		List<Expense> result = new ArrayList<>();
-		for (Document doc : collection.find()) {
+		for (Document doc : mongoCollection.find()) {
 			result.add(fromDocument(doc));
 		}
 		return result;
@@ -37,7 +37,7 @@ public class MongoExpenseRepository implements ExpenseRepository {
 
 	@Override
 	public Expense findById(String id) {
-		Document doc = collection.find(new Document("id", id)).first();
+		Document doc = mongoCollection.find(new Document("id", id)).first();
 		if (doc == null) {
 			return null;
 		}
@@ -46,14 +46,14 @@ public class MongoExpenseRepository implements ExpenseRepository {
 
 	@Override
 	public void update(Expense expense) {
-		collection.replaceOne(
+		mongoCollection.replaceOne(
 				new Document("id", expense.getId()),
 				toDocument(expense));
 	}
 
 	@Override
 	public void delete(String id) {
-		collection.deleteOne(new Document("id", id));
+		mongoCollection.deleteOne(new Document("id", id));
 	}
 
 	private Document toDocument(Expense expense) {

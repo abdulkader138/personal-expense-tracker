@@ -14,21 +14,21 @@ public class MongoCategoryRepository implements CategoryRepository {
 
 	private static final String COLLECTION = "categories";
 
-	private final MongoCollection<Document> collection;
+	private final MongoCollection<Document> mongoCollection;
 
 	public MongoCategoryRepository(MongoDatabase database) {
-		this.collection = database.getCollection(COLLECTION);
+		this.mongoCollection = database.getCollection(COLLECTION);
 	}
 
 	@Override
 	public void save(Category category) {
-		collection.insertOne(toDocument(category));
+		mongoCollection.insertOne(toDocument(category));
 	}
 
 	@Override
 	public List<Category> findAll() {
 		List<Category> result = new ArrayList<>();
-		for (Document doc : collection.find()) {
+		for (Document doc : mongoCollection.find()) {
 			result.add(fromDocument(doc));
 		}
 		return result;
@@ -36,7 +36,7 @@ public class MongoCategoryRepository implements CategoryRepository {
 
 	@Override
 	public Category findById(String id) {
-		Document doc = collection.find(new Document("id", id)).first();
+		Document doc = mongoCollection.find(new Document("id", id)).first();
 		if (doc == null) {
 			return null;
 		}
@@ -45,7 +45,7 @@ public class MongoCategoryRepository implements CategoryRepository {
 
 	@Override
 	public void delete(String id) {
-		collection.deleteOne(new Document("id", id));
+		mongoCollection.deleteOne(new Document("id", id));
 	}
 
 	private Document toDocument(Category category) {
