@@ -2,6 +2,8 @@ package com.mycompany.expensetracker.view.swing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.awt.Dimension;
+
 import org.assertj.swing.edt.GuiActionRunner;
 import org.assertj.swing.fixture.FrameFixture;
 import org.assertj.swing.junit.runner.GUITestRunner;
@@ -28,6 +30,7 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 
 	private FrameFixture window;
 	private MongoClient client;
+	private ExpenseTrackerView view;
 
 	@Override
 	protected void onSetUp() {
@@ -43,7 +46,7 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 
 		categoryService.addCategory(new Category("c1", "Food"));
 
-		ExpenseTrackerView view = GuiActionRunner.execute(() -> {
+		view = GuiActionRunner.execute(() -> {
 			ExpenseTrackerView v = new ExpenseTrackerView();
 			ExpenseTrackerController controller =
 				new ExpenseTrackerController(expenseService, categoryService, v);
@@ -53,7 +56,7 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 		});
 
 		window = new FrameFixture(robot(), view);
-		window.show();
+		window.show(new Dimension(800, 600));
 	}
 
 	@Override
@@ -78,7 +81,7 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 		window.textBox("txtAmount").enterText("20.0");
 		window.button("btnAddExpense").click();
 		assertThat(window.list("listExpenses").contents()).hasSize(1);
-		window.list("listExpenses").selectItem(0);
+		GuiActionRunner.execute(() -> view.listExpenses.setSelectedIndex(0));
 		window.button("btnDeleteExpense").click();
 		assertThat(window.list("listExpenses").contents()).hasSize(0);
 	}
