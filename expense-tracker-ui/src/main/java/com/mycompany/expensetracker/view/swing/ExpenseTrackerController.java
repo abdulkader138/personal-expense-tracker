@@ -18,6 +18,13 @@ public class ExpenseTrackerController {
 		this.expenseService = expenseService;
 		this.categoryService = categoryService;
 		this.view = view;
+		view.addAddExpenseListener(e -> newExpense());
+		view.addDeleteExpenseListener(e -> {
+			Expense selected = view.getSelectedExpense();
+			if (selected != null) {
+				deleteExpense(selected);
+			}
+		});
 	}
 
 	public void allExpenses() {
