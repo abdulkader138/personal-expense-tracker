@@ -59,4 +59,9 @@ public class MongoCategoryRepositoryIT {
 		repository.delete("1");
 		assertThat(repository.findAll()).isEmpty();
 	}
+
+	@Test
+	public void testFindByIdReturnsNullWhenNotFound() {
+		assertThat(repository.findById("nonexistent")).isNull();
+	}
 }
