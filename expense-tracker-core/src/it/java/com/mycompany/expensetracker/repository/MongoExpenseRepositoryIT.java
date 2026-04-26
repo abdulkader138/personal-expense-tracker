@@ -72,4 +72,17 @@ public class MongoExpenseRepositoryIT {
 		repository.delete("1");
 		assertThat(repository.findAll()).isEmpty();
 	}
+
+	@Test
+	public void testFindByIdReturnsNullWhenNotFound() {
+		assertThat(repository.findById("nonexistent")).isNull();
+	}
+
+	@Test
+	public void testSaveAndFindAllWithNullCategory() {
+		Expense expense = new Expense("1", "Lunch", 10.0, null);
+		repository.save(expense);
+		List<Expense> result = repository.findAll();
+		assertThat(result).containsExactly(expense);
+	}
 }
