@@ -1,7 +1,8 @@
 package com.mycompany.expensetracker.repository.mongo;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.bson.Document;
 
@@ -12,48 +13,33 @@ import com.mycompany.expensetracker.repository.CategoryRepository;
 
 public class MongoCategoryRepository implements CategoryRepository {
 
-	private static final String COLLECTION = "categories";
-
-	private final MongoCollection<Document> mongoCollection;
+	private final MongoCollection<Document> collection;
 
 	public MongoCategoryRepository(MongoDatabase database) {
-		this.mongoCollection = database.getCollection(COLLECTION);
+		collection = database.getCollection("categories");
 	}
 
 	@Override
 	public void save(Category category) {
-		mongoCollection.insertOne(toDocument(category));
+		collection.insertOne(new Document("_id", category.getId()).append("name", category.getName()));
 	}
 
 	@Override
 	public List<Category> findAll() {
-		List<Category> result = new ArrayList<>();
-		for (Document doc : mongoCollection.find()) {
-			result.add(fromDocument(doc));
-		}
-		return result;
+		return StreamSupport.stream(collection.find().spliterator(), false)
+				.map(doc -> new Category(doc.getString("_id"), doc.getString("name")))
+				.collect(Collectors.toList());
 	}
 
 	@Override
 	public Category findById(String id) {
-		Document doc = mongoCollection.find(new Document("id", id)).first();
-		if (doc == null) {
-			return null;
-		}
-		return fromDocument(doc);
+		Document doc = collection.find(new Document("_id", id)).first();
+		if (doc == null) return null;
+		return new Category(doc.getString("_id"), doc.getString("name"));
 	}
 
 	@Override
 	public void delete(String id) {
-		mongoCollection.deleteOne(new Document("id", id));
-	}
-
-	private Document toDocument(Category category) {
-		return new Document("id", category.getId())
-				.append("name", category.getName());
-	}
-
-	private Category fromDocument(Document doc) {
-		return new Category(doc.getString("id"), doc.getString("name"));
+		collection.deleteOne(new Document("_id", id));
 	}
 }

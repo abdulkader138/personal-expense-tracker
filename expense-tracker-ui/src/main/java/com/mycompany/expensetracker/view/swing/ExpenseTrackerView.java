@@ -1,5 +1,8 @@
 package com.mycompany.expensetracker.view.swing;
 
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
+import java.awt.event.ActionListener;
 import java.util.List;
 
 import javax.swing.DefaultComboBoxModel;
@@ -9,10 +12,9 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
-import java.awt.event.ActionListener;
-
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -21,88 +23,86 @@ import com.mycompany.expensetracker.model.Expense;
 
 public class ExpenseTrackerView extends JFrame {
 
-	private static final long serialVersionUID = 1L;
+	public JTextField txtDescription;
+	public JTextField txtAmount;
+	public JButton btnAddExpense;
+	public JButton btnDeleteExpense;
+	public JList<Expense> listExpenses;
 
-	JTextField txtDescription;
-	JTextField txtAmount;
-	JComboBox<Category> comboCategory;
-	JButton btnAddExpense;
-	DefaultListModel<Expense> listExpensesModel;
-	JList<Expense> listExpenses;
-	JButton btnDeleteExpense;
-	JLabel lblError;
+	private JLabel lblError;
+	private JComboBox<Category> comboCategory;
+	private DefaultListModel<Expense> expenseListModel;
+	private DefaultComboBoxModel<Category> categoryComboModel;
 
 	public ExpenseTrackerView() {
 		setTitle("Expense Tracker");
-		setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-		setSize(600, 400);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setLayout(new BorderLayout());
 
-		txtDescription = new JTextField(20);
+		txtDescription = new JTextField();
 		txtDescription.setName("txtDescription");
 
-		txtAmount = new JTextField(10);
+		txtAmount = new JTextField();
 		txtAmount.setName("txtAmount");
-
-		comboCategory = new JComboBox<>();
-		comboCategory.setName("comboCategory");
 
 		btnAddExpense = new JButton("Add Expense");
 		btnAddExpense.setName("btnAddExpense");
 		btnAddExpense.setEnabled(false);
 
-		listExpensesModel = new DefaultListModel<>();
-		listExpenses = new JList<>(listExpensesModel);
-		listExpenses.setName("listExpenses");
-
 		btnDeleteExpense = new JButton("Delete Expense");
 		btnDeleteExpense.setName("btnDeleteExpense");
+
+		expenseListModel = new DefaultListModel<>();
+		listExpenses = new JList<>(expenseListModel);
+		listExpenses.setName("listExpenses");
 
 		lblError = new JLabel(" ");
 		lblError.setName("lblError");
 
-		DocumentListener documentListener = new DocumentListener() {
-			@Override
-			public void changedUpdate(DocumentEvent e) {
-				updateAddButton();
-			}
+		categoryComboModel = new DefaultComboBoxModel<>();
+		comboCategory = new JComboBox<>(categoryComboModel);
+		comboCategory.setName("comboCategory");
 
-			@Override
-			public void insertUpdate(DocumentEvent e) {
-				updateAddButton();
-			}
-
-			@Override
-			public void removeUpdate(DocumentEvent e) {
-				updateAddButton();
-			}
-
-			private void updateAddButton() {
-				btnAddExpense.setEnabled(
-					!txtDescription.getText().trim().isEmpty() &&
-					!txtAmount.getText().trim().isEmpty()
-				);
-			}
+		DocumentListener enabler = new DocumentListener() {
+			@Override public void insertUpdate(DocumentEvent e) { updateAddButton(); }
+			@Override public void removeUpdate(DocumentEvent e) { updateAddButton(); }
+			@Override public void changedUpdate(DocumentEvent e) { updateAddButton(); }
 		};
+		txtDescription.getDocument().addDocumentListener(enabler);
+		txtAmount.getDocument().addDocumentListener(enabler);
 
-		txtDescription.getDocument().addDocumentListener(documentListener);
-		txtAmount.getDocument().addDocumentListener(documentListener);
+		JPanel inputPanel = new JPanel(new GridLayout(3, 2, 5, 5));
+		inputPanel.add(new JLabel("Description:"));
+		inputPanel.add(txtDescription);
+		inputPanel.add(new JLabel("Amount:"));
+		inputPanel.add(txtAmount);
+		inputPanel.add(new JLabel("Category:"));
+		inputPanel.add(comboCategory);
 
-		getContentPane().setLayout(new java.awt.FlowLayout());
-		getContentPane().add(new JLabel("Description:"));
-		getContentPane().add(txtDescription);
-		getContentPane().add(new JLabel("Amount:"));
-		getContentPane().add(txtAmount);
-		getContentPane().add(new JLabel("Category:"));
-		getContentPane().add(comboCategory);
-		getContentPane().add(btnAddExpense);
-		getContentPane().add(new JScrollPane(listExpenses));
-		getContentPane().add(btnDeleteExpense);
-		getContentPane().add(lblError);
+		JPanel buttonPanel = new JPanel();
+		buttonPanel.add(btnAddExpense);
+		buttonPanel.add(btnDeleteExpense);
+
+		JPanel bottomPanel = new JPanel(new BorderLayout());
+		bottomPanel.add(buttonPanel, BorderLayout.CENTER);
+		bottomPanel.add(lblError, BorderLayout.SOUTH);
+
+		add(inputPanel, BorderLayout.NORTH);
+		add(new JScrollPane(listExpenses), BorderLayout.CENTER);
+		add(bottomPanel, BorderLayout.SOUTH);
+
+		pack();
+	}
+
+	private void updateAddButton() {
+		btnAddExpense.setEnabled(
+			!txtDescription.getText().isEmpty() && !txtAmount.getText().isEmpty()
+		);
 	}
 
 	public void showExpenses(List<Expense> expenses) {
-		listExpensesModel.clear();
-		expenses.forEach(listExpensesModel::addElement);
+		expenseListModel.clear();
+		expenses.forEach(expenseListModel::addElement);
 	}
 
 	public void showError(String message) {
@@ -110,9 +110,8 @@ public class ExpenseTrackerView extends JFrame {
 	}
 
 	public void showCategories(List<Category> categories) {
-		DefaultComboBoxModel<Category> model = new DefaultComboBoxModel<>();
-		categories.forEach(model::addElement);
-		comboCategory.setModel(model);
+		categoryComboModel.removeAllElements();
+		categories.forEach(categoryComboModel::addElement);
 	}
 
 	public String getDescriptionText() {
@@ -131,11 +130,11 @@ public class ExpenseTrackerView extends JFrame {
 		return listExpenses.getSelectedValue();
 	}
 
-	public void addAddExpenseListener(ActionListener al) {
-		btnAddExpense.addActionListener(al);
+	public void addAddExpenseListener(ActionListener listener) {
+		btnAddExpense.addActionListener(listener);
 	}
 
-	public void addDeleteExpenseListener(ActionListener al) {
-		btnDeleteExpense.addActionListener(al);
+	public void addDeleteExpenseListener(ActionListener listener) {
+		btnDeleteExpense.addActionListener(listener);
 	}
 }
