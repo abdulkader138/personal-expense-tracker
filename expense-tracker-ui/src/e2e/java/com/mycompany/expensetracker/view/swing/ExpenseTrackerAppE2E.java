@@ -3,6 +3,9 @@ package com.mycompany.expensetracker.view.swing;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.awt.Dimension;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
 
 import org.assertj.swing.edt.GuiActionRunner;
 import org.assertj.swing.fixture.FrameFixture;
@@ -34,6 +37,7 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 
 	@Override
 	protected void onSetUp() {
+		turnOffCapsLock();
 		client = new MongoClient(new MongoClientURI(mongo.getConnectionString()));
 		MongoDatabase database = client.getDatabase("expensetracker-e2e");
 		database.getCollection("categories").drop();
@@ -63,6 +67,27 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 	protected void onTearDown() throws Exception {
 		if (client != null) {
 			client.close();
+		}
+	}
+
+	private void turnOffCapsLock() {
+		try {
+			Process p = new ProcessBuilder("xset", "q").start();
+			BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+			String line;
+			boolean capsOn = false;
+			while ((line = reader.readLine()) != null) {
+				if (line.contains("Caps Lock:") && line.contains("on")) {
+					capsOn = true;
+					break;
+				}
+			}
+			p.waitFor();
+			if (capsOn) {
+				new ProcessBuilder("xdotool", "key", "Caps_Lock").start().waitFor();
+				Thread.sleep(150);
+			}
+		} catch (Exception ignored) {
 		}
 	}
 
