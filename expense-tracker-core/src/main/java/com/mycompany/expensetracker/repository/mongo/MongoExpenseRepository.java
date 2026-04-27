@@ -1,7 +1,8 @@
 package com.mycompany.expensetracker.repository.mongo;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.bson.Document;
 
@@ -13,70 +14,63 @@ import com.mycompany.expensetracker.repository.ExpenseRepository;
 
 public class MongoExpenseRepository implements ExpenseRepository {
 
-	private static final String COLLECTION = "expenses";
-
-	private final MongoCollection<Document> mongoCollection;
+	private final MongoCollection<Document> collection;
 
 	public MongoExpenseRepository(MongoDatabase database) {
-		this.mongoCollection = database.getCollection(COLLECTION);
+		collection = database.getCollection("expenses");
 	}
 
 	@Override
 	public void save(Expense expense) {
-		mongoCollection.insertOne(toDocument(expense));
+		Document doc = new Document("_id", expense.getId())
+				.append("description", expense.getDescription())
+				.append("amount", expense.getAmount());
+		if (expense.getCategory() != null) {
+			doc.append("category", new Document("_id", expense.getCategory().getId())
+					.append("name", expense.getCategory().getName()));
+		}
+		collection.insertOne(doc);
 	}
 
 	@Override
 	public List<Expense> findAll() {
-		List<Expense> result = new ArrayList<>();
-		for (Document doc : mongoCollection.find()) {
-			result.add(fromDocument(doc));
-		}
-		return result;
+		return StreamSupport.stream(collection.find().spliterator(), false)
+				.map(this::documentToExpense)
+				.collect(Collectors.toList());
 	}
 
 	@Override
 	public Expense findById(String id) {
-		Document doc = mongoCollection.find(new Document("id", id)).first();
-		if (doc == null) {
-			return null;
-		}
-		return fromDocument(doc);
+		Document doc = collection.find(new Document("_id", id)).first();
+		if (doc == null) return null;
+		return documentToExpense(doc);
 	}
 
 	@Override
 	public void update(Expense expense) {
-		mongoCollection.replaceOne(
-				new Document("id", expense.getId()),
-				toDocument(expense));
+		Document setDoc = new Document("description", expense.getDescription())
+				.append("amount", expense.getAmount());
+		if (expense.getCategory() != null) {
+			setDoc.append("category", new Document("_id", expense.getCategory().getId())
+					.append("name", expense.getCategory().getName()));
+		} else {
+			setDoc.append("category", null);
+		}
+		collection.updateOne(new Document("_id", expense.getId()), new Document("$set", setDoc));
 	}
 
 	@Override
 	public void delete(String id) {
-		mongoCollection.deleteOne(new Document("id", id));
+		collection.deleteOne(new Document("_id", id));
 	}
 
-	private Document toDocument(Expense expense) {
-		Document doc = new Document("id", expense.getId())
-				.append("description", expense.getDescription())
-				.append("amount", expense.getAmount());
-		if (expense.getCategory() != null) {
-			doc.append("categoryId", expense.getCategory().getId())
-					.append("categoryName", expense.getCategory().getName());
-		}
-		return doc;
-	}
-
-	private Expense fromDocument(Document doc) {
+	private Expense documentToExpense(Document doc) {
 		Category category = null;
-		String categoryId = doc.getString("categoryId");
-		if (categoryId != null) {
-			category = new Category(categoryId, doc.getString("categoryName"));
+		Document catDoc = doc.get("category", Document.class);
+		if (catDoc != null) {
+			category = new Category(catDoc.getString("_id"), catDoc.getString("name"));
 		}
-		return new Expense(
-				doc.getString("id"),
-				doc.getString("description"),
-				doc.getDouble("amount"),
-				category);
+		return new Expense(doc.getString("_id"), doc.getString("description"),
+				doc.getDouble("amount"), category);
 	}
 }

@@ -6,8 +6,11 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
+
 
 import javax.swing.event.DocumentListener;
 import javax.swing.text.AbstractDocument;
@@ -30,9 +33,31 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 
 	@Override
 	protected void onSetUp() {
+		turnOffCapsLock();
 		view = GuiActionRunner.execute(ExpenseTrackerView::new);
 		window = new FrameFixture(robot(), view);
 		window.show(new java.awt.Dimension(800, 600));
+	}
+
+	private void turnOffCapsLock() {
+		try {
+			Process p = new ProcessBuilder("xset", "q").start();
+			BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+			String line;
+			boolean capsOn = false;
+			while ((line = reader.readLine()) != null) {
+				if (line.contains("Caps Lock:") && line.contains("on")) {
+					capsOn = true;
+					break;
+				}
+			}
+			p.waitFor();
+			if (capsOn) {
+				new ProcessBuilder("xdotool", "key", "Caps_Lock").start().waitFor();
+				Thread.sleep(150);
+			}
+		} catch (Exception ignored) {
+		}
 	}
 
 	@Test
