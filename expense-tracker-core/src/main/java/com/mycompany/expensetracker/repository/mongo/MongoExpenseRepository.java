@@ -14,6 +14,10 @@ import com.mycompany.expensetracker.repository.ExpenseRepository;
 
 public class MongoExpenseRepository implements ExpenseRepository {
 
+	private static final String FIELD_DESCRIPTION = "description";
+	private static final String FIELD_AMOUNT = "amount";
+	private static final String FIELD_CATEGORY = "category";
+
 	private final MongoCollection<Document> collection;
 
 	public MongoExpenseRepository(MongoDatabase database) {
@@ -23,10 +27,10 @@ public class MongoExpenseRepository implements ExpenseRepository {
 	@Override
 	public void save(Expense expense) {
 		Document doc = new Document("_id", expense.getId())
-				.append("description", expense.getDescription())
-				.append("amount", expense.getAmount());
+				.append(FIELD_DESCRIPTION, expense.getDescription())
+				.append(FIELD_AMOUNT, expense.getAmount());
 		if (expense.getCategory() != null) {
-			doc.append("category", new Document("_id", expense.getCategory().getId())
+			doc.append(FIELD_CATEGORY, new Document("_id", expense.getCategory().getId())
 					.append("name", expense.getCategory().getName()));
 		}
 		collection.insertOne(doc);
@@ -48,13 +52,13 @@ public class MongoExpenseRepository implements ExpenseRepository {
 
 	@Override
 	public void update(Expense expense) {
-		Document setDoc = new Document("description", expense.getDescription())
-				.append("amount", expense.getAmount());
+		Document setDoc = new Document(FIELD_DESCRIPTION, expense.getDescription())
+				.append(FIELD_AMOUNT, expense.getAmount());
 		if (expense.getCategory() != null) {
-			setDoc.append("category", new Document("_id", expense.getCategory().getId())
+			setDoc.append(FIELD_CATEGORY, new Document("_id", expense.getCategory().getId())
 					.append("name", expense.getCategory().getName()));
 		} else {
-			setDoc.append("category", null);
+			setDoc.append(FIELD_CATEGORY, null);
 		}
 		collection.updateOne(new Document("_id", expense.getId()), new Document("$set", setDoc));
 	}
@@ -66,11 +70,11 @@ public class MongoExpenseRepository implements ExpenseRepository {
 
 	private Expense documentToExpense(Document doc) {
 		Category category = null;
-		Document catDoc = doc.get("category", Document.class);
+		Document catDoc = doc.get(FIELD_CATEGORY, Document.class);
 		if (catDoc != null) {
 			category = new Category(catDoc.getString("_id"), catDoc.getString("name"));
 		}
-		return new Expense(doc.getString("_id"), doc.getString("description"),
-				doc.getDouble("amount"), category);
+		return new Expense(doc.getString("_id"), doc.getString(FIELD_DESCRIPTION),
+				doc.getDouble(FIELD_AMOUNT), category);
 	}
 }

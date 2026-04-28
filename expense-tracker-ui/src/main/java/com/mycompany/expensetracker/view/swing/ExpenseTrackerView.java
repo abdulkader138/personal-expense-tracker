@@ -15,6 +15,7 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.WindowConstants;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
@@ -23,11 +24,11 @@ import com.mycompany.expensetracker.model.Expense;
 
 public class ExpenseTrackerView extends JFrame {
 
-	public JTextField txtDescription;
-	public JTextField txtAmount;
-	public JButton btnAddExpense;
-	public JButton btnDeleteExpense;
-	public JList<Expense> listExpenses;
+	JTextField txtDescription;
+	JTextField txtAmount;
+	JButton btnAddExpense;
+	JButton btnDeleteExpense;
+	JList<Expense> listExpenses;
 
 	private JLabel lblError;
 	private JComboBox<Category> comboCategory;
@@ -36,7 +37,7 @@ public class ExpenseTrackerView extends JFrame {
 
 	public ExpenseTrackerView() {
 		setTitle("Expense Tracker");
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		setLayout(new BorderLayout());
 
 		txtDescription = new JTextField();
