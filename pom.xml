@@ -39,7 +39,8 @@
 
 		<sonar.coverage.exclusions>
 			**/model/**,
-			**/app/**
+			**/app/**,
+			**/repository/mongo/**
 		</sonar.coverage.exclusions>
 		<sonar.junit.reportPaths>
 			${project.build.directory}/surefire-reports,
