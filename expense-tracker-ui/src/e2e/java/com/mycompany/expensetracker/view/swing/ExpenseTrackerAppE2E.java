@@ -1,11 +1,12 @@
 package com.mycompany.expensetracker.view.swing;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.awt.Dimension;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-
+import java.util.concurrent.TimeUnit;
 
 import org.assertj.swing.edt.GuiActionRunner;
 import org.assertj.swing.fixture.FrameFixture;
@@ -93,21 +94,32 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 
 	@Test
 	public void testAddExpenseAppearsInList() {
-		window.textBox("txtDescription").enterText("Lunch");
-		window.textBox("txtAmount").enterText("10.0");
+		window.textBox("txtDescription").setText("Lunch");
+		window.textBox("txtAmount").setText("10.0");
+		window.button("btnAddExpense").requireEnabled();
 		window.button("btnAddExpense").click();
+		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
+			assertThat(window.list("listExpenses").contents()).hasSize(1)
+		);
 		assertThat(window.list("listExpenses").contents()).hasSize(1);
 		assertThat(window.list("listExpenses").contents()[0]).contains("Lunch");
 	}
 
 	@Test
 	public void testDeleteExpenseRemovesFromList() {
-		window.textBox("txtDescription").enterText("Dinner");
-		window.textBox("txtAmount").enterText("20.0");
+		window.textBox("txtDescription").setText("Dinner");
+		window.textBox("txtAmount").setText("20.0");
+		window.button("btnAddExpense").requireEnabled();
 		window.button("btnAddExpense").click();
+		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
+			assertThat(window.list("listExpenses").contents()).hasSize(1)
+		);
 		assertThat(window.list("listExpenses").contents()).hasSize(1);
 		GuiActionRunner.execute(() -> view.listExpenses.setSelectedIndex(0));
 		window.button("btnDeleteExpense").click();
+		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
+			assertThat(window.list("listExpenses").contents()).hasSize(0)
+		);
 		assertThat(window.list("listExpenses").contents()).hasSize(0);
 	}
 }

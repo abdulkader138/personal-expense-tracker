@@ -69,17 +69,17 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 
 	@Test
 	public void testAddButtonEnabledWhenDescriptionAndAmountFilled() {
-		window.textBox("txtDescription").enterText("Lunch");
-		window.textBox("txtAmount").enterText("10.0");
+		window.textBox("txtDescription").setText("Lunch");
+		window.textBox("txtAmount").setText("10.0");
 		window.button("btnAddExpense").requireEnabled();
 		assertThat(window.button("btnAddExpense").target().isEnabled()).isTrue();
 	}
 
 	@Test
 	public void testAddButtonDisabledWhenDescriptionCleared() {
-		window.textBox("txtDescription").enterText("Lunch");
-		window.textBox("txtAmount").enterText("10.0");
-		window.textBox("txtDescription").deleteText();
+		window.textBox("txtDescription").setText("Lunch");
+		window.textBox("txtAmount").setText("10.0");
+		window.textBox("txtDescription").setText("");
 		window.button("btnAddExpense").requireDisabled();
 		assertThat(window.button("btnAddExpense").target().isEnabled()).isFalse();
 	}
@@ -145,8 +145,8 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 	public void testAddAddExpenseListenerAttachesListener() {
 		ActionListener listener = mock(ActionListener.class);
 		GuiActionRunner.execute(() -> view.addAddExpenseListener(listener));
-		window.textBox("txtDescription").enterText("Lunch");
-		window.textBox("txtAmount").enterText("10.0");
+		window.textBox("txtDescription").setText("Lunch");
+		window.textBox("txtAmount").setText("10.0");
 		window.button("btnAddExpense").click();
 		verify(listener).actionPerformed(any());
 	}
