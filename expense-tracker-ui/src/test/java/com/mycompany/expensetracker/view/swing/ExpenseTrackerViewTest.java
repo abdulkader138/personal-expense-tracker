@@ -11,7 +11,6 @@ import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
 
-
 import javax.swing.event.DocumentListener;
 import javax.swing.text.AbstractDocument;
 
@@ -19,6 +18,7 @@ import org.assertj.swing.edt.GuiActionRunner;
 import org.assertj.swing.fixture.FrameFixture;
 import org.assertj.swing.junit.runner.GUITestRunner;
 import org.assertj.swing.junit.testcase.AssertJSwingJUnitTestCase;
+import org.assertj.swing.timing.Pause;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -54,9 +54,10 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 			p.waitFor();
 			if (capsOn) {
 				new ProcessBuilder("xdotool", "key", "Caps_Lock").start().waitFor();
-				Thread.sleep(150);
+				Pause.pause(150);
 			}
 		} catch (Exception ignored) {
+			// best-effort: silently skip on headless or non-X11 environments
 		}
 	}
 
