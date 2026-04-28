@@ -148,6 +148,7 @@
 							<excludes>
 								<exclude>**/model/**</exclude>
 								<exclude>**/app/**</exclude>
+								<exclude>**/repository/mongo/**</exclude>
 							</excludes>
 						</configuration>
 						<executions>
