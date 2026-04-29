@@ -24,6 +24,12 @@ public class MongoCategoryRepository implements CategoryRepository {
 	}
 
 	@Override
+	public void update(Category category) {
+		collection.updateOne(new Document("_id", category.getId()),
+				new Document("$set", new Document("name", category.getName())));
+	}
+
+	@Override
 	public List<Category> findAll() {
 		return StreamSupport.stream(collection.find().spliterator(), false)
 				.map(doc -> new Category(doc.getString("_id"), doc.getString("name")))

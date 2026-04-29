@@ -47,10 +47,85 @@ public class ExpenseServiceTest {
 	}
 
 	@Test
+	public void testAddExpenseWithNullDescriptionThrowsException() {
+		Expense expense = new Expense("1", null, 10.0, null);
+		assertThatThrownBy(() -> service.addExpense(expense))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("Description cannot be empty");
+	}
+
+	@Test
 	public void testAddExpenseWithZeroAmountDelegatesToRepository() {
 		Expense expense = new Expense("1", "Lunch", 0.0, null);
 		service.addExpense(expense);
 		verify(repository).save(expense);
+	}
+
+	@Test
+	public void testAddExpenseWithBlankDescriptionThrowsException() {
+		Expense expense = new Expense("1", "   ", 10.0, null);
+		assertThatThrownBy(() -> service.addExpense(expense))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("Description cannot be empty");
+	}
+
+	@Test
+	public void testAddExpenseWithEmptyDescriptionThrowsException() {
+		Expense expense = new Expense("1", "", 10.0, null);
+		assertThatThrownBy(() -> service.addExpense(expense))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("Description cannot be empty");
+	}
+
+	@Test
+	public void testUpdateExpenseDelegatesToRepository() {
+		Expense expense = new Expense("1", "Lunch", 10.0, null);
+		service.updateExpense(expense);
+		verify(repository).update(expense);
+	}
+
+	@Test
+	public void testUpdateExpenseWithNullThrowsException() {
+		assertThatThrownBy(() -> service.updateExpense(null))
+				.isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	public void testUpdateExpenseWithNegativeAmountThrowsException() {
+		Expense expense = new Expense("1", "Lunch", -5.0, null);
+		assertThatThrownBy(() -> service.updateExpense(expense))
+				.isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	public void testUpdateExpenseWithNullDescriptionThrowsException() {
+		Expense expense = new Expense("1", null, 10.0, null);
+		assertThatThrownBy(() -> service.updateExpense(expense))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("Description cannot be empty");
+	}
+
+	@Test
+	public void testUpdateExpenseWithZeroAmountDelegatesToRepository() {
+		Expense expense = new Expense("1", "Lunch", 0.0, null);
+		service.updateExpense(expense);
+		verify(repository).update(expense);
+	}
+
+	@Test
+	public void testUpdateExpenseWithBlankDescriptionThrowsException() {
+		Expense expense = new Expense("1", "   ", 10.0, null);
+		assertThatThrownBy(() -> service.updateExpense(expense))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("Description cannot be empty");
+	}
+
+	@Test
+	public void testUpdateExpenseWithEmptyDescriptionThrowsException() {
+		Expense expense = new Expense("1", "", 10.0, null);
+		assertThatThrownBy(() -> service.updateExpense(expense))
+				.isInstanceOf(IllegalArgumentException.class)
+				.hasMessage("Description cannot be empty");
 	}
 
 	@Test

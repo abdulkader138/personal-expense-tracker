@@ -17,10 +17,26 @@ public class ExpenseService {
 		if (expense == null) {
 			throw new IllegalArgumentException("Expense cannot be null");
 		}
+		if (expense.getDescription() == null || expense.getDescription().trim().isEmpty()) {
+			throw new IllegalArgumentException("Description cannot be empty");
+		}
 		if (expense.getAmount() < 0) {
 			throw new IllegalArgumentException("Amount cannot be negative");
 		}
 		repository.save(expense);
+	}
+
+	public void updateExpense(Expense expense) {
+		if (expense == null) {
+			throw new IllegalArgumentException("Expense cannot be null");
+		}
+		if (expense.getDescription() == null || expense.getDescription().trim().isEmpty()) {
+			throw new IllegalArgumentException("Description cannot be empty");
+		}
+		if (expense.getAmount() < 0) {
+			throw new IllegalArgumentException("Amount cannot be negative");
+		}
+		repository.update(expense);
 	}
 
 	public List<Expense> getAllExpenses() {

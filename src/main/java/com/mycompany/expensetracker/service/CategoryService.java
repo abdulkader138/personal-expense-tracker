@@ -20,6 +20,13 @@ public class CategoryService {
 		repository.save(category);
 	}
 
+	public void updateCategory(Category category) {
+		if (category == null) {
+			throw new IllegalArgumentException("Category cannot be null");
+		}
+		repository.update(category);
+	}
+
 	public List<Category> getAllCategories() {
 		return repository.findAll();
 	}

@@ -93,16 +93,22 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 	}
 
 	@Test
+	public void testApplicationStartsWithSeededCategoryAndEmptyExpenses() {
+		awaitComboContents(1);
+		assertThat(comboContents()).contains("Category{id='c1', name='Food'}");
+		assertThat(categoryListContents()).hasSize(1);
+		assertThat(expenseListContents()).isEmpty();
+	}
+
+	@Test
 	public void testAddExpenseAppearsInList() {
 		window.textBox("txtDescription").setText("Lunch");
 		window.textBox("txtAmount").setText("10.0");
 		window.button("btnAddExpense").requireEnabled();
 		window.button("btnAddExpense").click();
-		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
-			assertThat(window.list("listExpenses").contents()).hasSize(1)
-		);
-		assertThat(window.list("listExpenses").contents()).hasSize(1);
-		assertThat(window.list("listExpenses").contents()[0]).contains("Lunch");
+		awaitExpenseCount(1);
+		assertThat(expenseListContents()).hasSize(1);
+		assertThat(expenseListContents()[0]).contains("Lunch");
 	}
 
 	@Test
@@ -111,15 +117,89 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 		window.textBox("txtAmount").setText("20.0");
 		window.button("btnAddExpense").requireEnabled();
 		window.button("btnAddExpense").click();
-		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
-			assertThat(window.list("listExpenses").contents()).hasSize(1)
-		);
-		assertThat(window.list("listExpenses").contents()).hasSize(1);
-		GuiActionRunner.execute(() -> view.listExpenses.setSelectedIndex(0));
+		awaitExpenseCount(1);
+		assertThat(expenseListContents()).hasSize(1);
+		selectExpense(0);
 		window.button("btnDeleteExpense").click();
+		awaitExpenseCount(0);
+		assertThat(expenseListContents()).hasSize(0);
+	}
+
+	@Test
+	public void testUpdateExpenseChangesPersistedValuesInList() {
+		window.textBox("txtDescription").setText("Lunch");
+		window.textBox("txtAmount").setText("10.0");
+		selectCategory(0);
+		window.button("btnAddExpense").requireEnabled();
+		window.button("btnAddExpense").click();
+		awaitExpenseCount(1);
+
+		selectExpense(0);
+		window.textBox("txtDescription").setText("Dinner");
+		window.textBox("txtAmount").setText("20.0");
+		window.button("btnUpdateExpense").click();
+
+		awaitExpenseCount(1);
+		assertThat(expenseListContents()[0]).contains("Dinner");
+		assertThat(expenseListContents()[0]).contains("20.0");
+	}
+
+	@Test
+	public void testCategoryCrudFlow() {
+		window.textBox("txtCategoryName").setText("Travel");
+		window.button("btnAddCategory").click();
+		awaitCategoryCount(2);
+		assertThat(categoryListContents()).anyMatch(item -> item.contains("Travel"));
+
+		selectCategory(1);
+		assertThat(view.getCategoryNameText()).isEqualTo("Travel");
+
+		window.textBox("txtCategoryName").setText("Trips");
+		window.button("btnUpdateCategory").click();
+		awaitCategoryCount(2);
+		assertThat(categoryListContents()).anyMatch(item -> item.contains("Trips"));
+
+		selectCategory(1);
+		window.button("btnDeleteCategory").click();
+		awaitCategoryCount(1);
+		assertThat(categoryListContents()).noneMatch(item -> item.contains("Trips"));
+	}
+
+	private void awaitComboContents(int expectedSize) {
 		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
-			assertThat(window.list("listExpenses").contents()).hasSize(0)
+			assertThat(comboContents()).hasSize(expectedSize)
 		);
-		assertThat(window.list("listExpenses").contents()).hasSize(0);
+	}
+
+	private void awaitExpenseCount(int expectedSize) {
+		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
+			assertThat(expenseListContents()).hasSize(expectedSize)
+		);
+	}
+
+	private void awaitCategoryCount(int expectedSize) {
+		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
+			assertThat(categoryListContents()).hasSize(expectedSize)
+		);
+	}
+
+	private String[] comboContents() {
+		return window.comboBox("comboCategory").contents();
+	}
+
+	private String[] expenseListContents() {
+		return window.list("listExpenses").contents();
+	}
+
+	private String[] categoryListContents() {
+		return window.list("listCategories").contents();
+	}
+
+	private void selectExpense(int index) {
+		GuiActionRunner.execute(() -> view.listExpenses.setSelectedIndex(index));
+	}
+
+	private void selectCategory(int index) {
+		GuiActionRunner.execute(() -> view.listCategories.setSelectedIndex(index));
 	}
 }
