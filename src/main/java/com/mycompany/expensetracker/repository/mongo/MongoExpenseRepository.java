@@ -1,7 +1,6 @@
 package com.mycompany.expensetracker.repository.mongo;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.bson.Document;
@@ -40,7 +39,7 @@ public class MongoExpenseRepository implements ExpenseRepository {
 	public List<Expense> findAll() {
 		return StreamSupport.stream(collection.find().spliterator(), false)
 				.map(this::documentToExpense)
-				.collect(Collectors.toList());
+				.toList();
 	}
 
 	@Override
