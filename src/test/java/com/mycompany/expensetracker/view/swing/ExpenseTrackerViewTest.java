@@ -148,6 +148,7 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 		window.textBox("txtDescription").setText("Lunch");
 		window.textBox("txtAmount").setText("10.0");
 		window.button("btnAddExpense").requireEnabled();
+		assertThat(window.button("btnAddExpense").target().isEnabled()).isTrue();
 		window.button("btnAddExpense").click();
 		verify(listener).actionPerformed(any());
 	}
