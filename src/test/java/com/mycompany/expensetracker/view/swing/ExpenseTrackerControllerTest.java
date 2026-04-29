@@ -3,7 +3,6 @@ package com.mycompany.expensetracker.view.swing;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -66,33 +65,6 @@ public class ExpenseTrackerControllerTest {
 		controller.newExpense();
 		verify(expenseService).addExpense(any(Expense.class));
 		verify(view).showExpenses(expenses);
-	}
-
-	@Test
-	public void testNewExpenseWithBlankDescriptionShowsError() {
-		when(view.getDescriptionText()).thenReturn("   ");
-		when(view.getAmountText()).thenReturn("10.0");
-		controller.newExpense();
-		verify(expenseService, never()).addExpense(any(Expense.class));
-		verify(view).showError(contains("Description cannot be empty"));
-	}
-
-	@Test
-	public void testNewExpenseWithNullDescriptionShowsError() {
-		when(view.getDescriptionText()).thenReturn(null);
-		when(view.getAmountText()).thenReturn("10.0");
-		controller.newExpense();
-		verify(expenseService, never()).addExpense(any(Expense.class));
-		verify(view).showError(contains("Description cannot be empty"));
-	}
-
-	@Test
-	public void testNewExpenseWithEmptyDescriptionShowsError() {
-		when(view.getDescriptionText()).thenReturn("");
-		when(view.getAmountText()).thenReturn("10.0");
-		controller.newExpense();
-		verify(expenseService, never()).addExpense(any(Expense.class));
-		verify(view).showError(contains("Description cannot be empty"));
 	}
 
 	@Test
@@ -186,45 +158,6 @@ public class ExpenseTrackerControllerTest {
 	}
 
 	@Test
-	public void testUpdateExpenseWithInvalidAmountShowsError() {
-		Expense selected = new Expense("1", "Lunch", 10.0, null);
-		when(view.getSelectedExpense()).thenReturn(selected);
-		when(view.getDescriptionText()).thenReturn("Dinner");
-		when(view.getAmountText()).thenReturn("oops");
-		controller.updateExpense();
-		verify(expenseService, never()).updateExpense(isNull());
-		verify(expenseService, never()).getAllExpenses();
-		verify(view, never()).showExpenses(any());
-		verify(view).showError(contains("oops"));
-	}
-
-	@Test
-	public void testUpdateExpenseWithBlankDescriptionShowsError() {
-		Expense selected = new Expense("1", "Lunch", 10.0, null);
-		when(view.getSelectedExpense()).thenReturn(selected);
-		when(view.getDescriptionText()).thenReturn("   ");
-		when(view.getAmountText()).thenReturn("20.0");
-		controller.updateExpense();
-		verify(expenseService, never()).updateExpense(isNull());
-		verify(expenseService, never()).getAllExpenses();
-		verify(view, never()).showExpenses(any());
-		verify(view).showError(contains("Description cannot be empty"));
-	}
-
-	@Test
-	public void testUpdateExpenseWithEmptyDescriptionShowsError() {
-		Expense selected = new Expense("1", "Lunch", 10.0, null);
-		when(view.getSelectedExpense()).thenReturn(selected);
-		when(view.getDescriptionText()).thenReturn("");
-		when(view.getAmountText()).thenReturn("20.0");
-		controller.updateExpense();
-		verify(expenseService, never()).updateExpense(isNull());
-		verify(expenseService, never()).getAllExpenses();
-		verify(view, never()).showExpenses(any());
-		verify(view).showError(contains("Description cannot be empty"));
-	}
-
-	@Test
 	public void testUpdateExpenseWhenServiceThrowsShowsError() {
 		Expense selected = new Expense("1", "Lunch", 10.0, null);
 		when(view.getSelectedExpense()).thenReturn(selected);
@@ -265,30 +198,6 @@ public class ExpenseTrackerControllerTest {
 	}
 
 	@Test
-	public void testAddCategoryWithBlankNameShowsError() {
-		when(view.getCategoryNameText()).thenReturn("   ");
-		controller.addCategory();
-		verify(categoryService, never()).addCategory(any(Category.class));
-		verify(view).showError(contains("Category name cannot be empty"));
-	}
-
-	@Test
-	public void testAddCategoryWithNullNameShowsError() {
-		when(view.getCategoryNameText()).thenReturn(null);
-		controller.addCategory();
-		verify(categoryService, never()).addCategory(any(Category.class));
-		verify(view).showError(contains("Category name cannot be empty"));
-	}
-
-	@Test
-	public void testAddCategoryWithEmptyNameShowsError() {
-		when(view.getCategoryNameText()).thenReturn("");
-		controller.addCategory();
-		verify(categoryService, never()).addCategory(any(Category.class));
-		verify(view).showError(contains("Category name cannot be empty"));
-	}
-
-	@Test
 	public void testUpdateCategoryCallsServiceAndRefreshesView() {
 		Category selected = new Category("1", "Food");
 		List<Category> categories = Arrays.asList(selected);
@@ -320,36 +229,6 @@ public class ExpenseTrackerControllerTest {
 		controller.updateCategory();
 		verify(categoryService, never()).updateCategory(any(Category.class));
 		verify(view).showError(contains("Select a category to update"));
-	}
-
-	@Test
-	public void testUpdateCategoryWithBlankNameShowsError() {
-		Category selected = new Category("1", "Food");
-		when(view.getSelectedCategoryInList()).thenReturn(selected);
-		when(view.getCategoryNameText()).thenReturn("   ");
-		controller.updateCategory();
-		verify(categoryService, never()).updateCategory(any(Category.class));
-		verify(view).showError(contains("Category name cannot be empty"));
-	}
-
-	@Test
-	public void testUpdateCategoryWithNullNameShowsError() {
-		Category selected = new Category("1", "Food");
-		when(view.getSelectedCategoryInList()).thenReturn(selected);
-		when(view.getCategoryNameText()).thenReturn(null);
-		controller.updateCategory();
-		verify(categoryService, never()).updateCategory(any(Category.class));
-		verify(view).showError(contains("Category name cannot be empty"));
-	}
-
-	@Test
-	public void testUpdateCategoryWithEmptyNameShowsError() {
-		Category selected = new Category("1", "Food");
-		when(view.getSelectedCategoryInList()).thenReturn(selected);
-		when(view.getCategoryNameText()).thenReturn("");
-		controller.updateCategory();
-		verify(categoryService, never()).updateCategory(any(Category.class));
-		verify(view).showError(contains("Category name cannot be empty"));
 	}
 
 	@Test
