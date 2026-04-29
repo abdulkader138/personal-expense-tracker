@@ -110,6 +110,7 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 		GuiActionRunner.execute(() -> view.showCategories(categories));
 		window.comboBox("comboCategory").requireItemCount(2);
 		window.list("listCategories").requireItemCount(2);
+		assertThat(window.comboBox("comboCategory").contents()).contains("Category{id='1', name='Food'}");
 	}
 
 	@Test
@@ -185,6 +186,7 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 		window.button("btnUpdateExpense").requireEnabled();
 		GuiActionRunner.execute(() -> view.btnUpdateExpense.doClick());
 		verify(listener).actionPerformed(any());
+		assertThat(window.button("btnUpdateExpense").target().isEnabled()).isTrue();
 	}
 
 	@Test
@@ -206,6 +208,7 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 		assertThat(window.button("btnDeleteExpense").target().isEnabled()).isTrue();
 		window.button("btnDeleteExpense").click();
 		verify(listener).actionPerformed(any());
+		assertThat(window.button("btnDeleteExpense").target().isEnabled()).isTrue();
 	}
 
 	@Test

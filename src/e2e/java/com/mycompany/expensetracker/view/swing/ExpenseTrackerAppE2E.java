@@ -129,7 +129,6 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 	public void testUpdateExpenseChangesPersistedValuesInList() {
 		window.textBox("txtDescription").setText("Lunch");
 		window.textBox("txtAmount").setText("10.0");
-		selectCategory(0);
 		window.button("btnAddExpense").requireEnabled();
 		window.button("btnAddExpense").click();
 		awaitExpenseCount(1);
