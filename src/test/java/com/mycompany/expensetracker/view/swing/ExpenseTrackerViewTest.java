@@ -109,6 +109,7 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 		);
 		GuiActionRunner.execute(() -> view.showCategories(categories));
 		window.comboBox("comboCategory").requireItemCount(2);
+		window.list("listCategories").requireItemCount(2);
 	}
 
 	@Test
@@ -139,6 +140,51 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 			view.listExpenses.setSelectedIndex(0);
 		});
 		assertThat(view.getSelectedExpense()).isEqualTo(expense);
+	}
+
+	@Test
+	public void testGetSelectedCategoryInListReturnsSelectedItem() {
+		Category category = new Category("1", "Food");
+		GuiActionRunner.execute(() -> view.showCategories(Arrays.asList(category)));
+		window.list("listCategories").selectItem(0);
+		assertThat(view.getSelectedCategoryInList()).isEqualTo(category);
+	}
+
+	@Test
+	public void testAddCategoryButtonsExistAndCategoryNameFieldCanBeSet() {
+		assertThat(window.button("btnAddCategory").target().isEnabled()).isTrue();
+		assertThat(window.button("btnUpdateCategory").target().isEnabled()).isTrue();
+		assertThat(window.button("btnDeleteCategory").target().isEnabled()).isTrue();
+		GuiActionRunner.execute(() -> view.setCategoryNameText("Food"));
+		assertThat(view.getCategoryNameText()).isEqualTo("Food");
+	}
+
+	@Test
+	public void testExpenseUpdateButtonExists() {
+		assertThat(window.button("btnUpdateExpense").target().isEnabled()).isTrue();
+	}
+
+	@Test
+	public void testExpenseEditSettersUpdateFields() {
+		Category category = new Category("1", "Food");
+		GuiActionRunner.execute(() -> {
+			view.showCategories(Arrays.asList(category));
+			view.setDescriptionText("Lunch");
+			view.setAmountText("10.0");
+			view.setSelectedCategory(category);
+		});
+		assertThat(view.getDescriptionText()).isEqualTo("Lunch");
+		assertThat(view.getAmountText()).isEqualTo("10.0");
+		assertThat(view.getSelectedCategory()).isEqualTo(category);
+	}
+
+	@Test
+	public void testAddUpdateExpenseListenerAttachesListener() {
+		ActionListener listener = mock(ActionListener.class);
+		GuiActionRunner.execute(() -> view.addUpdateExpenseListener(listener));
+		window.button("btnUpdateExpense").requireEnabled();
+		GuiActionRunner.execute(() -> view.btnUpdateExpense.doClick());
+		verify(listener).actionPerformed(any());
 	}
 
 	@Test

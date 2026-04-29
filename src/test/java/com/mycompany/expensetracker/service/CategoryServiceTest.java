@@ -40,6 +40,19 @@ public class CategoryServiceTest {
 	}
 
 	@Test
+	public void testUpdateCategoryDelegatesToRepository() {
+		Category category = new Category("1", "Food");
+		service.updateCategory(category);
+		verify(repository).update(category);
+	}
+
+	@Test
+	public void testUpdateCategoryWithNullThrowsException() {
+		assertThatThrownBy(() -> service.updateCategory(null))
+				.isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
 	public void testGetAllCategoriesReturnsFromRepository() {
 		List<Category> categories = Arrays.asList(new Category("1", "Food"));
 		when(repository.findAll()).thenReturn(categories);

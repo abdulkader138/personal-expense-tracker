@@ -66,6 +66,16 @@ public class MongoExpenseRepositoryIT {
 	}
 
 	@Test
+	public void testUpdateWithNullCategory() {
+		Category category = new Category("c1", "Food");
+		Expense expense = new Expense("1", "Lunch", 10.0, category);
+		repository.save(expense);
+		Expense updated = new Expense("1", "Dinner", 20.0, null);
+		repository.update(updated);
+		assertThat(repository.findById("1")).isEqualTo(updated);
+	}
+
+	@Test
 	public void testDelete() {
 		Expense expense = new Expense("1", "Lunch", 10.0, null);
 		repository.save(expense);

@@ -61,6 +61,15 @@ public class MongoCategoryRepositoryIT {
 	}
 
 	@Test
+	public void testUpdate() {
+		Category category = new Category("1", "Food");
+		repository.save(category);
+		Category updated = new Category("1", "Groceries");
+		repository.update(updated);
+		assertThat(repository.findById("1")).isEqualTo(updated);
+	}
+
+	@Test
 	public void testFindByIdReturnsNullWhenNotFound() {
 		assertThat(repository.findById("nonexistent")).isNull();
 	}
