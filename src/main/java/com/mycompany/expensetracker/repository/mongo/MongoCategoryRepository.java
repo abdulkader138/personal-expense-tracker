@@ -1,7 +1,6 @@
 package com.mycompany.expensetracker.repository.mongo;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.bson.Document;
@@ -28,7 +27,7 @@ public class MongoCategoryRepository implements CategoryRepository {
 	public List<Category> findAll() {
 		return StreamSupport.stream(collection.find().spliterator(), false)
 				.map(doc -> new Category(doc.getString("_id"), doc.getString("name")))
-				.collect(Collectors.toList());
+				.toList();
 	}
 
 	@Override

@@ -156,6 +156,7 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 	public void testAddDeleteExpenseListenerAttachesListener() {
 		ActionListener listener = mock(ActionListener.class);
 		GuiActionRunner.execute(() -> view.addDeleteExpenseListener(listener));
+		assertThat(window.button("btnDeleteExpense").target().isEnabled()).isTrue();
 		window.button("btnDeleteExpense").click();
 		verify(listener).actionPerformed(any());
 	}
