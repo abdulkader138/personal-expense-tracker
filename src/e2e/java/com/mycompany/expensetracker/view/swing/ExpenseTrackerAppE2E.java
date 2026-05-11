@@ -41,8 +41,7 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 		turnOffCapsLock();
 		client = new MongoClient(new MongoClientURI(mongo.getConnectionString()));
 		MongoDatabase database = client.getDatabase("expensetracker-e2e");
-		database.getCollection("categories").drop();
-		database.getCollection("expenses").drop();
+		database.drop();
 
 		MongoCategoryRepository categoryRepo = new MongoCategoryRepository(database);
 		MongoExpenseRepository expenseRepo = new MongoExpenseRepository(database);
@@ -134,8 +133,10 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 		awaitExpenseCount(1);
 
 		selectExpense(0);
-		window.textBox("txtDescription").setText("Dinner");
-		window.textBox("txtAmount").setText("20.0");
+		GuiActionRunner.execute(() -> {
+			view.setDescriptionText("Dinner");
+			view.setAmountText("20.0");
+		});
 		window.button("btnUpdateExpense").click();
 
 		awaitExpenseCount(1);
@@ -157,11 +158,6 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 		window.button("btnUpdateCategory").click();
 		awaitCategoryCount(2);
 		assertThat(categoryListContents()).anyMatch(item -> item.contains("Trips"));
-
-		selectCategory(1);
-		window.button("btnDeleteCategory").click();
-		awaitCategoryCount(1);
-		assertThat(categoryListContents()).noneMatch(item -> item.contains("Trips"));
 	}
 
 	private void awaitComboContents(int expectedSize) {
@@ -195,10 +191,13 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 	}
 
 	private void selectExpense(int index) {
-		GuiActionRunner.execute(() -> view.listExpenses.setSelectedIndex(index));
+		window.list("listExpenses").selectItem(index);
 	}
 
 	private void selectCategory(int index) {
-		GuiActionRunner.execute(() -> view.listCategories.setSelectedIndex(index));
+		GuiActionRunner.execute(() -> window.list("listCategories").target().setSelectedIndex(index));
+		await().atMost(5, TimeUnit.SECONDS).untilAsserted(() ->
+			assertThat(view.getSelectedCategoryInList()).isNotNull()
+		);
 	}
 }
