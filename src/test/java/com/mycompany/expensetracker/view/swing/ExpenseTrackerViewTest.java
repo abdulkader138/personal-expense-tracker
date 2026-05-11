@@ -1,10 +1,5 @@
 package com.mycompany.expensetracker.view.swing;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -14,6 +9,7 @@ import java.util.List;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.AbstractDocument;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import org.assertj.swing.edt.GuiActionRunner;
 import org.assertj.swing.fixture.FrameFixture;
 import org.assertj.swing.junit.runner.GUITestRunner;
@@ -21,6 +17,7 @@ import org.assertj.swing.junit.testcase.AssertJSwingJUnitTestCase;
 import org.assertj.swing.timing.Pause;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import static org.mockito.Mockito.mock;
 
 import com.mycompany.expensetracker.model.Category;
 import com.mycompany.expensetracker.model.Expense;
@@ -37,6 +34,8 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 		view = GuiActionRunner.execute(ExpenseTrackerView::new);
 		window = new FrameFixture(robot(), view);
 		window.show(new java.awt.Dimension(800, 600));
+		window.focus();
+		Pause.pause(500);
 	}
 
 	private void turnOffCapsLock() {
@@ -77,18 +76,22 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 
 	@Test
 	public void testAddButtonDisabledWhenDescriptionCleared() {
-		window.textBox("txtDescription").setText("Lunch");
-		window.textBox("txtAmount").setText("10.0");
-		window.textBox("txtDescription").setText("");
+		GuiActionRunner.execute(() -> {
+			view.setDescriptionText("Lunch");
+			view.setAmountText("10.0");
+			view.setDescriptionText("");
+		});
 		window.button("btnAddExpense").requireDisabled();
 		assertThat(window.button("btnAddExpense").target().isEnabled()).isFalse();
 	}
 
 	@Test
 	public void testAddButtonDisabledWhenAmountCleared() {
-		window.textBox("txtDescription").setText("Lunch");
-		window.textBox("txtAmount").setText("10.0");
-		window.textBox("txtAmount").setText("");
+		GuiActionRunner.execute(() -> {
+			view.setDescriptionText("Lunch");
+			view.setAmountText("10.0");
+			view.setAmountText("");
+		});
 		window.button("btnAddExpense").requireDisabled();
 		assertThat(window.button("btnAddExpense").target().isEnabled()).isFalse();
 	}
