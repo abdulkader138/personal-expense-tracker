@@ -1,17 +1,17 @@
 package com.mycompany.expensetracker.view.swing;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
-
 import java.awt.Dimension;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import org.assertj.swing.edt.GuiActionRunner;
 import org.assertj.swing.fixture.FrameFixture;
 import org.assertj.swing.junit.runner.GUITestRunner;
 import org.assertj.swing.junit.testcase.AssertJSwingJUnitTestCase;
+import org.assertj.swing.timing.Pause;
+import static org.awaitility.Awaitility.await;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,6 +42,7 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 		client = new MongoClient(new MongoClientURI(mongo.getConnectionString()));
 		MongoDatabase database = client.getDatabase("expensetracker-e2e");
 		database.drop();
+		Pause.pause(500);
 
 		MongoCategoryRepository categoryRepo = new MongoCategoryRepository(database);
 		MongoExpenseRepository expenseRepo = new MongoExpenseRepository(database);
@@ -61,6 +62,8 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 
 		window = new FrameFixture(robot(), view);
 		window.show(new Dimension(800, 600));
+		window.focus();
+		Pause.pause(500);
 	}
 
 	@Override
@@ -85,9 +88,10 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 			p.waitFor();
 			if (capsOn) {
 				new ProcessBuilder("xdotool", "key", "Caps_Lock").start().waitFor();
-				Thread.sleep(150);
+				Pause.pause(150);
 			}
 		} catch (Exception ignored) {
+			// best-effort: silently skip on headless or non-X11 environments
 		}
 	}
 
@@ -103,6 +107,7 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 	public void testAddExpenseAppearsInList() {
 		window.textBox("txtDescription").setText("Lunch");
 		window.textBox("txtAmount").setText("10.0");
+		window.comboBox("comboCategory").selectItem(0);
 		window.button("btnAddExpense").requireEnabled();
 		window.button("btnAddExpense").click();
 		awaitExpenseCount(1);
@@ -114,6 +119,7 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 	public void testDeleteExpenseRemovesFromList() {
 		window.textBox("txtDescription").setText("Dinner");
 		window.textBox("txtAmount").setText("20.0");
+		window.comboBox("comboCategory").selectItem(0);
 		window.button("btnAddExpense").requireEnabled();
 		window.button("btnAddExpense").click();
 		awaitExpenseCount(1);
@@ -121,13 +127,14 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 		selectExpense(0);
 		window.button("btnDeleteExpense").click();
 		awaitExpenseCount(0);
-		assertThat(expenseListContents()).hasSize(0);
+		assertThat(expenseListContents()).isEmpty();
 	}
 
 	@Test
 	public void testUpdateExpenseChangesPersistedValuesInList() {
 		window.textBox("txtDescription").setText("Lunch");
 		window.textBox("txtAmount").setText("10.0");
+		window.comboBox("comboCategory").selectItem(0);
 		window.button("btnAddExpense").requireEnabled();
 		window.button("btnAddExpense").click();
 		awaitExpenseCount(1);
@@ -140,8 +147,7 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 		window.button("btnUpdateExpense").click();
 
 		awaitExpenseCount(1);
-		assertThat(expenseListContents()[0]).contains("Dinner");
-		assertThat(expenseListContents()[0]).contains("20.0");
+		assertThat(expenseListContents()[0]).contains("Dinner", "20.0");
 	}
 
 	@Test
