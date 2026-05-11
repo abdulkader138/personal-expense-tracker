@@ -25,17 +25,17 @@ import com.mycompany.expensetracker.model.Expense;
 
 public class ExpenseTrackerView extends JFrame {
 
-	JTextField txtDescription;
-	JTextField txtAmount;
-	JButton btnAddExpense;
-	JButton btnUpdateExpense;
-	JButton btnDeleteExpense;
-	JList<Expense> listExpenses;
-	JTextField txtCategoryName;
-	JButton btnAddCategory;
-	JButton btnUpdateCategory;
-	JButton btnDeleteCategory;
-	JList<Category> listCategories;
+	private JTextField txtDescription;
+	private JTextField txtAmount;
+	private JButton btnAddExpense;
+	private JButton btnUpdateExpense;
+	private JButton btnDeleteExpense;
+	private JList<Expense> listExpenses;
+	private JTextField txtCategoryName;
+	private JButton btnAddCategory;
+	private JButton btnUpdateCategory;
+	private JButton btnDeleteCategory;
+	private JList<Category> listCategories;
 
 	private JLabel lblError;
 	private JComboBox<Category> comboCategory;

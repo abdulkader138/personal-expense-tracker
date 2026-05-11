@@ -54,7 +54,7 @@ public class ExpenseTrackerController {
 	}
 
 	public void newExpense() {
-		Expense expense = buildExpenseFromView(java.util.UUID.randomUUID().toString());
+		Expense expense = buildExpenseFromView(UUID.randomUUID().toString());
 		if (expense == null) {
 			return;
 		}

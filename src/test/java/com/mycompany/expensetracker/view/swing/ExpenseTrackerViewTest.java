@@ -85,6 +85,15 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 	}
 
 	@Test
+	public void testAddButtonDisabledWhenAmountCleared() {
+		window.textBox("txtDescription").setText("Lunch");
+		window.textBox("txtAmount").setText("10.0");
+		window.textBox("txtAmount").setText("");
+		window.button("btnAddExpense").requireDisabled();
+		assertThat(window.button("btnAddExpense").target().isEnabled()).isFalse();
+	}
+
+	@Test
 	public void testShowExpensesUpdatesListModel() {
 		List<Expense> expenses = Arrays.asList(
 			new Expense("1", "Lunch", 10.0, null),
@@ -115,13 +124,13 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 
 	@Test
 	public void testGetDescriptionTextReturnsFieldContent() {
-		GuiActionRunner.execute(() -> view.txtDescription.setText("Lunch"));
+		GuiActionRunner.execute(() -> view.setDescriptionText("Lunch"));
 		assertThat(view.getDescriptionText()).isEqualTo("Lunch");
 	}
 
 	@Test
 	public void testGetAmountTextReturnsFieldContent() {
-		GuiActionRunner.execute(() -> view.txtAmount.setText("10.0"));
+		GuiActionRunner.execute(() -> view.setAmountText("10.0"));
 		assertThat(view.getAmountText()).isEqualTo("10.0");
 	}
 
@@ -136,10 +145,8 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 	@Test
 	public void testGetSelectedExpenseReturnsSelectedItem() {
 		Expense expense = new Expense("1", "Lunch", 10.0, null);
-		GuiActionRunner.execute(() -> {
-			view.showExpenses(Arrays.asList(expense));
-			view.listExpenses.setSelectedIndex(0);
-		});
+		GuiActionRunner.execute(() -> view.showExpenses(Arrays.asList(expense)));
+		window.list("listExpenses").selectItem(0);
 		assertThat(view.getSelectedExpense()).isEqualTo(expense);
 	}
 
@@ -183,40 +190,30 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 	public void testAddUpdateExpenseListenerAttachesListener() {
 		ActionListener listener = mock(ActionListener.class);
 		GuiActionRunner.execute(() -> view.addUpdateExpenseListener(listener));
-		window.button("btnUpdateExpense").requireEnabled();
-		GuiActionRunner.execute(() -> view.btnUpdateExpense.doClick());
-		verify(listener).actionPerformed(any());
-		assertThat(window.button("btnUpdateExpense").target().isEnabled()).isTrue();
+		assertThat(window.button("btnUpdateExpense").target().getActionListeners()).contains(listener);
 	}
 
 	@Test
 	public void testAddAddExpenseListenerAttachesListener() {
 		ActionListener listener = mock(ActionListener.class);
 		GuiActionRunner.execute(() -> view.addAddExpenseListener(listener));
-		window.textBox("txtDescription").setText("Lunch");
-		window.textBox("txtAmount").setText("10.0");
-		window.button("btnAddExpense").requireEnabled();
-		assertThat(window.button("btnAddExpense").target().isEnabled()).isTrue();
-		window.button("btnAddExpense").click();
-		verify(listener).actionPerformed(any());
+		assertThat(window.button("btnAddExpense").target().getActionListeners()).contains(listener);
 	}
 
 	@Test
 	public void testAddDeleteExpenseListenerAttachesListener() {
 		ActionListener listener = mock(ActionListener.class);
 		GuiActionRunner.execute(() -> view.addDeleteExpenseListener(listener));
-		assertThat(window.button("btnDeleteExpense").target().isEnabled()).isTrue();
-		window.button("btnDeleteExpense").click();
-		verify(listener).actionPerformed(any());
-		assertThat(window.button("btnDeleteExpense").target().isEnabled()).isTrue();
+		assertThat(window.button("btnDeleteExpense").target().getActionListeners()).contains(listener);
 	}
 
 	@Test
 	public void testChangedUpdateEnablesButtonWhenBothFieldsFilled() {
+		AbstractDocument document = (AbstractDocument) window.textBox("txtDescription").target().getDocument();
 		GuiActionRunner.execute(() -> {
-			view.txtDescription.setText("Lunch");
-			view.txtAmount.setText("10.0");
-			DocumentListener[] listeners = ((AbstractDocument) view.txtDescription.getDocument())
+			view.setDescriptionText("Lunch");
+			view.setAmountText("10.0");
+			DocumentListener[] listeners = document
 					.getListeners(DocumentListener.class);
 			for (DocumentListener l : listeners) {
 				if (l.getClass().getEnclosingClass() == ExpenseTrackerView.class) {

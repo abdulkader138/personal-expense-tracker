@@ -6,6 +6,9 @@ on:
 
 jobs:
   build:
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
     runs-on: ubuntu-latest
 
     steps:
@@ -21,23 +24,32 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Set up virtual display for Swing tests
-        run: |
-          sudo apt-get install -y xvfb
-          Xvfb :99 -screen 0 1024x768x24 &
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2
+            ~/.sonar/cache
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml', '**/*.yml') }}
+          restore-keys: ${{ runner.os }}-m2-
+
+      - name: Install xvfb
+        run: sudo apt-get update && sudo apt-get install -y xvfb
 
       - name: Build and test with coverage
-        env:
-          DISPLAY: ':99'
-        run: ./mvnw verify -Pjacoco
+        run: >
+          xvfb-run -a ./mvnw -B verify -Pjacoco
 
       - name: SonarCloud analysis
-        env:
-          DISPLAY: ':99'
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        if: ${{ env.SONAR_TOKEN }}
         run: >
-          ./mvnw sonar:sonar
+          xvfb-run -a ./mvnw -B sonar:sonar
           -Dsonar.projectKey=abdulkader138_personal-expense-tracker
           -Dsonar.organization=abdulkader138
           -Dsonar.host.url=https://sonarcloud.io
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Send coverage to Coveralls
+        if: ${{ env.COVERALLS_REPO_TOKEN }}
+        run: ./mvnw -B -Pcoveralls coveralls:report -DrepoToken=${{ secrets.COVERALLS_REPO_TOKEN }}
