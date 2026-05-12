@@ -68,8 +68,10 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 
 	@Test
 	public void testAddButtonEnabledWhenDescriptionAndAmountFilled() {
-		window.textBox("txtDescription").setText("Lunch");
-		window.textBox("txtAmount").setText("10.0");
+		GuiActionRunner.execute(() -> {
+			view.setDescriptionText("Lunch");
+			view.setAmountText("10.0");
+		});
 		window.button("btnAddExpense").requireEnabled();
 		assertThat(window.button("btnAddExpense").target().isEnabled()).isTrue();
 	}
@@ -142,23 +144,26 @@ public class ExpenseTrackerViewTest extends AssertJSwingJUnitTestCase {
 		Category category = new Category("1", "Food");
 		GuiActionRunner.execute(() -> view.showCategories(Arrays.asList(category)));
 		window.comboBox("comboCategory").selectItem(0);
-		assertThat(view.getSelectedCategory()).isEqualTo(category);
+		Category selected = GuiActionRunner.execute(view::getSelectedCategory);
+		assertThat(selected).isEqualTo(category);
 	}
 
 	@Test
 	public void testGetSelectedExpenseReturnsSelectedItem() {
 		Expense expense = new Expense("1", "Lunch", 10.0, null);
 		GuiActionRunner.execute(() -> view.showExpenses(Arrays.asList(expense)));
-		window.list("listExpenses").selectItem(0);
-		assertThat(view.getSelectedExpense()).isEqualTo(expense);
+		GuiActionRunner.execute(() -> window.list("listExpenses").target().setSelectedIndex(0));
+		Expense selected = GuiActionRunner.execute(view::getSelectedExpense);
+		assertThat(selected).isEqualTo(expense);
 	}
 
 	@Test
 	public void testGetSelectedCategoryInListReturnsSelectedItem() {
 		Category category = new Category("1", "Food");
 		GuiActionRunner.execute(() -> view.showCategories(Arrays.asList(category)));
-		window.list("listCategories").selectItem(0);
-		assertThat(view.getSelectedCategoryInList()).isEqualTo(category);
+		GuiActionRunner.execute(() -> window.list("listCategories").target().setSelectedIndex(0));
+		Category selected = GuiActionRunner.execute(view::getSelectedCategoryInList);
+		assertThat(selected).isEqualTo(category);
 	}
 
 	@Test

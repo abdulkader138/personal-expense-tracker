@@ -1,4 +1,4 @@
-package com.mycompany.expensetracker.view.swing;
+package com.mycompany.expensetracker.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -17,6 +17,7 @@ import org.junit.runners.Parameterized;
 import com.mycompany.expensetracker.model.Category;
 import com.mycompany.expensetracker.service.CategoryService;
 import com.mycompany.expensetracker.service.ExpenseService;
+import com.mycompany.expensetracker.view.swing.ExpenseTrackerView;
 
 @RunWith(Parameterized.class)
 public class ExpenseTrackerControllerCategoryValidationParameterizedTest {
