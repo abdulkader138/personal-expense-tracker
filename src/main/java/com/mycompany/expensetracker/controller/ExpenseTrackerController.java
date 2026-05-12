@@ -1,4 +1,4 @@
-package com.mycompany.expensetracker.view.swing;
+package com.mycompany.expensetracker.controller;
 
 import java.util.UUID;
 
@@ -6,6 +6,7 @@ import com.mycompany.expensetracker.service.CategoryService;
 import com.mycompany.expensetracker.service.ExpenseService;
 import com.mycompany.expensetracker.model.Category;
 import com.mycompany.expensetracker.model.Expense;
+import com.mycompany.expensetracker.view.swing.ExpenseTrackerView;
 
 public class ExpenseTrackerController {
 

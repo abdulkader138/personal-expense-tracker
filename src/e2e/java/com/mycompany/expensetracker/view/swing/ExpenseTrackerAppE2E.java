@@ -20,6 +20,7 @@ import org.testcontainers.containers.MongoDBContainer;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoDatabase;
+import com.mycompany.expensetracker.controller.ExpenseTrackerController;
 import com.mycompany.expensetracker.model.Category;
 import com.mycompany.expensetracker.repository.mongo.MongoCategoryRepository;
 import com.mycompany.expensetracker.repository.mongo.MongoExpenseRepository;
@@ -105,9 +106,11 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 
 	@Test
 	public void testAddExpenseAppearsInList() {
-		window.textBox("txtDescription").setText("Lunch");
-		window.textBox("txtAmount").setText("10.0");
-		window.comboBox("comboCategory").selectItem(0);
+		GuiActionRunner.execute(() -> {
+			view.setDescriptionText("Lunch");
+			view.setAmountText("10.0");
+			view.setSelectedCategory(new Category("c1", "Food"));
+		});
 		window.button("btnAddExpense").requireEnabled();
 		window.button("btnAddExpense").click();
 		awaitExpenseCount(1);
@@ -117,9 +120,11 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 
 	@Test
 	public void testDeleteExpenseRemovesFromList() {
-		window.textBox("txtDescription").setText("Dinner");
-		window.textBox("txtAmount").setText("20.0");
-		window.comboBox("comboCategory").selectItem(0);
+		GuiActionRunner.execute(() -> {
+			view.setDescriptionText("Dinner");
+			view.setAmountText("20.0");
+			view.setSelectedCategory(new Category("c1", "Food"));
+		});
 		window.button("btnAddExpense").requireEnabled();
 		window.button("btnAddExpense").click();
 		awaitExpenseCount(1);
@@ -132,9 +137,11 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 
 	@Test
 	public void testUpdateExpenseChangesPersistedValuesInList() {
-		window.textBox("txtDescription").setText("Lunch");
-		window.textBox("txtAmount").setText("10.0");
-		window.comboBox("comboCategory").selectItem(0);
+		GuiActionRunner.execute(() -> {
+			view.setDescriptionText("Lunch");
+			view.setAmountText("10.0");
+			view.setSelectedCategory(new Category("c1", "Food"));
+		});
 		window.button("btnAddExpense").requireEnabled();
 		window.button("btnAddExpense").click();
 		awaitExpenseCount(1);
@@ -152,7 +159,7 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 
 	@Test
 	public void testCategoryCrudFlow() {
-		window.textBox("txtCategoryName").setText("Travel");
+		GuiActionRunner.execute(() -> view.setCategoryNameText("Travel"));
 		window.button("btnAddCategory").click();
 		awaitCategoryCount(2);
 		assertThat(categoryListContents()).anyMatch(item -> item.contains("Travel"));
@@ -160,7 +167,7 @@ public class ExpenseTrackerAppE2E extends AssertJSwingJUnitTestCase {
 		selectCategory(1);
 		assertThat(view.getCategoryNameText()).isEqualTo("Travel");
 
-		window.textBox("txtCategoryName").setText("Trips");
+		GuiActionRunner.execute(() -> view.setCategoryNameText("Trips"));
 		window.button("btnUpdateCategory").click();
 		awaitCategoryCount(2);
 		assertThat(categoryListContents()).anyMatch(item -> item.contains("Trips"));

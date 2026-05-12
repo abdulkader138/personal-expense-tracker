@@ -165,32 +165,6 @@
 							</sources>
 						</configuration>
 					</execution>
-					<execution>
-						<id>add-bdd-sources</id>
-						<phase>generate-test-sources</phase>
-						<goals>
-							<goal>add-test-source</goal>
-						</goals>
-						<configuration>
-							<sources>
-								<source>src/bdd/java</source>
-							</sources>
-						</configuration>
-					</execution>
-					<execution>
-						<id>add-bdd-test-resources</id>
-						<phase>generate-test-resources</phase>
-						<goals>
-							<goal>add-test-resource</goal>
-						</goals>
-						<configuration>
-							<resources>
-								<resource>
-									<directory>src/bdd/resources</directory>
-								</resource>
-							</resources>
-						</configuration>
-					</execution>
 				</executions>
 			</plugin>
 			<plugin>
@@ -225,7 +199,6 @@
 							</includes>
 							<excludes>
 								<exclude>**/*E2E.java</exclude>
-								<exclude>**/*BDD.java</exclude>
 							</excludes>
 						</configuration>
 					</execution>
@@ -241,23 +214,6 @@
 							</includes>
 							<excludes>
 								<exclude>**/*IT.java</exclude>
-								<exclude>**/*BDD.java</exclude>
-							</excludes>
-						</configuration>
-					</execution>
-					<execution>
-						<id>bdd-tests</id>
-						<goals>
-							<goal>integration-test</goal>
-							<goal>verify</goal>
-						</goals>
-						<configuration>
-							<includes>
-								<include>**/*BDD.java</include>
-							</includes>
-							<excludes>
-								<exclude>**/*IT.java</exclude>
-								<exclude>**/*E2E.java</exclude>
 							</excludes>
 						</configuration>
 					</execution>
@@ -297,6 +253,7 @@
 							</execution>
 							<execution>
 								<id>check</id>
+								<phase>verify</phase>
 								<goals>
 									<goal>check</goal>
 								</goals>
